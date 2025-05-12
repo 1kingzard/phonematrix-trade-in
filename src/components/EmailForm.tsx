@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -46,8 +46,22 @@ const EmailForm: React.FC<EmailFormProps> = ({
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [faults, setFaults] = useState<string[]>([]);
+  const [deductionsFromCalculator, setDeductionsFromCalculator] = useState<{[key: string]: boolean}>({});
   
   const destinationEmail = 'infophonematrix@gmail.com';
+  
+  // Get deduction selections from localStorage
+  useEffect(() => {
+    const storedDeductions = localStorage.getItem('tradeInDeductions');
+    if (storedDeductions) {
+      try {
+        const parsedDeductions = JSON.parse(storedDeductions);
+        setDeductionsFromCalculator(parsedDeductions);
+      } catch (err) {
+        console.error("Error parsing deductions:", err);
+      }
+    }
+  }, []);
   
   // Format currency values
   const formatCurrency = (value: number) => {
@@ -104,6 +118,16 @@ Trade-in Device:
       selectedFaults.forEach(fault => {
         body += `\n* ${fault.label} (Estimated repair cost: ${formatCurrency(fault.cost)})`;
       });
+    }
+    
+    // Add deduction selections from calculator
+    if (Object.keys(deductionsFromCalculator).length > 0) {
+      body += `\n\nDevice Condition Deductions:`;
+      for (const [key, isSelected] of Object.entries(deductionsFromCalculator)) {
+        if (isSelected) {
+          body += `\n* ${key}`;
+        }
+      }
     }
 
     if (upgradeDevice) {
@@ -168,7 +192,7 @@ ${notes || "None provided"}
         <CardTitle className="flex items-center gap-2">
           {upgradeDevice 
             ? "Complete Your Trade-in & Upgrade Request" 
-            : "Request Trade-in Quote"}
+            : "Complete Your Upgrade Request"}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
