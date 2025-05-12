@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useDeviceData, DeviceData } from '../services/deviceDataService';
+import { useDeviceData, DeviceData, calculatePriceDifference, calculateShippingCost } from '../services/deviceDataService';
 import CurrencyToggle from '../components/CurrencyToggle';
 import DeviceFilters, { FilterOptions } from '../components/DeviceFilters';
 import DeviceCard from '../components/DeviceCard';
@@ -9,7 +9,7 @@ import EmailForm from '../components/EmailForm';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Package } from 'lucide-react';
 
 const Index = () => {
   // Data state
@@ -19,8 +19,13 @@ const Index = () => {
   // UI state
   const [currency, setCurrency] = useState<string>('JMD'); // Default to JMD
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
+  const [upgradeDevice, setUpgradeDevice] = useState<DeviceData | null>(null);
   const [finalTradeValue, setFinalTradeValue] = useState<number>(0);
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showUpgradeSelection, setShowUpgradeSelection] = useState(false);
+  
+  // Exchange rate constant
+  const exchangeRate = 154; // USD to JMD exchange rate
   
   // Apply filters to device data
   const handleFilterChange = (filters: FilterOptions) => {
@@ -51,9 +56,12 @@ const Index = () => {
   
   // Reset selection when filters change
   useEffect(() => {
-    setSelectedDevice(null);
+    if (!showUpgradeSelection) {
+      setSelectedDevice(null);
+    }
+    setUpgradeDevice(null);
     setShowEmailForm(false);
-  }, [filteredDevices]);
+  }, [filteredDevices, showUpgradeSelection]);
   
   // Initialize filtered devices
   useEffect(() => {
@@ -64,14 +72,29 @@ const Index = () => {
   
   // Handle device selection
   const handleDeviceSelect = (device: DeviceData) => {
-    setSelectedDevice(device);
-    setFinalTradeValue(device.Price);
+    if (showUpgradeSelection) {
+      setUpgradeDevice(device);
+    } else {
+      setSelectedDevice(device);
+      setFinalTradeValue(device.Price);
+    }
     setShowEmailForm(false);
   };
   
   // Handle deduction calculator value change
   const handleTradeValueChange = (value: number) => {
     setFinalTradeValue(value);
+  };
+  
+  // Handle proceed to upgrade selection
+  const handleProceedToUpgrade = () => {
+    setShowUpgradeSelection(true);
+  };
+  
+  // Handle back from upgrade selection
+  const handleBackFromUpgrade = () => {
+    setShowUpgradeSelection(false);
+    setUpgradeDevice(null);
   };
   
   // Handle proceed to email form
@@ -88,12 +111,30 @@ const Index = () => {
     
     // Reset selection for a new quote
     setSelectedDevice(null);
+    setUpgradeDevice(null);
+    setShowUpgradeSelection(false);
     setShowEmailForm(false);
   };
   
   // Handle going back from email form
   const handleBackFromEmail = () => {
     setShowEmailForm(false);
+  };
+  
+  // Calculate price difference and additional costs
+  const priceDifference = calculatePriceDifference(selectedDevice, upgradeDevice, finalTradeValue);
+  const shippingCost = currency === 'JMD' && upgradeDevice ? calculateShippingCost(
+    currency === 'USD' ? upgradeDevice.Price : upgradeDevice.Price * exchangeRate
+  ) : 0;
+  
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(currency === 'USD' ? value : value * exchangeRate);
   };
   
   // Render content based on loading/error state
@@ -158,12 +199,124 @@ const Index = () => {
                 onValueChange={handleTradeValueChange}
               />
               <EmailForm 
-                selectedDevice={selectedDevice} 
+                selectedDevice={selectedDevice}
+                upgradeDevice={upgradeDevice}
                 finalTradeValue={finalTradeValue}
+                priceDifference={priceDifference}
+                shippingCost={shippingCost}
                 currency={currency}
                 onSubmitSuccess={handleEmailSuccess}
               />
             </div>
+          </div>
+        ) : showUpgradeSelection && selectedDevice ? (
+          /* Upgrade device selection view */
+          <div className="space-y-6">
+            <Button 
+              variant="outline" 
+              onClick={handleBackFromUpgrade}
+              className="flex items-center gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Trade-in Selection
+            </Button>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+              <h2 className="text-xl font-semibold mb-4">Selected Trade-in Device</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-lg font-medium">{selectedDevice.Brand} {selectedDevice.Model}</p>
+                  <p className="text-gray-600">
+                    {selectedDevice.Storage} • {selectedDevice.Color} • {selectedDevice.Condition}
+                  </p>
+                </div>
+                <div className="md:text-right">
+                  <p className="text-gray-600">Trade-in Value:</p>
+                  <p className="text-xl font-bold text-brand-blue">{formatCurrency(finalTradeValue)}</p>
+                </div>
+              </div>
+            </div>
+            
+            <h2 className="text-xl font-semibold mb-4">Select Your Upgrade Device</h2>
+            
+            {/* Filters for upgrade device */}
+            <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
+            
+            {/* Upgrade device selection */}
+            <div className="mt-8">
+              {filteredDevices.length === 0 ? (
+                <div className="bg-white rounded-lg p-8 text-center">
+                  <p className="text-gray-500">No devices match your selected filters. Please try different criteria.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredDevices.map((device, index) => (
+                    <DeviceCard
+                      key={`${device.Model}-${device.Storage}-${device.Condition}-${index}`}
+                      device={device}
+                      currency={currency}
+                      onClick={() => handleDeviceSelect(device)}
+                      selected={upgradeDevice === device}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Selected upgrade device details */}
+            {upgradeDevice && (
+              <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Your Trade-in</h3>
+                    <p>{selectedDevice.Brand} {selectedDevice.Model}</p>
+                    <p className="text-gray-600 text-sm">
+                      {selectedDevice.Storage} • {selectedDevice.Condition}
+                    </p>
+                    <p className="font-bold mt-2">{formatCurrency(finalTradeValue)}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Your Upgrade</h3>
+                    <p>{upgradeDevice.Brand} {upgradeDevice.Model}</p>
+                    <p className="text-gray-600 text-sm">
+                      {upgradeDevice.Storage} • {upgradeDevice.Condition}
+                    </p>
+                    <p className="font-bold mt-2">{formatCurrency(upgradeDevice.Price)}</p>
+                  </div>
+                </div>
+                
+                <Separator className="my-6" />
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Price Difference:</span>
+                    <span className="font-medium">{formatCurrency(priceDifference)}</span>
+                  </div>
+                  
+                  {currency === 'JMD' && (
+                    <div className="flex justify-between text-amber-700">
+                      <span className="flex items-center gap-1">
+                        <Package className="h-4 w-4" />
+                        Shipping Cost (30%):
+                      </span>
+                      <span className="font-medium">{formatCurrency(shippingCost)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold text-lg pt-3">
+                    <span>Total to Pay:</span>
+                    <span>{formatCurrency(priceDifference + shippingCost)}</span>
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full mt-6 bg-brand-orange hover:bg-brand-orange/90" 
+                  onClick={handleProceedToEmail}
+                >
+                  Complete Trade-in Request
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -172,7 +325,7 @@ const Index = () => {
             
             {/* Results section */}
             <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Available Trade-in Options</h2>
+              <h2 className="text-xl font-semibold mb-4">Select Your Current Device for Trade-in</h2>
               
               {filteredDevices.length === 0 ? (
                 <div className="bg-white rounded-lg p-8 text-center">
@@ -217,24 +370,23 @@ const Index = () => {
                     <div>
                       <p className="text-gray-600">Final Trade-in Value:</p>
                       <p className="text-2xl font-bold text-brand-blue">
-                        {new Intl.NumberFormat('en-US', {
-                          style: 'currency',
-                          currency: currency,
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        }).format(
-                          currency === 'USD' 
-                            ? finalTradeValue 
-                            : finalTradeValue * 154
-                        )}
+                        {formatCurrency(finalTradeValue)}
                       </p>
                     </div>
                     
                     <Button 
                       className="w-full bg-brand-orange hover:bg-brand-orange/90" 
+                      onClick={handleProceedToUpgrade}
+                    >
+                      Select Upgrade Device
+                    </Button>
+                    
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
                       onClick={handleProceedToEmail}
                     >
-                      Request Trade-in Quote
+                      Request Trade-in Quote Only
                     </Button>
                   </div>
                 </div>

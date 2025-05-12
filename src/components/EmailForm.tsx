@@ -6,17 +6,24 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
+import { Package } from 'lucide-react';
 
 interface EmailFormProps {
   selectedDevice: DeviceData | null;
+  upgradeDevice: DeviceData | null;
   finalTradeValue: number;
+  priceDifference: number;
+  shippingCost: number;
   currency: string;
   onSubmitSuccess: () => void;
 }
 
 const EmailForm: React.FC<EmailFormProps> = ({ 
-  selectedDevice, 
+  selectedDevice,
+  upgradeDevice,
   finalTradeValue,
+  priceDifference,
+  shippingCost,
   currency,
   onSubmitSuccess
 }) => {
@@ -28,36 +35,65 @@ const EmailForm: React.FC<EmailFormProps> = ({
   const destinationEmail = 'infophonematrix@gmail.com';
   const exchangeRate = 154;
   
-  // Format the trade-in value
-  const formattedValue = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(currency === 'USD' ? finalTradeValue : finalTradeValue * exchangeRate);
+  // Format currency values
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(currency === 'USD' ? value : value * exchangeRate);
+  };
   
   // Prepare email subject and body
   const prepareEmail = () => {
     if (!selectedDevice) return;
     
-    const subject = `Trade-in Request: ${selectedDevice.Brand} ${selectedDevice.Model}`;
+    const subject = upgradeDevice 
+      ? `Trade-in & Upgrade Request: ${selectedDevice.Brand} ${selectedDevice.Model} to ${upgradeDevice.Brand} ${upgradeDevice.Model}`
+      : `Trade-in Request: ${selectedDevice.Brand} ${selectedDevice.Model}`;
     
-    const body = `
+    let body = `
 Trade-in Request Details:
 ------------------------
 Customer Name: ${name}
 Customer Email: ${email}
 Customer Phone: ${phone}
 
-Device Details:
+Trade-in Device:
 * OS: ${selectedDevice.OS}
 * Brand: ${selectedDevice.Brand}
 * Model: ${selectedDevice.Model}
 * Storage: ${selectedDevice.Storage}
 * Color: ${selectedDevice.Color}
 * Condition: ${selectedDevice.Condition}
+* Final Trade-in Value: ${formatCurrency(finalTradeValue)}`;
 
-Final Trade-in Value: ${formattedValue} (${currency})
+    if (upgradeDevice) {
+      body += `
+
+Upgrade Device:
+* OS: ${upgradeDevice.OS}
+* Brand: ${upgradeDevice.Brand}
+* Model: ${upgradeDevice.Model}
+* Storage: ${upgradeDevice.Storage}
+* Color: ${upgradeDevice.Color}
+* Condition: ${upgradeDevice.Condition}
+* Price: ${formatCurrency(upgradeDevice.Price)}
+
+Price Breakdown:
+* Price Difference: ${formatCurrency(priceDifference)}`;
+
+      if (currency === 'JMD') {
+        body += `
+* Shipping Cost (30%): ${formatCurrency(shippingCost)}`;
+      }
+
+      body += `
+* Total to Pay: ${formatCurrency(priceDifference + shippingCost)}`;
+    }
+    
+    body += `
 
 Additional Notes:
 ${notes || "None provided"}
@@ -94,7 +130,11 @@ ${notes || "None provided"}
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Request Trade-in Quote</CardTitle>
+        <CardTitle>
+          {upgradeDevice 
+            ? "Complete Your Trade-in & Upgrade Request" 
+            : "Request Trade-in Quote"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,17 +183,55 @@ ${notes || "None provided"}
             />
           </div>
           
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-sm font-medium mb-2">Selected Device</div>
-            <div className="mb-1">{selectedDevice.Brand} {selectedDevice.Model}</div>
-            <div className="mb-1 text-sm text-gray-600">
-              {selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition}
+          <div className="rounded-lg space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm font-medium mb-2">Trade-in Device</div>
+              <div className="mb-1">{selectedDevice.Brand} {selectedDevice.Model}</div>
+              <div className="mb-1 text-sm text-gray-600">
+                {selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition}
+              </div>
+              <div className="font-bold text-brand-blue">{formatCurrency(finalTradeValue)}</div>
             </div>
-            <div className="font-bold text-brand-blue">{formattedValue}</div>
+            
+            {upgradeDevice && (
+              <>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-medium mb-2">Upgrade Device</div>
+                  <div className="mb-1">{upgradeDevice.Brand} {upgradeDevice.Model}</div>
+                  <div className="mb-1 text-sm text-gray-600">
+                    {upgradeDevice.Storage}, {upgradeDevice.Color}, {upgradeDevice.Condition}
+                  </div>
+                  <div className="font-bold text-brand-blue">{formatCurrency(upgradeDevice.Price)}</div>
+                </div>
+                
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-medium mb-2">Price Breakdown</div>
+                  <div className="flex justify-between mb-1">
+                    <span>Price Difference:</span>
+                    <span>{formatCurrency(priceDifference)}</span>
+                  </div>
+                  
+                  {currency === 'JMD' && (
+                    <div className="flex justify-between mb-1 text-amber-700">
+                      <span className="flex items-center gap-1">
+                        <Package className="h-4 w-4" />
+                        Shipping Cost (30%):
+                      </span>
+                      <span>{formatCurrency(shippingCost)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold">
+                    <span>Total to Pay:</span>
+                    <span>{formatCurrency(priceDifference + shippingCost)}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           
           <Button type="submit" className="w-full bg-brand-blue hover:bg-brand-blue/90">
-            Submit Trade-in Request
+            Submit Request
           </Button>
           
           <p className="text-xs text-center text-gray-500">

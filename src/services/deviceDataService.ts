@@ -72,3 +72,21 @@ export const getUniqueValues = (devices: DeviceData[], field: keyof DeviceData):
   const uniqueValues = new Set(devices.map(device => device[field] as string));
   return Array.from(uniqueValues).filter(Boolean).sort();
 };
+
+// Calculate the price difference between two devices
+export const calculatePriceDifference = (
+  tradeInDevice: DeviceData | null, 
+  upgradeDevice: DeviceData | null, 
+  finalTradeValue: number
+): number => {
+  if (!tradeInDevice || !upgradeDevice) {
+    return 0;
+  }
+  
+  return upgradeDevice.Price - finalTradeValue;
+};
+
+// Calculate shipping cost for JMD (30% of device price)
+export const calculateShippingCost = (price: number): number => {
+  return price * 0.3; // 30% of the price
+};
