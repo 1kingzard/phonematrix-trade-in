@@ -139,3 +139,46 @@
   background-color: #3DDC84;
   color: white;
 }
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Device card hover effects */
+.device-card {
+  transition: all 0.3s ease;
+}
+
+.device-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+/* Dark mode adjustments */
+.dark .loading-spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: #ff7eb6;
+}
+
+.dark .ios-indicator {
+  background-color: #fff;
+  color: #000;
+}
+
+.dark .device-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+}

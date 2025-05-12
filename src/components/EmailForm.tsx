@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
-import { Package } from 'lucide-react';
+import { AlertTriangle, Package, CheckCircle, XCircle } from 'lucide-react';
 
 // Define currency type to match Index.tsx
 type CurrencyType = 'USD' | 'JMD';
@@ -22,6 +22,15 @@ interface EmailFormProps {
   onSubmitSuccess: () => void;
 }
 
+// Device fault options
+const DEVICE_FAULTS = [
+  { id: 'screen', label: 'Cracked Screen', cost: 50 },
+  { id: 'battery', label: 'Poor Battery Health', cost: 35 },
+  { id: 'buttons', label: 'Non-working Buttons', cost: 20 },
+  { id: 'charging', label: 'Charging Port Issues', cost: 25 },
+  { id: 'camera', label: 'Camera Problems', cost: 40 }
+];
+
 const EmailForm: React.FC<EmailFormProps> = ({ 
   selectedDevice,
   upgradeDevice,
@@ -36,6 +45,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [faults, setFaults] = useState<string[]>([]);
   
   const destinationEmail = 'infophonematrix@gmail.com';
   
@@ -47,6 +57,20 @@ const EmailForm: React.FC<EmailFormProps> = ({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(currency === 'USD' ? value : value * exchangeRate);
+  };
+  
+  // Handle fault toggle
+  const toggleFault = (faultId: string) => {
+    if (faults.includes(faultId)) {
+      setFaults(faults.filter(f => f !== faultId));
+    } else {
+      setFaults([...faults, faultId]);
+    }
+  };
+
+  // Get selected faults
+  const getSelectedFaults = () => {
+    return DEVICE_FAULTS.filter(fault => faults.includes(fault.id));
   };
   
   // Prepare email subject and body
@@ -73,10 +97,17 @@ Trade-in Device:
 * Condition: ${selectedDevice.Condition}
 * Final Trade-in Value: ${formatCurrency(finalTradeValue)}`;
 
-    if (upgradeDevice) {
-      body += `
+    // Add device faults if any
+    const selectedFaults = getSelectedFaults();
+    if (selectedFaults.length > 0) {
+      body += `\n\nReported Device Issues:`;
+      selectedFaults.forEach(fault => {
+        body += `\n* ${fault.label} (Estimated repair cost: ${formatCurrency(fault.cost)})`;
+      });
+    }
 
-Upgrade Device:
+    if (upgradeDevice) {
+      body += `\n\nUpgrade Device:
 * OS: ${upgradeDevice.OS}
 * Brand: ${upgradeDevice.Brand}
 * Model: ${upgradeDevice.Model}
@@ -132,15 +163,26 @@ ${notes || "None provided"}
   }
   
   return (
-    <Card>
+    <Card className="animate-fade-in">
       <CardHeader className="bg-gradient-to-r from-[#d81570] to-[#e83a8e] text-white">
-        <CardTitle>
+        <CardTitle className="flex items-center gap-2">
           {upgradeDevice 
             ? "Complete Your Trade-in & Upgrade Request" 
             : "Request Trade-in Quote"}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
+        <div className="space-y-2 mb-4">
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
+            <h3 className="text-sm font-medium text-blue-700 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" /> How It Works:
+            </h3>
+            <p className="text-sm text-blue-600 mt-1">
+              Submit this form to receive a quote for your device trade-in. We'll contact you to arrange pickup or drop-off.
+            </p>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name *</Label>
@@ -178,6 +220,36 @@ ${notes || "None provided"}
               className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
             />
           </div>
+
+          <div className="space-y-2">
+            <Label>Device Condition Issues</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              {DEVICE_FAULTS.map(fault => (
+                <div 
+                  key={fault.id} 
+                  className={`p-3 rounded-md border cursor-pointer flex items-center space-x-2 transition-colors ${
+                    faults.includes(fault.id) 
+                      ? 'bg-[#fce4f1] border-[#d81570]' 
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => toggleFault(fault.id)}
+                >
+                  {faults.includes(fault.id) ? (
+                    <CheckCircle className="h-4 w-4 text-[#d81570]" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-300" />
+                  )}
+                  <span>{fault.label}</span>
+                  <span className="text-xs text-gray-500">
+                    (~{formatCurrency(fault.cost)})
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Select any issues your device has to help us provide an accurate quote
+            </p>
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="notes">Additional Notes</Label>
@@ -196,7 +268,7 @@ ${notes || "None provided"}
               <div className="text-sm font-medium mb-2">Trade-in Device</div>
               <div className="mb-1">{selectedDevice.Brand} {selectedDevice.Model}</div>
               <div className="mb-1 text-sm text-gray-600">
-                {selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition}
+                {selectedDevice.Storage} • {selectedDevice.Color} • {selectedDevice.Condition}
               </div>
               <div className="font-bold text-[#d81570]">{formatCurrency(finalTradeValue)}</div>
             </div>
@@ -207,7 +279,7 @@ ${notes || "None provided"}
                   <div className="text-sm font-medium mb-2">Upgrade Device</div>
                   <div className="mb-1">{upgradeDevice.Brand} {upgradeDevice.Model}</div>
                   <div className="mb-1 text-sm text-gray-600">
-                    {upgradeDevice.Storage}, {upgradeDevice.Color}, {upgradeDevice.Condition}
+                    {upgradeDevice.Storage} • {upgradeDevice.Color} • {upgradeDevice.Condition}
                   </div>
                   <div className="font-bold text-[#d81570]">{formatCurrency(upgradeDevice.Price)}</div>
                 </div>
