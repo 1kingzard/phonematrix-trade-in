@@ -3,9 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
 
+// Define currency type to match Index.tsx
+type CurrencyType = 'USD' | 'JMD';
+
 interface DeviceCardProps {
   device: DeviceData;
-  currency: string;
+  currency: CurrencyType;
   onClick: () => void;
   selected: boolean;
 }

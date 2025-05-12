@@ -8,13 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
 import { Package } from 'lucide-react';
 
+// Define currency type to match Index.tsx
+type CurrencyType = 'USD' | 'JMD';
+
 interface EmailFormProps {
   selectedDevice: DeviceData | null;
   upgradeDevice: DeviceData | null;
   finalTradeValue: number;
   priceDifference: number;
   shippingCost: number;
-  currency: string;
+  currency: CurrencyType;
   onSubmitSuccess: () => void;
 }
 

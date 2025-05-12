@@ -11,13 +11,16 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { ArrowLeft, Package } from 'lucide-react';
 
+// Define currency type to avoid comparison errors
+type CurrencyType = 'USD' | 'JMD';
+
 const Index = () => {
   // Data state
   const { devices, loading, error } = useDeviceData();
   const [filteredDevices, setFilteredDevices] = useState<DeviceData[]>([]);
   
   // UI state
-  const [currency, setCurrency] = useState<string>('JMD'); // Default to JMD
+  const [currency, setCurrency] = useState<CurrencyType>('JMD'); // Default to JMD
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
   const [upgradeDevice, setUpgradeDevice] = useState<DeviceData | null>(null);
   const [finalTradeValue, setFinalTradeValue] = useState<number>(0);

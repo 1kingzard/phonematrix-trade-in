@@ -2,9 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
+// Define currency type to match Index.tsx
+type CurrencyType = 'USD' | 'JMD';
+
 interface CurrencyToggleProps {
-  currency: string;
-  setCurrency: (currency: string) => void;
+  currency: CurrencyType;
+  setCurrency: (currency: CurrencyType) => void;
 }
 
 const CurrencyToggle: React.FC<CurrencyToggleProps> = ({ currency, setCurrency }) => {
