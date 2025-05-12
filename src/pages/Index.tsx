@@ -26,23 +26,23 @@ const Index = () => {
   const handleFilterChange = (filters: FilterOptions) => {
     let results = devices;
     
-    if (filters.os) {
+    if (filters.os && filters.os !== 'all-os') {
       results = results.filter(device => device.OS === filters.os);
     }
     
-    if (filters.brand) {
+    if (filters.brand && filters.brand !== 'all-brands') {
       results = results.filter(device => device.Brand === filters.brand);
     }
     
-    if (filters.model) {
+    if (filters.model && filters.model !== 'all-models') {
       results = results.filter(device => device.Model === filters.model);
     }
     
-    if (filters.storage) {
+    if (filters.storage && filters.storage !== 'all-storage') {
       results = results.filter(device => device.Storage === filters.storage);
     }
     
-    if (filters.condition) {
+    if (filters.condition && filters.condition !== 'all-conditions') {
       results = results.filter(device => device.Condition === filters.condition);
     }
     

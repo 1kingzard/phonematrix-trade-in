@@ -114,7 +114,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
               <SelectValue placeholder="Select OS" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Operating Systems</SelectItem>
+              <SelectItem value="all-os">All Operating Systems</SelectItem>
               {osOptions.map((os) => (
                 <SelectItem key={os} value={os}>{os}</SelectItem>
               ))}
@@ -134,7 +134,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
               <SelectValue placeholder={filters.os ? "Select Brand" : "Select OS first"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Brands</SelectItem>
+              <SelectItem value="all-brands">All Brands</SelectItem>
               {brandOptions.map((brand) => (
                 <SelectItem key={brand} value={brand}>{brand}</SelectItem>
               ))}
@@ -154,7 +154,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
               <SelectValue placeholder={filters.brand ? "Select Model" : "Select Brand first"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Models</SelectItem>
+              <SelectItem value="all-models">All Models</SelectItem>
               {modelOptions.map((model) => (
                 <SelectItem key={model} value={model}>{model}</SelectItem>
               ))}
@@ -174,7 +174,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
               <SelectValue placeholder={filters.model ? "Select Storage" : "Select Model first"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Storage Options</SelectItem>
+              <SelectItem value="all-storage">All Storage Options</SelectItem>
               {storageOptions.map((storage) => (
                 <SelectItem key={storage} value={storage}>{storage}</SelectItem>
               ))}
@@ -194,7 +194,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
               <SelectValue placeholder={filters.storage ? "Select Condition" : "Select Storage first"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Conditions</SelectItem>
+              <SelectItem value="all-conditions">All Conditions</SelectItem>
               {conditionOptions.map((condition) => (
                 <SelectItem key={condition} value={condition}>{condition}</SelectItem>
               ))}
