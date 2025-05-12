@@ -18,6 +18,7 @@ interface EmailFormProps {
   priceDifference: number;
   shippingCost: number;
   currency: CurrencyType;
+  exchangeRate: number;
   onSubmitSuccess: () => void;
 }
 
@@ -28,6 +29,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
   priceDifference,
   shippingCost,
   currency,
+  exchangeRate,
   onSubmitSuccess
 }) => {
   const [name, setName] = useState('');
@@ -36,7 +38,6 @@ const EmailForm: React.FC<EmailFormProps> = ({
   const [notes, setNotes] = useState('');
   
   const destinationEmail = 'infophonematrix@gmail.com';
-  const exchangeRate = 154;
   
   // Format currency values
   const formatCurrency = (value: number) => {
@@ -89,7 +90,7 @@ Price Breakdown:
 
       if (currency === 'JMD') {
         body += `
-* Shipping Cost (30%): ${formatCurrency(shippingCost)}`;
+* Shipping Cost (30% of upgraded device): ${formatCurrency(shippingCost)}`;
       }
 
       body += `
@@ -132,14 +133,14 @@ ${notes || "None provided"}
   
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="bg-gradient-to-r from-[#d81570] to-[#e83a8e] text-white">
         <CardTitle>
           {upgradeDevice 
             ? "Complete Your Trade-in & Upgrade Request" 
             : "Request Trade-in Quote"}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name *</Label>
@@ -149,6 +150,7 @@ ${notes || "None provided"}
               onChange={(e) => setName(e.target.value)} 
               placeholder="Enter your full name"
               required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
             />
           </div>
           
@@ -161,6 +163,7 @@ ${notes || "None provided"}
               onChange={(e) => setEmail(e.target.value)} 
               placeholder="Enter your email address"
               required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
             />
           </div>
           
@@ -172,6 +175,7 @@ ${notes || "None provided"}
               onChange={(e) => setPhone(e.target.value)} 
               placeholder="Enter your phone number"
               required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
             />
           </div>
           
@@ -183,6 +187,7 @@ ${notes || "None provided"}
               onChange={(e) => setNotes(e.target.value)} 
               placeholder="Any additional details about your device..."
               rows={3}
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
             />
           </div>
           
@@ -193,7 +198,7 @@ ${notes || "None provided"}
               <div className="mb-1 text-sm text-gray-600">
                 {selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition}
               </div>
-              <div className="font-bold text-brand-blue">{formatCurrency(finalTradeValue)}</div>
+              <div className="font-bold text-[#d81570]">{formatCurrency(finalTradeValue)}</div>
             </div>
             
             {upgradeDevice && (
@@ -204,7 +209,7 @@ ${notes || "None provided"}
                   <div className="mb-1 text-sm text-gray-600">
                     {upgradeDevice.Storage}, {upgradeDevice.Color}, {upgradeDevice.Condition}
                   </div>
-                  <div className="font-bold text-brand-blue">{formatCurrency(upgradeDevice.Price)}</div>
+                  <div className="font-bold text-[#d81570]">{formatCurrency(upgradeDevice.Price)}</div>
                 </div>
                 
                 <div className="p-4 bg-gray-50 rounded-lg">
@@ -218,7 +223,7 @@ ${notes || "None provided"}
                     <div className="flex justify-between mb-1 text-amber-700">
                       <span className="flex items-center gap-1">
                         <Package className="h-4 w-4" />
-                        Shipping Cost (30%):
+                        Shipping Cost (30% of upgrade):
                       </span>
                       <span>{formatCurrency(shippingCost)}</span>
                     </div>
@@ -233,7 +238,7 @@ ${notes || "None provided"}
             )}
           </div>
           
-          <Button type="submit" className="w-full bg-brand-blue hover:bg-brand-blue/90">
+          <Button type="submit" className="w-full bg-[#d81570] hover:bg-[#e83a8e]">
             Submit Request
           </Button>
           

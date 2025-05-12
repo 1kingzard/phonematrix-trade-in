@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 // Define the type for our device data
@@ -67,6 +66,37 @@ export const useDeviceData = () => {
   return { devices, loading, error };
 };
 
+// Hook to get the current exchange rate
+export const useExchangeRate = () => {
+  const [exchangeRate, setExchangeRate] = useState<number>(158); // Default fallback rate
+  const [loading, setLoading] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const data = await response.json();
+
+        if (data.rates && data.rates.JMD) {
+          setExchangeRate(data.rates.JMD);
+          console.log("Successfully fetched exchange rate:", data.rates.JMD);
+        } else {
+          console.error("Error fetching exchange rate: Invalid response", data);
+        }
+      } catch (error) {
+        console.error("Error fetching exchange rate:", error);
+        // Keep the fallback rate if there's an error
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchExchangeRate();
+  }, []);
+  
+  return { exchangeRate, loading };
+};
+
 // Function to get unique values for a specific field from device data
 export const getUniqueValues = (devices: DeviceData[], field: keyof DeviceData): string[] => {
   const uniqueValues = new Set(devices.map(device => device[field] as string));
@@ -86,7 +116,7 @@ export const calculatePriceDifference = (
   return upgradeDevice.Price - finalTradeValue;
 };
 
-// Calculate shipping cost for JMD (30% of device price)
-export const calculateShippingCost = (price: number): number => {
-  return price * 0.3; // 30% of the price
+// Calculate shipping cost for upgraded device in JMD (30% of device price)
+export const calculateShippingCost = (upgradeDevicePrice: number): number => {
+  return upgradeDevicePrice * 0.3; // 30% of the upgrade device price
 };

@@ -9,13 +9,13 @@ type CurrencyType = 'USD' | 'JMD';
 interface DeviceCardProps {
   device: DeviceData;
   currency: CurrencyType;
+  exchangeRate: number;
   onClick: () => void;
   selected: boolean;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, onClick, selected }) => {
-  // Convert USD to JMD (using approximate exchange rate)
-  const exchangeRate = 154; // USD to JMD exchange rate
+const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, exchangeRate, onClick, selected }) => {
+  // Convert USD to JMD using the current exchange rate
   const price = currency === 'USD' ? device.Price : Math.round(device.Price * exchangeRate);
   
   // Format currency display
@@ -26,15 +26,25 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, onClick, sele
     maximumFractionDigits: 0,
   }).format(price);
   
+  // Get OS indicator class
+  const getOsIndicatorClass = () => {
+    return device.OS === 'iOS' ? 'ios-indicator' : 'android-indicator';
+  };
+  
   return (
     <Card 
-      className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
-        selected ? 'border-brand-blue border-2' : 'border-gray-200'
+      className={`hover:shadow-md transition-all duration-200 cursor-pointer hover:-translate-y-1 ${
+        selected ? 'border-[#d81570] border-2' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
       <CardHeader className="p-4 bg-gray-50 rounded-t-lg">
-        <CardTitle className="text-md font-medium">{device.Brand} {device.Model}</CardTitle>
+        <div className="flex items-center">
+          <div className={`os-indicator ${getOsIndicatorClass()} mr-2 text-xs`}>
+            {device.OS === 'iOS' ? 'iOS' : 'A'}
+          </div>
+          <CardTitle className="text-md font-medium">{device.Brand} {device.Model}</CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="p-4 space-y-2">
         <div className="flex justify-between">
@@ -51,7 +61,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, onClick, sele
         </div>
         <div className="flex justify-between items-center mt-4">
           <span className="text-sm text-gray-600">Trade-in Value:</span>
-          <span className="text-lg font-bold text-brand-blue">{formattedPrice}</span>
+          <span className="text-lg font-bold text-[#d81570]">{formattedPrice}</span>
         </div>
       </CardContent>
     </Card>

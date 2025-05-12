@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -49,6 +50,10 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Brand Colors */
+    --brand-blue: 333 82% 45%;
+    --brand-orange: 333 82% 45%;
   }
 
   .dark {
@@ -98,4 +103,39 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom Phone Matrix Styles */
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #d81570;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.os-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ios-indicator {
+  background-color: #000;
+  color: white;
+}
+
+.android-indicator {
+  background-color: #3DDC84;
+  color: white;
 }

@@ -1,11 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { useDeviceData, DeviceData, calculatePriceDifference, calculateShippingCost } from '../services/deviceDataService';
+import { 
+  useDeviceData, 
+  DeviceData, 
+  calculatePriceDifference, 
+  calculateShippingCost,
+  useExchangeRate
+} from '../services/deviceDataService';
 import CurrencyToggle from '../components/CurrencyToggle';
 import DeviceFilters, { FilterOptions } from '../components/DeviceFilters';
 import DeviceCard from '../components/DeviceCard';
 import DeductionCalculator from '../components/DeductionCalculator';
 import EmailForm from '../components/EmailForm';
+import Header from '../components/Header';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -17,6 +24,7 @@ type CurrencyType = 'USD' | 'JMD';
 const Index = () => {
   // Data state
   const { devices, loading, error } = useDeviceData();
+  const { exchangeRate, loading: loadingRate } = useExchangeRate();
   const [filteredDevices, setFilteredDevices] = useState<DeviceData[]>([]);
   
   // UI state
@@ -26,9 +34,6 @@ const Index = () => {
   const [finalTradeValue, setFinalTradeValue] = useState<number>(0);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showUpgradeSelection, setShowUpgradeSelection] = useState(false);
-  
-  // Exchange rate constant
-  const exchangeRate = 154; // USD to JMD exchange rate
   
   // Apply filters to device data
   const handleFilterChange = (filters: FilterOptions) => {
@@ -126,9 +131,11 @@ const Index = () => {
   
   // Calculate price difference and additional costs
   const priceDifference = calculatePriceDifference(selectedDevice, upgradeDevice, finalTradeValue);
-  const shippingCost = currency === 'JMD' && upgradeDevice ? calculateShippingCost(
-    currency === 'USD' ? upgradeDevice.Price : upgradeDevice.Price * exchangeRate
-  ) : 0;
+  
+  // Calculate shipping cost only for the upgrade device in JMD
+  const shippingCost = currency === 'JMD' && upgradeDevice 
+    ? calculateShippingCost(upgradeDevice.Price) 
+    : 0;
   
   // Format currency
   const formatCurrency = (value: number) => {
@@ -141,10 +148,11 @@ const Index = () => {
   };
   
   // Render content based on loading/error state
-  if (loading) {
+  if (loading || loadingRate) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-4">
+          <div className="loading-spinner"></div>
           <div className="text-2xl font-bold">Loading Device Data...</div>
           <div className="text-gray-500">Please wait while we fetch the latest trade-in values.</div>
         </div>
@@ -158,7 +166,7 @@ const Index = () => {
         <div className="text-center space-y-4">
           <div className="text-2xl font-bold text-red-500">Error Loading Data</div>
           <div className="text-gray-700">{error}</div>
-          <Button onClick={() => window.location.reload()}>
+          <Button onClick={() => window.location.reload()} className="bg-[#d81570] hover:bg-[#e83a8e]">
             Try Again
           </Button>
         </div>
@@ -169,14 +177,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
       {/* Header section */}
-      <header className="bg-white shadow-sm">
-        <div className="container py-6">
-          <h1 className="text-2xl md:text-3xl font-bold">Device Trade-in Value Calculator</h1>
+      <Header />
+      
+      <div className="bg-gradient-to-r from-[#fef2f8] to-[#fce4f1] py-8">
+        <div className="container">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#d81570]">Device Trade-in Value Calculator</h1>
           <p className="text-gray-600 mt-2">
             Compare trade-in values for your devices and get an instant quote.
           </p>
         </div>
-      </header>
+      </div>
       
       <main className="container mt-8">
         {/* Currency toggle */}
@@ -190,7 +200,7 @@ const Index = () => {
             <Button 
               variant="outline" 
               onClick={handleBackFromEmail}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 text-[#d81570]"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Calculator
             </Button>
@@ -208,6 +218,7 @@ const Index = () => {
                 priceDifference={priceDifference}
                 shippingCost={shippingCost}
                 currency={currency}
+                exchangeRate={exchangeRate}
                 onSubmitSuccess={handleEmailSuccess}
               />
             </div>
@@ -218,13 +229,13 @@ const Index = () => {
             <Button 
               variant="outline" 
               onClick={handleBackFromUpgrade}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 text-[#d81570]"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Trade-in Selection
             </Button>
             
             <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-              <h2 className="text-xl font-semibold mb-4">Selected Trade-in Device</h2>
+              <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Selected Trade-in Device</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-lg font-medium">{selectedDevice.Brand} {selectedDevice.Model}</p>
@@ -234,12 +245,12 @@ const Index = () => {
                 </div>
                 <div className="md:text-right">
                   <p className="text-gray-600">Trade-in Value:</p>
-                  <p className="text-xl font-bold text-brand-blue">{formatCurrency(finalTradeValue)}</p>
+                  <p className="text-xl font-bold text-[#d81570]">{formatCurrency(finalTradeValue)}</p>
                 </div>
               </div>
             </div>
             
-            <h2 className="text-xl font-semibold mb-4">Select Your Upgrade Device</h2>
+            <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Select Your Upgrade Device</h2>
             
             {/* Filters for upgrade device */}
             <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
@@ -257,6 +268,7 @@ const Index = () => {
                       key={`${device.Model}-${device.Storage}-${device.Condition}-${index}`}
                       device={device}
                       currency={currency}
+                      exchangeRate={exchangeRate}
                       onClick={() => handleDeviceSelect(device)}
                       selected={upgradeDevice === device}
                     />
@@ -270,21 +282,21 @@ const Index = () => {
               <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Your Trade-in</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-[#d81570]">Your Trade-in</h3>
                     <p>{selectedDevice.Brand} {selectedDevice.Model}</p>
                     <p className="text-gray-600 text-sm">
                       {selectedDevice.Storage} • {selectedDevice.Condition}
                     </p>
-                    <p className="font-bold mt-2">{formatCurrency(finalTradeValue)}</p>
+                    <p className="font-bold mt-2 text-[#d81570]">{formatCurrency(finalTradeValue)}</p>
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Your Upgrade</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-[#d81570]">Your Upgrade</h3>
                     <p>{upgradeDevice.Brand} {upgradeDevice.Model}</p>
                     <p className="text-gray-600 text-sm">
                       {upgradeDevice.Storage} • {upgradeDevice.Condition}
                     </p>
-                    <p className="font-bold mt-2">{formatCurrency(upgradeDevice.Price)}</p>
+                    <p className="font-bold mt-2 text-[#d81570]">{formatCurrency(upgradeDevice.Price)}</p>
                   </div>
                 </div>
                 
@@ -300,7 +312,7 @@ const Index = () => {
                     <div className="flex justify-between text-amber-700">
                       <span className="flex items-center gap-1">
                         <Package className="h-4 w-4" />
-                        Shipping Cost (30%):
+                        Shipping Cost (30% of upgrade):
                       </span>
                       <span className="font-medium">{formatCurrency(shippingCost)}</span>
                     </div>
@@ -308,12 +320,12 @@ const Index = () => {
                   
                   <div className="flex justify-between font-bold text-lg pt-3">
                     <span>Total to Pay:</span>
-                    <span>{formatCurrency(priceDifference + shippingCost)}</span>
+                    <span className="text-[#d81570]">{formatCurrency(priceDifference + shippingCost)}</span>
                   </div>
                 </div>
                 
                 <Button 
-                  className="w-full mt-6 bg-brand-orange hover:bg-brand-orange/90" 
+                  className="w-full mt-6 bg-[#d81570] hover:bg-[#e83a8e]" 
                   onClick={handleProceedToEmail}
                 >
                   Complete Trade-in Request
@@ -328,7 +340,7 @@ const Index = () => {
             
             {/* Results section */}
             <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Select Your Current Device for Trade-in</h2>
+              <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Select Your Current Device for Trade-in</h2>
               
               {filteredDevices.length === 0 ? (
                 <div className="bg-white rounded-lg p-8 text-center">
@@ -341,6 +353,7 @@ const Index = () => {
                       key={`${device.Model}-${device.Storage}-${device.Condition}-${index}`}
                       device={device}
                       currency={currency}
+                      exchangeRate={exchangeRate}
                       onClick={() => handleDeviceSelect(device)}
                       selected={selectedDevice === device}
                     />
@@ -360,7 +373,7 @@ const Index = () => {
                 
                 <div className="bg-white p-6 rounded-lg shadow-sm space-y-6">
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Selected Device</h3>
+                    <h3 className="text-xl font-semibold mb-2 text-[#d81570]">Selected Device</h3>
                     <p className="text-lg">{selectedDevice.Brand} {selectedDevice.Model}</p>
                     <p className="text-gray-600">
                       {selectedDevice.Storage} &bull; {selectedDevice.Color} &bull; {selectedDevice.Condition}
@@ -372,20 +385,20 @@ const Index = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-gray-600">Final Trade-in Value:</p>
-                      <p className="text-2xl font-bold text-brand-blue">
+                      <p className="text-2xl font-bold text-[#d81570]">
                         {formatCurrency(finalTradeValue)}
                       </p>
                     </div>
                     
                     <Button 
-                      className="w-full bg-brand-orange hover:bg-brand-orange/90" 
+                      className="w-full bg-[#d81570] hover:bg-[#e83a8e]" 
                       onClick={handleProceedToUpgrade}
                     >
                       Select Upgrade Device
                     </Button>
                     
                     <Button 
-                      className="w-full" 
+                      className="w-full border-[#d81570] text-[#d81570] hover:bg-[#fce4f1]" 
                       variant="outline"
                       onClick={handleProceedToEmail}
                     >
