@@ -22,17 +22,18 @@ const parseCSV = (csvText: string): DeviceData[] => {
   
   return lines.slice(1).map(line => {
     const values = line.split(',').map(value => value.trim());
-    const deviceData = {} as DeviceData;
+    const deviceData: Partial<DeviceData> = {};
     
     headers.forEach((header, index) => {
-      if (header === 'Price') {
-        deviceData[header as keyof DeviceData] = parseFloat(values[index]) || 0;
+      const key = header as keyof DeviceData;
+      if (key === 'Price') {
+        deviceData[key] = parseFloat(values[index]) || 0;
       } else {
-        deviceData[header as keyof DeviceData] = values[index];
+        deviceData[key] = values[index];
       }
     });
     
-    return deviceData;
+    return deviceData as DeviceData;
   }).filter(device => device.Model && device.Price); // Filter out any incomplete rows
 };
 
