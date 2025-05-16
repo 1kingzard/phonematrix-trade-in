@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   useDeviceData, 
   DeviceData, 
   calculatePriceDifference, 
   calculateShippingCost,
-  useExchangeRate
+  useExchangeRate,
+  getUniqueValues
 } from '../services/deviceDataService';
 import CurrencyToggle from '../components/CurrencyToggle';
 import DeviceFilters, { FilterOptions } from '../components/DeviceFilters';
@@ -16,6 +16,7 @@ import Header from '../components/Header';
 import OnboardingGuide from '../components/OnboardingGuide';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { ArrowLeft, Package, Smartphone, RefreshCcw, AlertTriangle } from 'lucide-react';
 
@@ -37,10 +38,18 @@ const Index = () => {
   const [showUpgradeSelection, setShowUpgradeSelection] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   
+  // Device selection by select dropdown
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [selectedUpgradeDeviceId, setSelectedUpgradeDeviceId] = useState<string>('');
+  
   // Refs for scrolling
   const upgradeDeviceRef = useRef<HTMLDivElement>(null);
   const emailFormRef = useRef<HTMLDivElement>(null);
   const selectedDeviceDetailsRef = useRef<HTMLDivElement>(null);
+  
+  // Get unique brands and models for select dropdowns
+  const brands = getUniqueValues(devices, 'Brand');
+  const models = getUniqueValues(devices, 'Model');
   
   // Check if onboarding was previously dismissed
   useEffect(() => {
@@ -79,8 +88,10 @@ const Index = () => {
   useEffect(() => {
     if (!showUpgradeSelection) {
       setSelectedDevice(null);
+      setSelectedDeviceId('');
     }
     setUpgradeDevice(null);
+    setSelectedUpgradeDeviceId('');
     setShowEmailForm(false);
   }, [filteredDevices, showUpgradeSelection]);
   
@@ -95,6 +106,7 @@ const Index = () => {
   const handleDeviceSelect = (device: DeviceData) => {
     if (showUpgradeSelection) {
       setUpgradeDevice(device);
+      setSelectedUpgradeDeviceId(`${device.Brand}-${device.Model}-${device.Storage}-${device.Condition}`);
       // Scroll to selected device details section when upgrade device is selected
       setTimeout(() => {
         if (emailFormRef.current) {
@@ -103,6 +115,7 @@ const Index = () => {
       }, 100);
     } else {
       setSelectedDevice(device);
+      setSelectedDeviceId(`${device.Brand}-${device.Model}-${device.Storage}-${device.Condition}`);
       setFinalTradeValue(device.Price);
       // Scroll to selected device details section
       setTimeout(() => {
@@ -112,6 +125,48 @@ const Index = () => {
       }, 100);
     }
     setShowEmailForm(false);
+  };
+  
+  // Handle select dropdown change for trade-in device
+  const handleSelectDeviceChange = (value: string) => {
+    const [brand, model, storage, condition] = value.split('-');
+    const device = devices.find(d => 
+      d.Brand === brand && 
+      d.Model === model && 
+      d.Storage === storage && 
+      d.Condition === condition
+    );
+    
+    if (device) {
+      setSelectedDeviceId(value);
+      handleDeviceSelect(device);
+    }
+  };
+  
+  // Handle select dropdown change for upgrade device
+  const handleSelectUpgradeDeviceChange = (value: string) => {
+    const [brand, model, storage, condition] = value.split('-');
+    const device = devices.find(d => 
+      d.Brand === brand && 
+      d.Model === model && 
+      d.Storage === storage && 
+      d.Condition === condition
+    );
+    
+    if (device) {
+      setSelectedUpgradeDeviceId(value);
+      handleDeviceSelect(device);
+    }
+  };
+  
+  // Format device name for select options
+  const formatDeviceOption = (device: DeviceData) => {
+    return `${device.Brand} ${device.Model} - ${device.Storage} (${device.Condition})`;
+  };
+  
+  // Create unique ID for device select options
+  const createDeviceId = (device: DeviceData) => {
+    return `${device.Brand}-${device.Model}-${device.Storage}-${device.Condition}`;
   };
   
   // Handle deduction calculator value change
@@ -134,6 +189,7 @@ const Index = () => {
   const handleBackFromUpgrade = () => {
     setShowUpgradeSelection(false);
     setUpgradeDevice(null);
+    setSelectedUpgradeDeviceId('');
   };
   
   // Handle proceed to email form
@@ -157,6 +213,8 @@ const Index = () => {
     // Reset selection for a new quote
     setSelectedDevice(null);
     setUpgradeDevice(null);
+    setSelectedDeviceId('');
+    setSelectedUpgradeDeviceId('');
     setShowUpgradeSelection(false);
     setShowEmailForm(false);
   };
@@ -328,6 +386,28 @@ const Index = () => {
             
             <h2 className="text-xl font-semibold mb-4 text-[#d81570]" ref={upgradeDeviceRef}>Select Your Upgrade Device</h2>
             
+            {/* Select dropdown for upgrade device */}
+            <div className="mb-4 bg-white rounded-lg p-4 shadow-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quick Select Upgrade Device
+              </label>
+              <Select
+                value={selectedUpgradeDeviceId}
+                onValueChange={handleSelectUpgradeDeviceChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a device to upgrade to" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDevices.map((device) => (
+                    <SelectItem key={createDeviceId(device)} value={createDeviceId(device)}>
+                      {formatDeviceOption(device)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             {/* Filters for upgrade device */}
             <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
             
@@ -411,6 +491,28 @@ const Index = () => {
           </div>
         ) : (
           <>
+            {/* Select dropdown for trade-in device */}
+            <div className="mb-6 bg-white rounded-lg p-4 shadow-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quick Select Trade-in Device
+              </label>
+              <Select
+                value={selectedDeviceId}
+                onValueChange={handleSelectDeviceChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your device for trade-in" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDevices.map((device) => (
+                    <SelectItem key={createDeviceId(device)} value={createDeviceId(device)}>
+                      {formatDeviceOption(device)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Filters section */}
             <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
             

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Header from '../components/Header';
 import { useDeviceData, DeviceData, useExchangeRate, getUniqueValues } from '../services/deviceDataService';
@@ -145,7 +144,7 @@ const PriceList = () => {
         <div className="flex justify-end mb-4">
           <CurrencyToggle
             currency={currency}
-            onCurrencyChange={(newCurrency) => setCurrency(newCurrency as CurrencyType)}
+            setCurrency={setCurrency}
           />
         </div>
         
