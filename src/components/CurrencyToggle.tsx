@@ -7,15 +7,15 @@ type CurrencyType = 'USD' | 'JMD';
 
 interface CurrencyToggleProps {
   currency: CurrencyType;
-  onCurrencyChange: (currency: CurrencyType) => void;
+  setCurrency: (currency: CurrencyType) => void;
 }
 
-const CurrencyToggle: React.FC<CurrencyToggleProps> = ({ currency, onCurrencyChange }) => {
+const CurrencyToggle: React.FC<CurrencyToggleProps> = ({ currency, setCurrency }) => {
   return (
     <div className="flex items-center space-x-2 bg-white rounded-lg shadow-sm p-2">
       <RadioGroup 
         value={currency} 
-        onValueChange={(value) => onCurrencyChange(value as CurrencyType)}
+        onValueChange={(value) => setCurrency(value as CurrencyType)}
         className="flex items-center space-x-2"
       >
         <div className="flex items-center space-x-1">

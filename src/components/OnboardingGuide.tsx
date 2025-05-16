@@ -18,10 +18,28 @@ interface Step {
 }
 
 interface OnboardingGuideProps {
-  steps: Step[];
+  steps?: Step[];
 }
 
-const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ steps }) => {
+const defaultSteps: Step[] = [
+  {
+    title: "Welcome to Trade-in Calculator",
+    description: "Get started with our easy-to-use device trade-in calculator.",
+    image: "/placeholder.svg"
+  },
+  {
+    title: "Select Your Device",
+    description: "Choose the device you want to trade in from our extensive catalog.",
+    image: "/placeholder.svg"
+  },
+  {
+    title: "View Trade-in Value",
+    description: "See how much your device is worth and proceed to upgrade options.",
+    image: "/placeholder.svg"
+  }
+];
+
+const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ steps = defaultSteps }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
 
