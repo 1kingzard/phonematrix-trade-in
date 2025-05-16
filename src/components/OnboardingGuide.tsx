@@ -11,37 +11,19 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-const OnboardingGuide: React.FC = () => {
+interface Step {
+  title: string;
+  description: string;
+  image: string;
+}
+
+interface OnboardingGuideProps {
+  steps: Step[];
+}
+
+const OnboardingGuide: React.FC<OnboardingGuideProps> = ({ steps }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
-
-  const steps = [
-    {
-      title: "Welcome to PhoneMatrix Trade-in",
-      description: "Get started with our simple trade-in process to upgrade your device or get cash for your old phone.",
-      image: "https://i.imgur.com/Ea9JY6U.png",
-    },
-    {
-      title: "Step 1: Select Your Current Device",
-      description: "Use the filters to find your current device and click on it to select.",
-      image: "https://i.imgur.com/yNt5KTz.png",
-    },
-    {
-      title: "Step 2: Check Trade-in Value",
-      description: "Review the value of your device and select any condition issues that apply.",
-      image: "https://i.imgur.com/P8ZGxPD.png",
-    },
-    {
-      title: "Step 3: Choose to Upgrade or Cash-in",
-      description: "Select a new device for upgrade or request a cash value for your trade-in.",
-      image: "https://i.imgur.com/2QuRzm4.png",
-    },
-    {
-      title: "Step 4: Complete Your Request",
-      description: "Fill in your contact details and any device issues to submit your trade-in request.",
-      image: "https://i.imgur.com/ZnTbpCE.png",
-    }
-  ];
 
   const handleDismiss = () => {
     localStorage.setItem('onboardingDismissed', 'true');
@@ -88,11 +70,11 @@ const OnboardingGuide: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <Card className="max-w-md w-full bg-white dark:bg-gray-900 shadow-2xl animate-fade-in">
+      <Card className="max-w-md w-full bg-white shadow-2xl animate-fade-in">
         <CardHeader className="relative">
           <button
             onClick={handleDismiss}
-            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
             aria-label="Close onboarding"
           >
             <X className="h-5 w-5" />
@@ -101,7 +83,7 @@ const OnboardingGuide: React.FC = () => {
           <CardDescription>{currentStepData.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="aspect-video relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+          <div className="aspect-video relative overflow-hidden rounded-md bg-gray-100">
             <img
               src={currentStepData.image}
               alt={`Step ${currentStep + 1}`}
@@ -115,7 +97,7 @@ const OnboardingGuide: React.FC = () => {
                 className={`h-2 w-2 rounded-full mx-1 ${
                   currentStep === index
                     ? "bg-[#d81570]"
-                    : "bg-gray-200 dark:bg-gray-700"
+                    : "bg-gray-200"
                 }`}
               />
             ))}

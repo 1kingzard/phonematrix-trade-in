@@ -183,7 +183,7 @@ const PriceList = () => {
                     <SelectValue placeholder="Select Brand" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Brands</SelectItem>
+                    <SelectItem value="all-brands">All Brands</SelectItem>
                     {brands.map(brand => (
                       <SelectItem key={brand} value={brand}>{brand}</SelectItem>
                     ))}
@@ -206,7 +206,7 @@ const PriceList = () => {
                     <SelectValue placeholder={selectedBrand ? "Select Model" : "Select Brand First"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Models</SelectItem>
+                    <SelectItem value="all-models">All Models</SelectItem>
                     {models.map(model => (
                       <SelectItem key={model} value={model}>{model}</SelectItem>
                     ))}
@@ -228,7 +228,7 @@ const PriceList = () => {
                     <SelectValue placeholder={selectedModel ? "Select Storage" : "Select Model First"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Storage</SelectItem>
+                    <SelectItem value="all-storage">All Storage</SelectItem>
                     {storageOptions.map(storage => (
                       <SelectItem key={storage} value={storage}>{storage}</SelectItem>
                     ))}
@@ -247,7 +247,7 @@ const PriceList = () => {
                     <SelectValue placeholder={selectedStorage ? "Select Condition" : "Select Storage First"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Conditions</SelectItem>
+                    <SelectItem value="all-conditions">All Conditions</SelectItem>
                     {conditionOptions.map(condition => (
                       <SelectItem key={condition} value={condition}>{condition}</SelectItem>
                     ))}
