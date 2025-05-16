@@ -1,0 +1,236 @@
+
+import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DeviceData } from '../services/deviceDataService';
+import { Package } from 'lucide-react';
+
+// Define currency type 
+type CurrencyType = 'USD' | 'JMD';
+
+interface PurchaseFormProps {
+  selectedDevice: DeviceData | null;
+  currency: CurrencyType;
+  exchangeRate: number;
+  onSubmitSuccess: () => void;
+}
+
+const PurchaseForm: React.FC<PurchaseFormProps> = ({ 
+  selectedDevice,
+  currency,
+  exchangeRate,
+  onSubmitSuccess
+}) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  
+  const destinationEmail = 'infophonematrix@gmail.com';
+  
+  // Format currency values
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(currency === 'USD' ? value : value * exchangeRate);
+  };
+  
+  // Calculate shipping cost (30% of device price)
+  const shippingCost = selectedDevice ? selectedDevice.Price * 0.3 : 0;
+  
+  // Calculate total price
+  const totalPrice = selectedDevice ? selectedDevice.Price + shippingCost : 0;
+  
+  // Prepare email subject and body
+  const prepareEmail = () => {
+    if (!selectedDevice) return;
+    
+    const subject = `Purchase Request: ${selectedDevice.Brand} ${selectedDevice.Model}`;
+    
+    let body = `
+Purchase Request Details:
+------------------------
+Customer Name: ${name}
+Customer Email: ${email}
+Customer Phone: ${phone}
+Customer Address: ${address}
+
+Device Details:
+* OS: ${selectedDevice.OS}
+* Brand: ${selectedDevice.Brand}
+* Model: ${selectedDevice.Model}
+* Storage: ${selectedDevice.Storage}
+* Color: ${selectedDevice.Color}
+* Condition: ${selectedDevice.Condition}
+* Price: ${formatCurrency(selectedDevice.Price)}
+
+Price Breakdown:
+* Device Price: ${formatCurrency(selectedDevice.Price)}`;
+
+    if (currency === 'JMD') {
+      body += `
+* Shipping Cost (30%): ${formatCurrency(shippingCost)}`;
+    }
+
+    body += `
+* Total to Pay: ${formatCurrency(totalPrice)}
+
+Additional Notes:
+${notes || "None provided"}
+    `;
+    
+    // Encode for mailto link
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(body);
+    
+    return `mailto:${destinationEmail}?subject=${encodedSubject}&body=${encodedBody}`;
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!name || !email || !phone || !address) {
+      alert('Please fill all required fields');
+      return;
+    }
+    
+    const mailtoLink = prepareEmail();
+    if (mailtoLink) {
+      window.location.href = mailtoLink;
+      onSubmitSuccess();
+    }
+  };
+  
+  if (!selectedDevice) {
+    return null;
+  }
+  
+  return (
+    <Card className="animate-fade-in">
+      <CardHeader className="bg-gradient-to-r from-[#d81570] to-[#e83a8e] text-white">
+        <CardTitle className="flex items-center gap-2">
+          Complete Your Purchase Request
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="space-y-2 mb-6">
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
+            <h3 className="text-sm font-medium text-blue-700">Device Selected:</h3>
+            <p className="text-sm text-blue-600 mt-1">
+              {selectedDevice.Brand} {selectedDevice.Model} ({selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition})
+            </p>
+            <p className="text-sm font-bold text-blue-700 mt-1">
+              Price: {formatCurrency(selectedDevice.Price)}
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name *</Label>
+            <Input 
+              id="name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              placeholder="Enter your full name"
+              required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address *</Label>
+            <Input 
+              id="email" 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="Enter your email address"
+              required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number *</Label>
+            <Input 
+              id="phone" 
+              value={phone} 
+              onChange={(e) => setPhone(e.target.value)} 
+              placeholder="Enter your phone number"
+              required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="address">Shipping Address *</Label>
+            <Textarea 
+              id="address" 
+              value={address} 
+              onChange={(e) => setAddress(e.target.value)} 
+              placeholder="Enter your shipping address"
+              required
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
+              rows={3}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notes">Additional Notes</Label>
+            <Textarea 
+              id="notes" 
+              value={notes} 
+              onChange={(e) => setNotes(e.target.value)} 
+              placeholder="Any additional details or requests..."
+              rows={3}
+              className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
+            />
+          </div>
+          
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm font-medium mb-2">Price Breakdown</div>
+            <div className="flex justify-between mb-1">
+              <span>Device Price:</span>
+              <span>{formatCurrency(selectedDevice.Price)}</span>
+            </div>
+            
+            {currency === 'JMD' && (
+              <div className="flex justify-between mb-1 text-amber-700">
+                <span className="flex items-center gap-1">
+                  <Package className="h-4 w-4" />
+                  Shipping Cost (30%):
+                </span>
+                <span>{formatCurrency(shippingCost)}</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between font-bold pt-2 border-t mt-2">
+              <span>Total to Pay:</span>
+              <span>{formatCurrency(totalPrice)}</span>
+            </div>
+          </div>
+          
+          <Button type="submit" className="w-full bg-[#d81570] hover:bg-[#e83a8e]">
+            Submit Purchase Request
+          </Button>
+          
+          <p className="text-xs text-center text-gray-500">
+            By submitting this form, you'll be redirected to your email client to send the purchase request.
+          </p>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default PurchaseForm;

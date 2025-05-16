@@ -1,8 +1,12 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
+  const location = useLocation();
+  const isTradeInPage = location.pathname === '/';
+  const isPriceListPage = location.pathname === '/price-list';
+  
   return (
     <nav className="bg-white shadow-sm py-4 px-6 sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
@@ -20,13 +24,13 @@ const Header = () => {
           <div className="hidden md:flex space-x-8 mr-4">
             <Link 
               to="/" 
-              className="text-[#d81570] font-medium border-b-2 border-[#d81570] pb-1"
+              className={`font-medium ${isTradeInPage ? 'text-[#d81570] border-b-2 border-[#d81570] pb-1' : 'text-gray-600 hover:text-[#d81570]'}`}
             >
               Trade-In
             </Link>
             <Link 
-              to="/" 
-              className="text-gray-600 hover:text-[#d81570] font-medium"
+              to="/price-list" 
+              className={`font-medium ${isPriceListPage ? 'text-[#d81570] border-b-2 border-[#d81570] pb-1' : 'text-gray-600 hover:text-[#d81570]'}`}
             >
               Price List
             </Link>
@@ -39,13 +43,13 @@ const Header = () => {
         <div className="flex justify-center space-x-8">
           <Link 
             to="/" 
-            className="text-[#d81570] font-medium border-b-2 border-[#d81570] pb-1"
+            className={`font-medium ${isTradeInPage ? 'text-[#d81570] border-b-2 border-[#d81570] pb-1' : 'text-gray-600 hover:text-[#d81570]'}`}
           >
             Trade-In
           </Link>
           <Link 
-            to="/" 
-            className="text-gray-600 hover:text-[#d81570] font-medium"
+            to="/price-list" 
+            className={`font-medium ${isPriceListPage ? 'text-[#d81570] border-b-2 border-[#d81570] pb-1' : 'text-gray-600 hover:text-[#d81570]'}`}
           >
             Price List
           </Link>
