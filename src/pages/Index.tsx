@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   useDeviceData, 
@@ -13,6 +14,7 @@ import DeviceCard from '../components/DeviceCard';
 import DeductionCalculator from '../components/DeductionCalculator';
 import EmailForm from '../components/EmailForm';
 import Header from '../components/Header';
+import HeroSection from '../components/HeroSection';
 import OnboardingGuide from '../components/OnboardingGuide';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -272,21 +274,38 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
       {/* Onboarding guide */}
-      {showOnboarding && <OnboardingGuide />}
+      {showOnboarding && <OnboardingGuide steps={[
+        {
+          title: "Welcome to Trade-In Calculator",
+          description: "Find the best value for your device trade-in",
+          image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=500&q=80"
+        },
+        {
+          title: "Select Your Current Device",
+          description: "Choose the device you want to trade in",
+          image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=500&q=80"
+        },
+        {
+          title: "Select Your Upgrade",
+          description: "Browse available devices for your upgrade",
+          image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=500&q=80"
+        },
+        {
+          title: "Complete Your Trade-in",
+          description: "Submit your request and we'll contact you",
+          image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80"
+        }
+      ]} />}
       
       {/* Header section */}
       <Header />
       
-      <div className="bg-gradient-to-r from-[#fef2f8] to-[#fce4f1] py-8">
-        <div className="container">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#d81570]">
-            Device Trade-in Value Calculator
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Compare trade-in values for your devices and get an instant quote.
-          </p>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <HeroSection 
+        title="Device Trade-in Value Calculator"
+        subtitle="Get the best value when you upgrade your device"
+        imageSrc="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1600&q=80"
+      />
       
       <main className="container mt-8">
         {/* Currency toggle */}

@@ -1,5 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Header from '../components/Header';
+import HeroSection from '../components/HeroSection';
 import { useDeviceData, DeviceData, useExchangeRate, getUniqueValues } from '../services/deviceDataService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -111,6 +113,13 @@ const PriceList = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
+      {/* Hero Section */}
+      <HeroSection 
+        title="Phone Price List"
+        subtitle="Browse our selection of quality devices at competitive prices"
+        imageSrc="https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1600&q=80"
+      />
+      
       <main className="container mx-auto px-4 py-8">
         {/* Onboarding Guide */}
         <OnboardingGuide
@@ -137,8 +146,6 @@ const PriceList = () => {
             }
           ]}
         />
-        
-        <h1 className="text-3xl font-bold text-center mb-8">Phone Price List</h1>
         
         {/* Currency Toggle */}
         <div className="flex justify-end mb-4">
