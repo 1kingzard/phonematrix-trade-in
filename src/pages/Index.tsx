@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   useDeviceData, 
@@ -17,9 +18,18 @@ import HeroSection from '../components/HeroSection';
 import OnboardingGuide from '../components/OnboardingGuide';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { ArrowLeft, Package, Smartphone, RefreshCcw, AlertTriangle } from 'lucide-react';
+import SearchBar from '../components/SearchBar';
+import SortDropdown, { SortOption } from '../components/SortDropdown';
+import Testimonials from '../components/Testimonials';
+import FAQSection from '../components/FAQSection';
+import DeviceComparison from '../components/DeviceComparison';
+import RecentlyViewedDevices from '../components/RecentlyViewedDevices';
+import FeaturedDevices from '../components/FeaturedDevices';
+import ThemeToggle from '../components/ThemeToggle';
+import QuickFilters from '../components/QuickFilters';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 // Define currency type to avoid comparison errors
 type CurrencyType = 'USD' | 'JMD';
@@ -39,18 +49,27 @@ const Index = () => {
   const [showUpgradeSelection, setShowUpgradeSelection] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   
-  // Device selection by select dropdown
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
-  const [selectedUpgradeDeviceId, setSelectedUpgradeDeviceId] = useState<string>('');
+  // Search and sort state
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortOption, setSortOption] = useState<SortOption | undefined>(undefined);
+  
+  // Quick filter state
+  const [quickBrandFilter, setQuickBrandFilter] = useState<string | null>(null);
+  
+  // Comparison state
+  const [devicesToCompare, setDevicesToCompare] = useState<DeviceData[]>([]);
+  
+  // Recently viewed devices
+  const [recentlyViewed, setRecentlyViewed] = useLocalStorage<DeviceData[]>('recentlyViewedDevicesTrade', []);
   
   // Refs for scrolling
   const upgradeDeviceRef = useRef<HTMLDivElement>(null);
   const emailFormRef = useRef<HTMLDivElement>(null);
   const selectedDeviceDetailsRef = useRef<HTMLDivElement>(null);
+  const comparisonRef = useRef<HTMLDivElement>(null);
   
-  // Get unique brands and models for select dropdowns
+  // Get unique brands for quick filters
   const brands = getUniqueValues(devices, 'Brand');
-  const models = getUniqueValues(devices, 'Model');
   
   // Check if onboarding was previously dismissed
   useEffect(() => {
@@ -80,6 +99,45 @@ const Index = () => {
     
     if (filters.condition && filters.condition !== 'all-conditions') {
       results = results.filter(device => device.Condition === filters.condition);
+    }
+    
+    // Apply search term filter
+    if (searchTerm) {
+      results = results.filter(device => 
+        device.Brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.Model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.Storage.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.Color.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.Condition.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply quick brand filter
+    if (quickBrandFilter) {
+      results = results.filter(device => device.Brand === quickBrandFilter);
+    }
+    
+    // Apply sorting
+    if (sortOption) {
+      results = [...results].sort((a, b) => {
+        const key = sortOption.value as keyof DeviceData;
+        const valueA = a[key];
+        const valueB = b[key];
+        
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+          return sortOption.direction === 'asc' 
+            ? valueA.localeCompare(valueB) 
+            : valueB.localeCompare(valueA);
+        } 
+        
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+          return sortOption.direction === 'asc' 
+            ? valueA - valueB 
+            : valueB - valueA;
+        }
+        
+        return 0;
+      });
     }
     
     setFilteredDevices(results);
@@ -114,6 +172,17 @@ const Index = () => {
     } else {
       setSelectedDevice(device);
       setFinalTradeValue(device.Price);
+      
+      // Add to recently viewed
+      if (!recentlyViewed.some(item => 
+        item.Brand === device.Brand && 
+        item.Model === device.Model && 
+        item.Storage === device.Storage && 
+        item.Condition === device.Condition
+      )) {
+        setRecentlyViewed(prev => [device, ...prev.slice(0, 4)]);
+      }
+      
       // Scroll to selected device details section
       setTimeout(() => {
         if (selectedDeviceDetailsRef.current) {
@@ -122,6 +191,34 @@ const Index = () => {
       }, 100);
     }
     setShowEmailForm(false);
+  };
+  
+  // Handle adding device to comparison
+  const handleAddToComparison = (device: DeviceData) => {
+    if (devicesToCompare.length >= 3) {
+      toast({
+        title: "Maximum Comparison Limit",
+        description: "You can compare up to 3 devices at a time",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!devicesToCompare.some(item => 
+      item.Brand === device.Brand && 
+      item.Model === device.Model && 
+      item.Storage === device.Storage && 
+      item.Condition === device.Condition
+    )) {
+      setDevicesToCompare(prev => [...prev, device]);
+      
+      // Scroll to comparison section
+      setTimeout(() => {
+        if (comparisonRef.current) {
+          comparisonRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
   
   // Handle deduction calculator value change
@@ -194,14 +291,75 @@ const Index = () => {
     }).format(currency === 'USD' ? value : value * exchangeRate);
   };
   
+  // Get featured devices (5 most expensive devices)
+  const featuredDevices = [...devices]
+    .sort((a, b) => b.Price - a.Price)
+    .slice(0, 3);
+    
+  // Sort options
+  const sortOptions: SortOption[] = [
+    { label: 'Price (Low to High)', value: 'Price', direction: 'asc' },
+    { label: 'Price (High to Low)', value: 'Price', direction: 'desc' },
+    { label: 'Brand', value: 'Brand', direction: 'asc' },
+    { label: 'Model', value: 'Model', direction: 'asc' },
+    { label: 'Storage', value: 'Storage', direction: 'asc' },
+    { label: 'Condition', value: 'Condition', direction: 'asc' },
+  ];
+  
+  // Testimonials data
+  const testimonials = [
+    {
+      id: 1,
+      author: "Sarah Johnson",
+      text: "The trade-in process was so smooth! Got a great price for my old iPhone and the upgrade was hassle-free.",
+      rating: 5,
+    },
+    {
+      id: 2,
+      author: "Michael Chen",
+      text: "I was skeptical at first, but the pricing was fair and the customer service was excellent.",
+      rating: 4,
+    },
+    {
+      id: 3,
+      author: "Aisha Patel",
+      text: "Compared prices everywhere, and Phone Matrix offered the best trade-in value by far. Highly recommend!",
+      rating: 5,
+    }
+  ];
+  
+  // FAQ data
+  const faqs = [
+    {
+      question: "How does the trade-in process work?",
+      answer: "Our trade-in process is simple: Select your current device, choose a device to upgrade to (optional), submit your trade-in request, and our team will contact you to arrange inspection and payment."
+    },
+    {
+      question: "What condition should my device be in?",
+      answer: "We accept devices in various conditions from mint to poor. The better the condition, the higher the trade-in value. Devices should be functional unless specified otherwise."
+    },
+    {
+      question: "How long does the trade-in process take?",
+      answer: "Once you submit your request, our team will contact you within 24-48 hours. The entire process typically takes 3-5 business days from inspection to payment."
+    },
+    {
+      question: "Can I trade in multiple devices at once?",
+      answer: "Yes, you can trade in multiple devices. Please submit separate trade-in requests for each device."
+    },
+    {
+      question: "What payment methods do you offer?",
+      answer: "We offer payment via bank transfer, cash, or store credit. Store credit offers an additional 10% bonus on your trade-in value."
+    }
+  ];
+  
   // Render content based on loading/error state
   if (loading || loadingRate) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center space-y-4">
           <div className="loading-spinner"></div>
-          <div className="text-2xl font-bold">Loading Device Data...</div>
-          <div className="text-gray-500">Please wait while we fetch the latest trade-in values.</div>
+          <div className="text-2xl font-bold dark:text-white">Loading Device Data...</div>
+          <div className="text-gray-500 dark:text-gray-400">Please wait while we fetch the latest trade-in values.</div>
         </div>
       </div>
     );
@@ -209,10 +367,10 @@ const Index = () => {
   
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center space-y-4">
           <div className="text-2xl font-bold text-red-500">Error Loading Data</div>
-          <div className="text-gray-700">{error}</div>
+          <div className="text-gray-700 dark:text-gray-300">{error}</div>
           <Button onClick={() => window.location.reload()} className="bg-[#d81570] hover:bg-[#e83a8e]">
             Try Again
           </Button>
@@ -222,7 +380,7 @@ const Index = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+    <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-900">
       {/* Onboarding guide */}
       {showOnboarding && <OnboardingGuide steps={[
         {
@@ -258,43 +416,69 @@ const Index = () => {
       />
       
       <main className="container mt-8">
-        {/* Currency toggle */}
-        <div className="flex justify-end mb-4">
-          <CurrencyToggle currency={currency} setCurrency={setCurrency} />
+        {/* Top Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <CurrencyToggle currency={currency} setCurrency={setCurrency} />
+          </div>
+          
+          <SearchBar onSearch={setSearchTerm} placeholder="Search brand, model, storage..." />
+        </div>
+        
+        {/* Featured Devices */}
+        <div className="mb-8">
+          <FeaturedDevices 
+            devices={featuredDevices} 
+            onSelectDevice={handleDeviceSelect} 
+            currency={currency}
+            exchangeRate={exchangeRate}
+          />
         </div>
         
         {/* How to use guide */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm dark:bg-gray-800 dark:border dark:border-gray-700">
           <h2 className="font-semibold text-lg mb-3 flex items-center text-[#d81570]">
             <AlertTriangle className="h-5 w-5 mr-2" /> 
             How to Use This Tool
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg">
-              <div className="rounded-full bg-[#fce4f1] p-3 mb-3">
+            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-700">
+              <div className="rounded-full bg-[#fce4f1] p-3 mb-3 dark:bg-[#d81570]/20">
                 <Smartphone className="h-6 w-6 text-[#d81570]" />
               </div>
               <h3 className="font-medium mb-1">1. Select Your Device</h3>
-              <p className="text-sm text-gray-500">Choose your current device from the available options</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300">Choose your current device from the available options</p>
             </div>
-            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg">
-              <div className="rounded-full bg-[#fce4f1] p-3 mb-3">
+            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-700">
+              <div className="rounded-full bg-[#fce4f1] p-3 mb-3 dark:bg-[#d81570]/20">
                 <RefreshCcw className="h-6 w-6 text-[#d81570]" />
               </div>
               <h3 className="font-medium mb-1">2. Choose Your Upgrade</h3>
-              <p className="text-sm text-gray-500">Select a new device to upgrade to</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300">Select a new device to upgrade to</p>
             </div>
-            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg">
-              <div className="rounded-full bg-[#fce4f1] p-3 mb-3">
+            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-700">
+              <div className="rounded-full bg-[#fce4f1] p-3 mb-3 dark:bg-[#d81570]/20">
                 <Package className="h-6 w-6 text-[#d81570]" />
               </div>
               <h3 className="font-medium mb-1">3. Complete Your Request</h3>
-              <p className="text-sm text-gray-500">Submit the form and we'll contact you about your trade-in</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300">Submit the form and we'll contact you about your trade-in</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-3 text-center">
+          <p className="text-xs text-gray-500 mt-3 text-center dark:text-gray-400">
             Note: For devices in JMD, a 30% shipping cost applies for upgrades coming to Jamaica
           </p>
+        </div>
+        
+        {/* Quick Brand Filters */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Quick Brand Filter:</h3>
+          <QuickFilters 
+            filters={brands}
+            activeFilter={quickBrandFilter}
+            onFilterChange={setQuickBrandFilter}
+            type="brand"
+          />
         </div>
         
         {/* Email form view */}
@@ -337,23 +521,53 @@ const Index = () => {
               <ArrowLeft className="h-4 w-4" /> Back to Trade-in Selection
             </Button>
             
-            <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+            <div className="bg-white rounded-lg p-6 shadow-sm mb-6 dark:bg-gray-800 dark:border dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Selected Trade-in Device</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-lg font-medium">{selectedDevice.Brand} {selectedDevice.Model}</p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     {selectedDevice.Storage} • {selectedDevice.Color} • {selectedDevice.Condition}
                   </p>
                 </div>
                 <div className="md:text-right">
-                  <p className="text-gray-600">Trade-in Value:</p>
+                  <p className="text-gray-600 dark:text-gray-300">Trade-in Value:</p>
                   <p className="text-xl font-bold text-[#d81570]">{formatCurrency(finalTradeValue)}</p>
                 </div>
               </div>
             </div>
             
+            {/* Device Comparison */}
+            {devicesToCompare.length > 0 && (
+              <div className="mb-8" ref={comparisonRef}>
+                <DeviceComparison 
+                  devices={devicesToCompare}
+                  onRemoveDevice={(device) => {
+                    setDevicesToCompare(prev => prev.filter(d => 
+                      !(d.Brand === device.Brand && 
+                        d.Model === device.Model && 
+                        d.Storage === device.Storage && 
+                        d.Condition === device.Condition)
+                    ));
+                  }}
+                  currency={currency}
+                  exchangeRate={exchangeRate}
+                />
+              </div>
+            )}
+            
             <h2 className="text-xl font-semibold mb-4 text-[#d81570]" ref={upgradeDeviceRef}>Select Your Upgrade Device</h2>
+            
+            {/* Sort and search controls */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <SortDropdown 
+                options={sortOptions}
+                onSort={setSortOption}
+                activeOption={sortOption}
+              />
+              
+              <SearchBar onSearch={setSearchTerm} placeholder="Search devices..." />
+            </div>
             
             {/* Filters for upgrade device */}
             <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
@@ -361,8 +575,8 @@ const Index = () => {
             {/* Upgrade device selection */}
             <div className="mt-8">
               {filteredDevices.length === 0 ? (
-                <div className="bg-white rounded-lg p-8 text-center">
-                  <p className="text-gray-500">No devices match your selected filters. Please try different criteria.</p>
+                <div className="bg-white rounded-lg p-8 text-center dark:bg-gray-800">
+                  <p className="text-gray-500 dark:text-gray-400">No devices match your selected filters. Please try different criteria.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -382,12 +596,12 @@ const Index = () => {
             
             {/* Selected upgrade device details */}
             {upgradeDevice && (
-              <div className="mt-8 bg-white p-6 rounded-lg shadow-sm" ref={emailFormRef}>
+              <div className="mt-8 bg-white p-6 rounded-lg shadow-sm dark:bg-gray-800 dark:border dark:border-gray-700" ref={emailFormRef}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-[#d81570]">Your Trade-in</h3>
                     <p>{selectedDevice.Brand} {selectedDevice.Model}</p>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-sm dark:text-gray-300">
                       {selectedDevice.Storage} • {selectedDevice.Condition}
                     </p>
                     <p className="font-bold mt-2 text-[#d81570]">{formatCurrency(finalTradeValue)}</p>
@@ -396,7 +610,7 @@ const Index = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-[#d81570]">Your Upgrade</h3>
                     <p>{upgradeDevice.Brand} {upgradeDevice.Model}</p>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-sm dark:text-gray-300">
                       {upgradeDevice.Storage} • {upgradeDevice.Condition}
                     </p>
                     <p className="font-bold mt-2 text-[#d81570]">{formatCurrency(upgradeDevice.Price)}</p>
@@ -438,6 +652,49 @@ const Index = () => {
           </div>
         ) : (
           <>
+            {/* Recently Viewed Devices */}
+            {recentlyViewed.length > 0 && (
+              <div className="mb-8">
+                <RecentlyViewedDevices 
+                  devices={recentlyViewed}
+                  onSelectDevice={handleDeviceSelect}
+                  onCompareDevice={handleAddToComparison}
+                  currency={currency}
+                  exchangeRate={exchangeRate}
+                />
+              </div>
+            )}
+            
+            {/* Device Comparison */}
+            {devicesToCompare.length > 0 && (
+              <div className="mb-8" ref={comparisonRef}>
+                <DeviceComparison 
+                  devices={devicesToCompare}
+                  onRemoveDevice={(device) => {
+                    setDevicesToCompare(prev => prev.filter(d => 
+                      !(d.Brand === device.Brand && 
+                        d.Model === device.Model && 
+                        d.Storage === device.Storage && 
+                        d.Condition === device.Condition)
+                    ));
+                  }}
+                  currency={currency}
+                  exchangeRate={exchangeRate}
+                />
+              </div>
+            )}
+            
+            {/* Sort and search controls */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <SortDropdown 
+                options={sortOptions}
+                onSort={setSortOption}
+                activeOption={sortOption}
+              />
+              
+              <SearchBar onSearch={setSearchTerm} placeholder="Search devices..." />
+            </div>
+            
             {/* Filters section */}
             <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
             
@@ -446,8 +703,8 @@ const Index = () => {
               <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Select Your Current Device for Trade-in</h2>
               
               {filteredDevices.length === 0 ? (
-                <div className="bg-white rounded-lg p-8 text-center">
-                  <p className="text-gray-500">No devices match your selected filters. Please try different criteria.</p>
+                <div className="bg-white rounded-lg p-8 text-center dark:bg-gray-800">
+                  <p className="text-gray-500 dark:text-gray-400">No devices match your selected filters. Please try different criteria.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -474,11 +731,11 @@ const Index = () => {
                   onValueChange={handleTradeValueChange}
                 />
                 
-                <div className="bg-white p-6 rounded-lg shadow-sm space-y-6">
+                <div className="bg-white p-6 rounded-lg shadow-sm space-y-6 dark:bg-gray-800 dark:border dark:border-gray-700">
                   <div>
                     <h3 className="text-xl font-semibold mb-2 text-[#d81570]">Selected Device</h3>
                     <p className="text-lg">{selectedDevice.Brand} {selectedDevice.Model}</p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                       {selectedDevice.Storage} &bull; {selectedDevice.Color} &bull; {selectedDevice.Condition}
                     </p>
                   </div>
@@ -487,7 +744,7 @@ const Index = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <p className="text-gray-600">Final Trade-in Value:</p>
+                      <p className="text-gray-600 dark:text-gray-300">Final Trade-in Value:</p>
                       <p className="text-2xl font-bold text-[#d81570]">
                         {formatCurrency(finalTradeValue)}
                       </p>
@@ -507,12 +764,25 @@ const Index = () => {
         )}
       </main>
       
+      {/* Testimonials Section */}
+      <div className="mt-16">
+        <Testimonials testimonials={testimonials} />
+      </div>
+      
+      {/* FAQ Section */}
+      <div className="container mx-auto px-4 mt-8">
+        <FAQSection faqs={faqs} />
+      </div>
+      
       {/* Footer */}
-      <footer className="mt-16 py-6 bg-gray-100 border-t">
-        <div className="container text-center text-sm text-gray-600">
+      <footer className="mt-16 py-6 bg-gray-100 border-t dark:bg-gray-800 dark:border-gray-700">
+        <div className="container text-center text-sm text-gray-600 dark:text-gray-400">
           &copy; {new Date().getFullYear()} Phone Matrix Trade-in Calculator. All rights reserved.
         </div>
       </footer>
+      
+      {/* ScrollToTop Component */}
+      <ScrollToTop />
     </div>
   );
 };

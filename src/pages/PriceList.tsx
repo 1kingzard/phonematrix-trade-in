@@ -11,7 +11,19 @@ import CurrencyToggle from '../components/CurrencyToggle';
 import OnboardingGuide from '../components/OnboardingGuide';
 import DeviceConditionImages from '../components/DeviceConditionImages';
 import PurchaseForm from '../components/PurchaseForm';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
+import SearchBar from '../components/SearchBar';
+import SortDropdown, { SortOption } from '../components/SortDropdown';
+import Testimonials from '../components/Testimonials';
+import FAQSection from '../components/FAQSection';
+import DeviceComparison from '../components/DeviceComparison';
+import RecentlyViewedDevices from '../components/RecentlyViewedDevices';
+import FeaturedDevices from '../components/FeaturedDevices';
+import ThemeToggle from '../components/ThemeToggle';
+import QuickFilters from '../components/QuickFilters';
+import ScrollToTop from '../components/ScrollToTop';
+import useLocalStorage from '../hooks/useLocalStorage';
+import { toast } from '@/components/ui/use-toast';
 
 // Define currency type
 type CurrencyType = 'USD' | 'JMD';
@@ -26,6 +38,19 @@ const PriceList = () => {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [selectedStorage, setSelectedStorage] = useState<string>('');
   const [selectedCondition, setSelectedCondition] = useState<string>('');
+  
+  // Search and sort state
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortOption, setSortOption] = useState<SortOption | undefined>(undefined);
+  
+  // Quick filter state
+  const [quickBrandFilter, setQuickBrandFilter] = useState<string | null>(null);
+  
+  // Comparison state
+  const [devicesToCompare, setDevicesToCompare] = useState<DeviceData[]>([]);
+  
+  // Recently viewed devices
+  const [recentlyViewed, setRecentlyViewed] = useLocalStorage<DeviceData[]>('recentlyViewedDevices', []);
   
   // Get unique values for filters
   const brands = getUniqueValues(devices, 'Brand');
@@ -52,13 +77,57 @@ const PriceList = () => {
       )
     : [];
   
-  // Filter devices based on selections
+  // Filter devices based on selections, search term, and quick filters
   const filteredDevices = devices.filter(device => {
-    return (!selectedBrand || device.Brand === selectedBrand) &&
-           (!selectedModel || device.Model === selectedModel) &&
-           (!selectedStorage || device.Storage === selectedStorage) &&
-           (!selectedCondition || device.Condition === selectedCondition);
+    // Apply standard filters
+    const standardFilters = 
+      (!selectedBrand || device.Brand === selectedBrand) &&
+      (!selectedModel || device.Model === selectedModel) &&
+      (!selectedStorage || device.Storage === selectedStorage) &&
+      (!selectedCondition || device.Condition === selectedCondition);
+    
+    // Apply search term filter
+    const searchFilter = !searchTerm || 
+      device.Brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.Model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.Storage.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.Color.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.Condition.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Apply quick brand filter
+    const quickFilter = !quickBrandFilter || device.Brand === quickBrandFilter;
+    
+    return standardFilters && searchFilter && quickFilter;
   });
+  
+  // Sort filtered devices
+  const sortedDevices = [...filteredDevices];
+  if (sortOption) {
+    sortedDevices.sort((a, b) => {
+      const key = sortOption.value as keyof DeviceData;
+      const valueA = a[key];
+      const valueB = b[key];
+      
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return sortOption.direction === 'asc' 
+          ? valueA.localeCompare(valueB) 
+          : valueB.localeCompare(valueA);
+      } 
+      
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sortOption.direction === 'asc' 
+          ? valueA - valueB 
+          : valueB - valueA;
+      }
+      
+      return 0;
+    });
+  }
+
+  // Get featured devices (5 most expensive devices)
+  const featuredDevices = [...devices]
+    .sort((a, b) => b.Price - a.Price)
+    .slice(0, 3);
   
   // Selected device for purchase
   const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
@@ -67,6 +136,7 @@ const PriceList = () => {
   const filtersRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const purchaseFormRef = useRef<HTMLDivElement>(null);
+  const comparisonRef = useRef<HTMLDivElement>(null);
   
   // Show condition images state
   const [showConditionImages, setShowConditionImages] = useState(false);
@@ -74,10 +144,47 @@ const PriceList = () => {
   // Handle device selection
   const handleDeviceSelect = (device: DeviceData) => {
     setSelectedDevice(device);
+    
+    // Add to recently viewed
+    if (!recentlyViewed.some(item => 
+      item.Brand === device.Brand && 
+      item.Model === device.Model && 
+      item.Storage === device.Storage && 
+      item.Condition === device.Condition
+    )) {
+      setRecentlyViewed(prev => [device, ...prev.slice(0, 4)]);
+    }
+    
     // Scroll to purchase form
     setTimeout(() => {
       purchaseFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+  };
+  
+  // Handle comparison
+  const handleAddToComparison = (device: DeviceData) => {
+    if (devicesToCompare.length >= 3) {
+      toast({
+        title: "Maximum Comparison Limit",
+        description: "You can compare up to 3 devices at a time",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!devicesToCompare.some(item => 
+      item.Brand === device.Brand && 
+      item.Model === device.Model && 
+      item.Storage === device.Storage && 
+      item.Condition === device.Condition
+    )) {
+      setDevicesToCompare(prev => [...prev, device]);
+      
+      // Scroll to comparison section
+      setTimeout(() => {
+        comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   };
   
   // Handle form submission success
@@ -109,8 +216,64 @@ const PriceList = () => {
     }
   }, [selectedBrand, selectedModel, selectedStorage, selectedCondition]);
   
+  // Sort options
+  const sortOptions: SortOption[] = [
+    { label: 'Price (Low to High)', value: 'Price', direction: 'asc' },
+    { label: 'Price (High to Low)', value: 'Price', direction: 'desc' },
+    { label: 'Brand', value: 'Brand', direction: 'asc' },
+    { label: 'Model', value: 'Model', direction: 'asc' },
+    { label: 'Storage', value: 'Storage', direction: 'asc' },
+    { label: 'Condition', value: 'Condition', direction: 'asc' },
+  ];
+  
+  // Testimonials data
+  const testimonials = [
+    {
+      id: 1,
+      author: "Sarah Johnson",
+      text: "The trade-in process was so smooth! Got a great price for my old iPhone and the upgrade was hassle-free.",
+      rating: 5,
+    },
+    {
+      id: 2,
+      author: "Michael Chen",
+      text: "I was skeptical at first, but the pricing was fair and the customer service was excellent.",
+      rating: 4,
+    },
+    {
+      id: 3,
+      author: "Aisha Patel",
+      text: "Compared prices everywhere, and Phone Matrix offered the best trade-in value by far. Highly recommend!",
+      rating: 5,
+    }
+  ];
+  
+  // FAQ data
+  const faqs = [
+    {
+      question: "How does the trade-in process work?",
+      answer: "Our trade-in process is simple: Select your current device, choose a device to upgrade to (optional), submit your trade-in request, and our team will contact you to arrange inspection and payment."
+    },
+    {
+      question: "What condition should my device be in?",
+      answer: "We accept devices in various conditions from mint to poor. The better the condition, the higher the trade-in value. Devices should be functional unless specified otherwise."
+    },
+    {
+      question: "How long does the trade-in process take?",
+      answer: "Once you submit your request, our team will contact you within 24-48 hours. The entire process typically takes 3-5 business days from inspection to payment."
+    },
+    {
+      question: "Can I trade in multiple devices at once?",
+      answer: "Yes, you can trade in multiple devices. Please submit separate trade-in requests for each device."
+    },
+    {
+      question: "What payment methods do you offer?",
+      answer: "We offer payment via bank transfer, cash, or store credit. Store credit offers an additional 10% bonus on your trade-in value."
+    }
+  ];
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
       {/* Hero Section */}
@@ -121,6 +284,19 @@ const PriceList = () => {
       />
       
       <main className="container mx-auto px-4 py-8">
+        {/* Top Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <CurrencyToggle
+              currency={currency}
+              setCurrency={setCurrency}
+            />
+          </div>
+          
+          <SearchBar onSearch={setSearchTerm} placeholder="Search brand, model, storage..." />
+        </div>
+        
         {/* Onboarding Guide */}
         <OnboardingGuide
           steps={[
@@ -147,11 +323,13 @@ const PriceList = () => {
           ]}
         />
         
-        {/* Currency Toggle */}
-        <div className="flex justify-end mb-4">
-          <CurrencyToggle
+        {/* Featured Devices */}
+        <div className="mb-8">
+          <FeaturedDevices 
+            devices={featuredDevices} 
+            onSelectDevice={handleDeviceSelect} 
             currency={currency}
-            setCurrency={setCurrency}
+            exchangeRate={exchangeRate}
           />
         </div>
         
@@ -169,6 +347,17 @@ const PriceList = () => {
           </div>
         </div>
         
+        {/* Quick Brand Filters */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium mb-2 text-gray-700">Quick Brand Filter:</h3>
+          <QuickFilters 
+            filters={brands}
+            activeFilter={quickBrandFilter}
+            onFilterChange={setQuickBrandFilter}
+            type="brand"
+          />
+        </div>
+        
         {/* Filters */}
         <div ref={filtersRef} className="mb-8">
           <Card className="p-4">
@@ -183,6 +372,9 @@ const PriceList = () => {
                     setSelectedModel('');
                     setSelectedStorage('');
                     setSelectedCondition('');
+                    if (quickBrandFilter && value !== quickBrandFilter) {
+                      setQuickBrandFilter(null);
+                    }
                   }}
                 >
                   <SelectTrigger>
@@ -264,16 +456,60 @@ const PriceList = () => {
           </Card>
         </div>
         
+        {/* Recently Viewed Devices */}
+        {recentlyViewed.length > 0 && (
+          <div className="mb-8">
+            <RecentlyViewedDevices 
+              devices={recentlyViewed}
+              onSelectDevice={handleDeviceSelect}
+              onCompareDevice={handleAddToComparison}
+              currency={currency}
+              exchangeRate={exchangeRate}
+            />
+          </div>
+        )}
+        
+        {/* Device Comparison */}
+        {devicesToCompare.length > 0 && (
+          <div className="mb-8" ref={comparisonRef}>
+            <DeviceComparison 
+              devices={devicesToCompare}
+              onRemoveDevice={(device) => {
+                setDevicesToCompare(prev => prev.filter(d => 
+                  !(d.Brand === device.Brand && 
+                    d.Model === device.Model && 
+                    d.Storage === device.Storage && 
+                    d.Condition === device.Condition)
+                ));
+              }}
+              currency={currency}
+              exchangeRate={exchangeRate}
+            />
+          </div>
+        )}
+        
         {/* Results */}
         <div ref={resultsRef}>
           {loading ? (
             <p className="text-center py-8">Loading devices...</p>
           ) : error ? (
             <p className="text-center text-red-500 py-8">Error: {error}</p>
-          ) : filteredDevices.length === 0 ? (
+          ) : sortedDevices.length === 0 ? (
             <p className="text-center py-8">No devices found. Please adjust your filters.</p>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <div className="bg-white rounded-lg shadow overflow-x-auto dark:bg-gray-800">
+              <div className="p-4 flex justify-between items-center border-b">
+                <div>
+                  <span className="text-sm font-medium">
+                    {sortedDevices.length} {sortedDevices.length === 1 ? 'device' : 'devices'} found
+                  </span>
+                </div>
+                <SortDropdown 
+                  options={sortOptions}
+                  onSort={setSortOption}
+                  activeOption={sortOption}
+                />
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -283,25 +519,39 @@ const PriceList = () => {
                     <TableHead>Color</TableHead>
                     <TableHead>Condition</TableHead>
                     <TableHead>Price</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredDevices.map((device, index) => (
-                    <TableRow key={index}>
+                  {sortedDevices.map((device, index) => (
+                    <TableRow key={index} className="dark:border-gray-700">
                       <TableCell>{device.Brand}</TableCell>
                       <TableCell>{device.Model}</TableCell>
                       <TableCell>{device.Storage}</TableCell>
                       <TableCell>{device.Color}</TableCell>
                       <TableCell>{device.Condition}</TableCell>
                       <TableCell className="font-bold">{formatPrice(device.Price)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-2">
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddToComparison(device)}
+                          disabled={devicesToCompare.some(d => 
+                            d.Brand === device.Brand && 
+                            d.Model === device.Model && 
+                            d.Storage === device.Storage && 
+                            d.Condition === device.Condition
+                          )}
+                          className="text-xs"
+                        >
+                          Compare
+                        </Button>
                         <Button 
                           size="sm"
-                          className="bg-[#d81570] hover:bg-[#e83a8e] text-white"
+                          className="bg-[#d81570] hover:bg-[#e83a8e] text-white text-xs"
                           onClick={() => handleDeviceSelect(device)}
                         >
-                          Select <ChevronRight className="ml-1 h-4 w-4" />
+                          Select <ChevronRight className="ml-1 h-3 w-3" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -323,7 +573,20 @@ const PriceList = () => {
             />
           </div>
         )}
+        
+        {/* Testimonials Section */}
+        <div className="mt-16">
+          <Testimonials testimonials={testimonials} />
+        </div>
+        
+        {/* FAQ Section */}
+        <div className="mt-8">
+          <FAQSection faqs={faqs} />
+        </div>
       </main>
+      
+      {/* ScrollToTop Component */}
+      <ScrollToTop />
     </div>
   );
 };
