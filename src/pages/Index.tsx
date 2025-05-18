@@ -386,28 +386,6 @@ const Index = () => {
             
             <h2 className="text-xl font-semibold mb-4 text-[#d81570]" ref={upgradeDeviceRef}>Select Your Upgrade Device</h2>
             
-            {/* Select dropdown for upgrade device */}
-            <div className="mb-4 bg-white rounded-lg p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quick Select Upgrade Device
-              </label>
-              <Select
-                value={selectedUpgradeDeviceId}
-                onValueChange={handleSelectUpgradeDeviceChange}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a device to upgrade to" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredDevices.map((device) => (
-                    <SelectItem key={createDeviceId(device)} value={createDeviceId(device)}>
-                      {formatDeviceOption(device)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
             {/* Filters for upgrade device */}
             <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
             
