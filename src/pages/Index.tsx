@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   useDeviceData, 
@@ -30,6 +29,7 @@ import FeaturedDevices from '../components/FeaturedDevices';
 import ThemeToggle from '../components/ThemeToggle';
 import QuickFilters from '../components/QuickFilters';
 import useLocalStorage from '../hooks/useLocalStorage';
+import ScrollToTop from '../components/ScrollToTop'; // Fixed: Added the import for ScrollToTop
 
 // Define currency type to avoid comparison errors
 type CurrencyType = 'USD' | 'JMD';
