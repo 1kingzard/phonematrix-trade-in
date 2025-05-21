@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import PriceList from "./pages/PriceList";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
+import FAQPage from "./pages/FAQPage";
+import ReviewsPage from "./pages/ReviewsPage";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/price-list" element={<PriceList />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
