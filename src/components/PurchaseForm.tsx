@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -132,6 +133,30 @@ ${notes || "None provided"}
             </p>
           </div>
         </div>
+        
+        {/* Price Breakdown - Moved to the top of the form */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg mb-6">
+          <div className="text-sm font-medium mb-2 dark:text-white">Price Breakdown</div>
+          <div className="flex justify-between mb-1 dark:text-white">
+            <span>Device Price:</span>
+            <span>{formatCurrency(selectedDevice.Price)}</span>
+          </div>
+          
+          {currency === 'JMD' && (
+            <div className="flex justify-between mb-1 text-amber-700 dark:text-amber-400">
+              <span className="flex items-center gap-1">
+                <Package className="h-4 w-4" />
+                Shipping Cost (30%):
+              </span>
+              <span>{formatCurrency(shippingCost)}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between font-bold pt-2 border-t dark:border-gray-700 mt-2 dark:text-white">
+            <span>Total to Pay:</span>
+            <span>{formatCurrency(totalPrice)}</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -194,29 +219,6 @@ ${notes || "None provided"}
               rows={3}
               className="border-gray-300 focus:border-[#d81570] focus:ring-[#d81570]"
             />
-          </div>
-          
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-sm font-medium mb-2 dark:text-white">Price Breakdown</div>
-            <div className="flex justify-between mb-1 dark:text-white">
-              <span>Device Price:</span>
-              <span>{formatCurrency(selectedDevice.Price)}</span>
-            </div>
-            
-            {currency === 'JMD' && (
-              <div className="flex justify-between mb-1 text-amber-700 dark:text-amber-400">
-                <span className="flex items-center gap-1">
-                  <Package className="h-4 w-4" />
-                  Shipping Cost (30%):
-                </span>
-                <span>{formatCurrency(shippingCost)}</span>
-              </div>
-            )}
-            
-            <div className="flex justify-between font-bold pt-2 border-t dark:border-gray-700 mt-2 dark:text-white">
-              <span>Total to Pay:</span>
-              <span>{formatCurrency(totalPrice)}</span>
-            </div>
           </div>
           
           <Button type="submit" className="w-full bg-[#d81570] hover:bg-[#e83a8e]">
