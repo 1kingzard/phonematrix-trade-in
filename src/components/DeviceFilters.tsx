@@ -99,24 +99,24 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
   };
 
   return (
-    <div className="space-y-4 p-4 bg-white rounded-lg shadow-sm">
-      <div className="text-lg font-bold mb-4">Filter Devices</div>
+    <div className="space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      <div className="text-lg font-bold mb-4 dark:text-white">Filter Devices</div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Operating System Filter */}
         <div className="space-y-2">
-          <Label htmlFor="os-select">Operating System</Label>
+          <Label htmlFor="os-select" className="dark:text-white">Operating System</Label>
           <Select 
             value={filters.os} 
             onValueChange={(value) => handleFilterChange('os', value)}
           >
-            <SelectTrigger id="os-select">
-              <SelectValue placeholder="Select OS" />
+            <SelectTrigger id="os-select" className="dark:bg-gray-700 dark:text-white dark:border-gray-600">
+              <SelectValue placeholder="Select OS" className="dark:text-white" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-os">All Operating Systems</SelectItem>
+            <SelectContent className="dark:bg-gray-700">
+              <SelectItem value="all-os" className="dark:text-white">All Operating Systems</SelectItem>
               {osOptions.map((os) => (
-                <SelectItem key={os} value={os}>{os}</SelectItem>
+                <SelectItem key={os} value={os} className="dark:text-white">{os}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -124,19 +124,19 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
 
         {/* Brand Filter */}
         <div className="space-y-2">
-          <Label htmlFor="brand-select">Brand</Label>
+          <Label htmlFor="brand-select" className="dark:text-white">Brand</Label>
           <Select 
             value={filters.brand} 
             onValueChange={(value) => handleFilterChange('brand', value)}
             disabled={!filters.os}
           >
-            <SelectTrigger id="brand-select">
-              <SelectValue placeholder={filters.os ? "Select Brand" : "Select OS first"} />
+            <SelectTrigger id="brand-select" className="dark:bg-gray-700 dark:text-white dark:border-gray-600">
+              <SelectValue placeholder={filters.os ? "Select Brand" : "Select OS first"} className="dark:text-white" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-brands">All Brands</SelectItem>
+            <SelectContent className="dark:bg-gray-700">
+              <SelectItem value="all-brands" className="dark:text-white">All Brands</SelectItem>
               {brandOptions.map((brand) => (
-                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                <SelectItem key={brand} value={brand} className="dark:text-white">{brand}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -144,19 +144,19 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
 
         {/* Model Filter */}
         <div className="space-y-2">
-          <Label htmlFor="model-select">Model</Label>
+          <Label htmlFor="model-select" className="dark:text-white">Model</Label>
           <Select 
             value={filters.model} 
             onValueChange={(value) => handleFilterChange('model', value)}
             disabled={!filters.brand}
           >
-            <SelectTrigger id="model-select">
-              <SelectValue placeholder={filters.brand ? "Select Model" : "Select Brand first"} />
+            <SelectTrigger id="model-select" className="dark:bg-gray-700 dark:text-white dark:border-gray-600">
+              <SelectValue placeholder={filters.brand ? "Select Model" : "Select Brand first"} className="dark:text-white" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-models">All Models</SelectItem>
+            <SelectContent className="dark:bg-gray-700">
+              <SelectItem value="all-models" className="dark:text-white">All Models</SelectItem>
               {modelOptions.map((model) => (
-                <SelectItem key={model} value={model}>{model}</SelectItem>
+                <SelectItem key={model} value={model} className="dark:text-white">{model}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -164,19 +164,19 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
 
         {/* Storage Filter */}
         <div className="space-y-2">
-          <Label htmlFor="storage-select">Storage</Label>
+          <Label htmlFor="storage-select" className="dark:text-white">Storage</Label>
           <Select 
             value={filters.storage} 
             onValueChange={(value) => handleFilterChange('storage', value)}
             disabled={!filters.model}
           >
-            <SelectTrigger id="storage-select">
-              <SelectValue placeholder={filters.model ? "Select Storage" : "Select Model first"} />
+            <SelectTrigger id="storage-select" className="dark:bg-gray-700 dark:text-white dark:border-gray-600">
+              <SelectValue placeholder={filters.model ? "Select Storage" : "Select Model first"} className="dark:text-white" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-storage">All Storage Options</SelectItem>
+            <SelectContent className="dark:bg-gray-700">
+              <SelectItem value="all-storage" className="dark:text-white">All Storage Options</SelectItem>
               {storageOptions.map((storage) => (
-                <SelectItem key={storage} value={storage}>{storage}</SelectItem>
+                <SelectItem key={storage} value={storage} className="dark:text-white">{storage}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -184,19 +184,19 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({ devices, onFilterChange }
 
         {/* Condition Filter */}
         <div className="space-y-2">
-          <Label htmlFor="condition-select">Condition</Label>
+          <Label htmlFor="condition-select" className="dark:text-white">Condition</Label>
           <Select 
             value={filters.condition} 
             onValueChange={(value) => handleFilterChange('condition', value)}
             disabled={!filters.storage}
           >
-            <SelectTrigger id="condition-select">
-              <SelectValue placeholder={filters.storage ? "Select Condition" : "Select Storage first"} />
+            <SelectTrigger id="condition-select" className="dark:bg-gray-700 dark:text-white dark:border-gray-600">
+              <SelectValue placeholder={filters.storage ? "Select Condition" : "Select Storage first"} className="dark:text-white" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-conditions">All Conditions</SelectItem>
+            <SelectContent className="dark:bg-gray-700">
+              <SelectItem value="all-conditions" className="dark:text-white">All Conditions</SelectItem>
               {conditionOptions.map((condition) => (
-                <SelectItem key={condition} value={condition}>{condition}</SelectItem>
+                <SelectItem key={condition} value={condition} className="dark:text-white">{condition}</SelectItem>
               ))}
             </SelectContent>
           </Select>
