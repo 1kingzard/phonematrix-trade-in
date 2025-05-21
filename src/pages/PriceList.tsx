@@ -304,22 +304,22 @@ const PriceList = () => {
             {
               title: "Welcome to Price List",
               description: "Browse our devices and submit a purchase request",
-              image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=500&q=80"
+              image: "https://i.imgur.com/esqdOS8.jpeg"
             },
             {
               title: "Select Device Filters",
               description: "Use the filters to find the device you're looking for",
-              image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=500&q=80"
+              image: "https://i.imgur.com/P9kN1f4.jpeg"
             },
             {
               title: "View Device Details",
               description: "Browse the device list and select one to purchase",
-              image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80"
+              image: "https://i.imgur.com/e0bOeUx.jpeg"
             },
             {
               title: "Complete Purchase Request",
               description: "Fill out the form to submit your purchase request",
-              image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=500&q=80"
+              image: "https://i.imgur.com/efLlGEv.jpeg"
             }
           ]}
         />
