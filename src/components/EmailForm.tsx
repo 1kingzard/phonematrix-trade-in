@@ -197,11 +197,11 @@ ${notes || "None provided"}
       </CardHeader>
       <CardContent className="p-6">
         <div className="space-y-2 mb-4">
-          <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
-            <h3 className="text-sm font-medium text-blue-700 flex items-center gap-2">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900 border-l-4 border-blue-400 dark:border-blue-600 rounded-r-md">
+            <h3 className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" /> How It Works:
             </h3>
-            <p className="text-sm text-blue-600 mt-1">
+            <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
               Submit this form to receive a quote for your device trade-in. We'll contact you to arrange pickup or drop-off.
             </p>
           </div>
@@ -253,24 +253,24 @@ ${notes || "None provided"}
                   key={fault.id} 
                   className={`p-3 rounded-md border cursor-pointer flex items-center space-x-2 transition-colors ${
                     faults.includes(fault.id) 
-                      ? 'bg-[#fce4f1] border-[#d81570]' 
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                      ? 'bg-[#fce4f1] dark:bg-[#3f0d29] border-[#d81570]' 
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   onClick={() => toggleFault(fault.id)}
                 >
                   {faults.includes(fault.id) ? (
-                    <CheckCircle className="h-4 w-4 text-[#d81570]" />
+                    <CheckCircle className="h-4 w-4 text-[#d81570] dark:text-[#ff7eb6]" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-gray-300" />
+                    <XCircle className="h-4 w-4 text-gray-300 dark:text-gray-600" />
                   )}
-                  <span>{fault.label}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="dark:text-white">{fault.label}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     (~{formatCurrency(fault.cost)})
                   </span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Select any issues your device has to help us provide an accurate quote
             </p>
           </div>
@@ -288,35 +288,35 @@ ${notes || "None provided"}
           </div>
           
           <div className="rounded-lg space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm font-medium mb-2">Trade-in Device</div>
-              <div className="mb-1">{selectedDevice.Brand} {selectedDevice.Model}</div>
-              <div className="mb-1 text-sm text-gray-600">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-sm font-medium mb-2 dark:text-white">Trade-in Device</div>
+              <div className="mb-1 dark:text-white">{selectedDevice.Brand} {selectedDevice.Model}</div>
+              <div className="mb-1 text-sm text-gray-600 dark:text-gray-300">
                 {selectedDevice.Storage} • {selectedDevice.Color} • {selectedDevice.Condition}
               </div>
-              <div className="font-bold text-[#d81570]">{formatCurrency(finalTradeValue)}</div>
+              <div className="font-bold text-[#d81570] dark:text-[#ff7eb6]">{formatCurrency(finalTradeValue)}</div>
             </div>
             
             {upgradeDevice && (
               <>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-sm font-medium mb-2">Upgrade Device</div>
-                  <div className="mb-1">{upgradeDevice.Brand} {upgradeDevice.Model}</div>
-                  <div className="mb-1 text-sm text-gray-600">
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="text-sm font-medium mb-2 dark:text-white">Upgrade Device</div>
+                  <div className="mb-1 dark:text-white">{upgradeDevice.Brand} {upgradeDevice.Model}</div>
+                  <div className="mb-1 text-sm text-gray-600 dark:text-gray-300">
                     {upgradeDevice.Storage} • {upgradeDevice.Color} • {upgradeDevice.Condition}
                   </div>
-                  <div className="font-bold text-[#d81570]">{formatCurrency(upgradeDevice.Price)}</div>
+                  <div className="font-bold text-[#d81570] dark:text-[#ff7eb6]">{formatCurrency(upgradeDevice.Price)}</div>
                 </div>
                 
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-sm font-medium mb-2">Price Breakdown</div>
-                  <div className="flex justify-between mb-1">
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="text-sm font-medium mb-2 dark:text-white">Price Breakdown</div>
+                  <div className="flex justify-between mb-1 dark:text-white">
                     <span>Price Difference:</span>
                     <span>{formatCurrency(priceDifference)}</span>
                   </div>
                   
                   {currency === 'JMD' && (
-                    <div className="flex justify-between mb-1 text-amber-700">
+                    <div className="flex justify-between mb-1 text-amber-700 dark:text-amber-400">
                       <span className="flex items-center gap-1">
                         <Package className="h-4 w-4" />
                         Shipping Cost (30% of upgrade):
@@ -325,7 +325,7 @@ ${notes || "None provided"}
                     </div>
                   )}
                   
-                  <div className="flex justify-between font-bold">
+                  <div className="flex justify-between font-bold dark:text-white">
                     <span>Total to Pay:</span>
                     <span>{formatCurrency(priceDifference + shippingCost)}</span>
                   </div>
@@ -338,7 +338,7 @@ ${notes || "None provided"}
             Submit Request
           </Button>
           
-          <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-gray-500 dark:text-gray-400">
             By submitting this form, you'll be redirected to your email client to send the trade-in request.
           </p>
         </form>

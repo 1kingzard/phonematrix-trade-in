@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -123,12 +122,12 @@ ${notes || "None provided"}
       </CardHeader>
       <CardContent className="p-6">
         <div className="space-y-2 mb-6">
-          <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
-            <h3 className="text-sm font-medium text-blue-700">Device Selected:</h3>
-            <p className="text-sm text-blue-600 mt-1">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900 border-l-4 border-blue-400 dark:border-blue-600 rounded-r-md">
+            <h3 className="text-sm font-medium text-blue-700 dark:text-blue-300">Device Selected:</h3>
+            <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
               {selectedDevice.Brand} {selectedDevice.Model} ({selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition})
             </p>
-            <p className="text-sm font-bold text-blue-700 mt-1">
+            <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-1">
               Price: {formatCurrency(selectedDevice.Price)}
             </p>
           </div>
@@ -197,15 +196,15 @@ ${notes || "None provided"}
             />
           </div>
           
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-sm font-medium mb-2">Price Breakdown</div>
-            <div className="flex justify-between mb-1">
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="text-sm font-medium mb-2 dark:text-white">Price Breakdown</div>
+            <div className="flex justify-between mb-1 dark:text-white">
               <span>Device Price:</span>
               <span>{formatCurrency(selectedDevice.Price)}</span>
             </div>
             
             {currency === 'JMD' && (
-              <div className="flex justify-between mb-1 text-amber-700">
+              <div className="flex justify-between mb-1 text-amber-700 dark:text-amber-400">
                 <span className="flex items-center gap-1">
                   <Package className="h-4 w-4" />
                   Shipping Cost (30%):
@@ -214,7 +213,7 @@ ${notes || "None provided"}
               </div>
             )}
             
-            <div className="flex justify-between font-bold pt-2 border-t mt-2">
+            <div className="flex justify-between font-bold pt-2 border-t dark:border-gray-700 mt-2 dark:text-white">
               <span>Total to Pay:</span>
               <span>{formatCurrency(totalPrice)}</span>
             </div>
@@ -224,7 +223,7 @@ ${notes || "None provided"}
             Submit Purchase Request
           </Button>
           
-          <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-gray-500 dark:text-gray-400">
             By submitting this form, you'll be redirected to your email client to send the purchase request.
           </p>
         </form>

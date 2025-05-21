@@ -12,7 +12,7 @@ interface CurrencyToggleProps {
 
 const CurrencyToggle: React.FC<CurrencyToggleProps> = ({ currency, setCurrency }) => {
   return (
-    <div className="flex items-center space-x-2 bg-white rounded-lg shadow-sm p-2">
+    <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-2">
       <RadioGroup 
         value={currency} 
         onValueChange={(value) => setCurrency(value as CurrencyType)}
@@ -20,11 +20,11 @@ const CurrencyToggle: React.FC<CurrencyToggleProps> = ({ currency, setCurrency }
       >
         <div className="flex items-center space-x-1">
           <RadioGroupItem value="USD" id="usd" />
-          <Label htmlFor="usd" className="cursor-pointer">USD</Label>
+          <Label htmlFor="usd" className="cursor-pointer dark:text-white">USD</Label>
         </div>
         <div className="flex items-center space-x-1">
           <RadioGroupItem value="JMD" id="jmd" />
-          <Label htmlFor="jmd" className="cursor-pointer">JMD</Label>
+          <Label htmlFor="jmd" className="cursor-pointer dark:text-white">JMD</Label>
         </div>
       </RadioGroup>
     </div>
