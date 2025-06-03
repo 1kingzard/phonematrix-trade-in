@@ -23,7 +23,6 @@ interface PurchaseHistoryContextType {
   addPurchaseRequest: (request: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'>) => void;
   getTotalPurchases: () => number;
   getTotalSpent: () => number;
-  getDiscountRate: () => number;
 }
 
 const PurchaseHistoryContext = createContext<PurchaseHistoryContextType | undefined>(undefined);
@@ -76,21 +75,12 @@ export const PurchaseHistoryProvider: React.FC<{ children: React.ReactNode }> = 
       .reduce((total, req) => total + req.totalPrice, 0);
   };
 
-  const getDiscountRate = () => {
-    const totalPurchases = getTotalPurchases();
-    if (totalPurchases >= 10) return 0.15; // 15% discount for 10+ purchases
-    if (totalPurchases >= 5) return 0.10;  // 10% discount for 5+ purchases
-    if (totalPurchases >= 3) return 0.05;  // 5% discount for 3+ purchases
-    return 0; // No discount for less than 3 purchases
-  };
-
   return (
     <PurchaseHistoryContext.Provider value={{
       requests,
       addPurchaseRequest,
       getTotalPurchases,
-      getTotalSpent,
-      getDiscountRate
+      getTotalSpent
     }}>
       {children}
     </PurchaseHistoryContext.Provider>

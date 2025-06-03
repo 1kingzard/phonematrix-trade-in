@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -10,6 +9,7 @@ import ThemeToggle from '../components/ThemeToggle';
 
 const SplashPage = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const videoSources = [
     "https://videos.pexels.com/video-files/5692708/5692708-hd_1920_1080_25fps.mp4",
@@ -24,6 +24,27 @@ const SplashPage = () => {
     
     return () => clearInterval(interval);
   }, []);
+
+  // Watch for dark mode changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Create observer to watch for class changes on document element
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const logoSrc = isDarkMode ? 'https://i.imgur.com/dAkmFGF.png' : 'https://i.imgur.com/TcJEewx.png';
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -359,17 +380,17 @@ const SplashPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-gray-900 text-white">
+      <footer className="py-8 bg-gray-900 dark:bg-gray-950 text-white">
         <div className="container mx-auto px-6 text-center">
           <div className="flex justify-center items-center gap-4 mb-4">
             <img 
-              src="https://i.imgur.com/TcJEewx.png" 
+              src={logoSrc}
               alt="PhoneMatrix Logo" 
               className="h-8"
             />
             <ThemeToggle />
           </div>
-          <p className="text-gray-400">
+          <p className="text-gray-400 dark:text-gray-300">
             &copy; {new Date().getFullYear()} PhoneMatrix. All rights reserved.
           </p>
         </div>

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
-import { Package, Percent } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { usePurchaseHistory } from '../contexts/PurchaseHistoryContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +33,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   
-  const { addPurchaseRequest, getDiscountRate } = usePurchaseHistory();
+  const { addPurchaseRequest } = usePurchaseHistory();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -49,17 +49,14 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
     }).format(currency === 'USD' ? value : value * exchangeRate);
   };
   
-  // Calculate shipping cost (30% of device price)
-  const shippingCost = selectedDevice ? selectedDevice.Price * 0.3 : 0;
+  // Calculate shipping cost (30% of device price) - only for JMD
+  const shippingCost = (selectedDevice && currency === 'JMD') ? selectedDevice.Price * 0.3 : 0;
   
-  // Calculate discount
-  const discountRate = user ? getDiscountRate() : 0;
+  // Device price (directly from spreadsheet)
   const devicePrice = selectedDevice ? selectedDevice.Price : 0;
-  const discount = devicePrice * discountRate;
-  const discountedPrice = devicePrice - discount;
   
   // Calculate total price
-  const totalPrice = selectedDevice ? discountedPrice + shippingCost : 0;
+  const totalPrice = selectedDevice ? devicePrice + shippingCost : 0;
   
   // Prepare email subject and body
   const prepareEmail = () => {
@@ -82,17 +79,10 @@ Device Details:
 * Storage: ${selectedDevice.Storage}
 * Color: ${selectedDevice.Color}
 * Condition: ${selectedDevice.Condition}
-* Original Price: ${formatCurrency(selectedDevice.Price)}`;
+* Device Price: ${formatCurrency(selectedDevice.Price)}
 
-    if (discountRate > 0) {
-      body += `
-* Loyalty Discount (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discount)}
-* Discounted Price: ${formatCurrency(discountedPrice)}`;
-    }
-
-    body += `
 Price Breakdown:
-* Device Price: ${formatCurrency(discountedPrice)}`;
+* Device Price: ${formatCurrency(devicePrice)}`;
 
     if (currency === 'JMD') {
       body += `
@@ -166,7 +156,7 @@ ${notes || "None provided"}
               {selectedDevice.Brand} {selectedDevice.Model} ({selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition})
             </p>
             <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-1">
-              Original Price: {formatCurrency(selectedDevice.Price)}
+              Price: {formatCurrency(selectedDevice.Price)}
             </p>
           </div>
         </div>
@@ -178,16 +168,6 @@ ${notes || "None provided"}
             <span>Device Price:</span>
             <span>{formatCurrency(selectedDevice.Price)}</span>
           </div>
-          
-          {user && discountRate > 0 && (
-            <div className="flex justify-between mb-1 text-green-700 dark:text-green-400">
-              <span className="flex items-center gap-1">
-                <Percent className="h-4 w-4" />
-                Loyalty Discount ({(discountRate * 100).toFixed(0)}%):
-              </span>
-              <span>-{formatCurrency(discount)}</span>
-            </div>
-          )}
           
           {currency === 'JMD' && (
             <div className="flex justify-between mb-1 text-amber-700 dark:text-amber-400">
@@ -203,12 +183,6 @@ ${notes || "None provided"}
             <span>Total to Pay:</span>
             <span>{formatCurrency(totalPrice)}</span>
           </div>
-          
-          {!user && (
-            <p className="text-xs text-[#d81570] dark:text-[#ff7eb6] mt-2">
-              Login to earn loyalty discounts on future purchases!
-            </p>
-          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
