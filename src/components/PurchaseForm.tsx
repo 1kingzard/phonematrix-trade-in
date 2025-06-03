@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
-import { Package } from 'lucide-react';
+import { Package, Percent } from 'lucide-react';
 import { usePurchaseHistory } from '../contexts/PurchaseHistoryContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import DiscountCodeInput from './DiscountCodeInput';
 
 // Define currency type 
 type CurrencyType = 'USD' | 'JMD';
@@ -32,6 +33,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [discountCode, setDiscountCode] = useState('');
   
   const { addPurchaseRequest } = usePurchaseHistory();
   const { user } = useAuth();
@@ -55,8 +58,27 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
   // Device price (directly from spreadsheet)
   const devicePrice = selectedDevice ? selectedDevice.Price : 0;
   
-  // Calculate total price
-  const totalPrice = selectedDevice ? devicePrice + shippingCost : 0;
+  // Calculate subtotal before discount
+  const subtotal = selectedDevice ? devicePrice + shippingCost : 0;
+  
+  // Calculate discount amount
+  const discountAmount = subtotal * (discountPercentage / 100);
+  
+  // Calculate total price after discount
+  const totalPrice = subtotal - discountAmount;
+  
+  // Handle discount code application
+  const handleDiscountApplied = (discount: number, code: string) => {
+    setDiscountPercentage(discount);
+    setDiscountCode(code);
+    
+    if (discount > 0) {
+      toast({
+        title: "Discount applied!",
+        description: `${discount}% discount has been applied to your purchase.`,
+      });
+    }
+  };
   
   // Prepare email subject and body
   const prepareEmail = () => {
@@ -87,6 +109,15 @@ Price Breakdown:
     if (currency === 'JMD') {
       body += `
 * Shipping Cost (30%): ${formatCurrency(shippingCost)}`;
+    }
+
+    body += `
+* Subtotal: ${formatCurrency(subtotal)}`;
+
+    if (discountPercentage > 0) {
+      body += `
+* Discount Code: ${discountCode} (${discountPercentage}%)
+* Discount Amount: -${formatCurrency(discountAmount)}`;
     }
 
     body += `
@@ -179,6 +210,21 @@ ${notes || "None provided"}
             </div>
           )}
           
+          <div className="flex justify-between mb-1 dark:text-white border-t dark:border-gray-700 pt-1">
+            <span>Subtotal:</span>
+            <span>{formatCurrency(subtotal)}</span>
+          </div>
+          
+          {discountPercentage > 0 && (
+            <div className="flex justify-between mb-1 text-green-600 dark:text-green-400">
+              <span className="flex items-center gap-1">
+                <Percent className="h-4 w-4" />
+                Discount ({discountPercentage}%):
+              </span>
+              <span>-{formatCurrency(discountAmount)}</span>
+            </div>
+          )}
+          
           <div className="flex justify-between font-bold pt-2 border-t dark:border-gray-700 mt-2 dark:text-white">
             <span>Total to Pay:</span>
             <span>{formatCurrency(totalPrice)}</span>
@@ -235,6 +281,12 @@ ${notes || "None provided"}
               rows={3}
             />
           </div>
+          
+          {/* Discount Code Input */}
+          <DiscountCodeInput 
+            onDiscountApplied={handleDiscountApplied}
+            disabled={false}
+          />
           
           <div className="space-y-2">
             <Label htmlFor="notes">Additional Notes</Label>
