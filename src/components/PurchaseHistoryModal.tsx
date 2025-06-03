@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePurchaseHistory } from '../contexts/PurchaseHistoryContext';
-import { Calendar, Package, Percent } from 'lucide-react';
+import { Calendar, Package } from 'lucide-react';
 
 interface PurchaseHistoryModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface PurchaseHistoryModalProps {
 }
 
 const PurchaseHistoryModal: React.FC<PurchaseHistoryModalProps> = ({ isOpen, onClose }) => {
-  const { requests, getTotalPurchases, getTotalSpent, getDiscountRate } = usePurchaseHistory();
+  const { requests, getTotalPurchases, getTotalSpent } = usePurchaseHistory();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -33,17 +33,15 @@ const PurchaseHistoryModal: React.FC<PurchaseHistoryModalProps> = ({ isOpen, onC
     }).format(amount);
   };
 
-  const discountRate = getDiscountRate();
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Purchase History & Loyalty Status</DialogTitle>
+          <DialogTitle>Purchase History</DialogTitle>
         </DialogHeader>
         
-        {/* Loyalty Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Purchase Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -62,27 +60,6 @@ const PurchaseHistoryModal: React.FC<PurchaseHistoryModalProps> = ({ isOpen, onC
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${getTotalSpent().toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Percent className="h-4 w-4" />
-                Current Discount
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-[#d81570]">
-                {(discountRate * 100).toFixed(0)}%
-              </div>
-              {discountRate < 0.15 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {discountRate === 0 ? '3 purchases needed for 5% discount' : 
-                   discountRate === 0.05 ? '2 more purchases for 10% discount' : 
-                   discountRate === 0.10 ? '5 more purchases for 15% discount' : ''}
-                </p>
-              )}
             </CardContent>
           </Card>
         </div>
