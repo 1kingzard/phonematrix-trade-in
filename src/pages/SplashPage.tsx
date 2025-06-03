@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Smartphone, RefreshCcw, DollarSign, Star, CheckCircle, Users, Shield, Clock } from 'lucide-react';
+import { ArrowRight, Smartphone, RefreshCcw, DollarSign, Star, CheckCircle, Users, Shield, Clock, Search, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Header from '../components/Header';
@@ -210,7 +210,7 @@ const SplashPage = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: Shield,
@@ -226,6 +226,16 @@ const SplashPage = () => {
                 icon: Users,
                 title: "Expert Support",
                 description: "Our team of experts guides you through every step of the process"
+              },
+              {
+                icon: Search,
+                title: "Multi-Point Inspection",
+                description: "Comprehensive inspection performed on all devices to ensure quality"
+              },
+              {
+                icon: Award,
+                title: "30-Day Warranty",
+                description: "All devices come with a comprehensive 30-day warranty for peace of mind"
               }
             ].map((feature, index) => (
               <motion.div
@@ -238,13 +248,9 @@ const SplashPage = () => {
                 className="text-center"
               >
                 <Card className="p-8 h-full border-2 hover:border-[#d81570] transition-colors dark:bg-gray-700 dark:border-gray-600">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="w-16 h-16 bg-[#d81570]/10 rounded-full flex items-center justify-center mx-auto mb-6"
-                  >
+                  <div className="w-16 h-16 bg-[#d81570]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                     <feature.icon className="w-8 h-8 text-[#d81570]" />
-                  </motion.div>
+                  </div>
                   <h3 className="text-xl font-semibold mb-4 dark:text-white">{feature.title}</h3>
                   <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
                 </Card>

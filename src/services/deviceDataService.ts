@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 
 // Define the type for our device data
@@ -13,6 +14,9 @@ export interface DeviceData {
 
 // CSV URL from Google Sheets
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL9a5fmRtcYCgO0q9VHHSvIIQM_kJryefPZDQmzbCoPuw7jtlpMgLVV5JEgoi60lAtjIbZjD46QVJw/pub?output=csv";
+
+// Service charge for trading devices
+export const SERVICE_CHARGE = 50; // $50 service charge
 
 // Function to parse CSV data
 const parseCSV = (csvText: string): DeviceData[] => {
@@ -103,7 +107,7 @@ export const getUniqueValues = (devices: DeviceData[], field: keyof DeviceData):
   return Array.from(uniqueValues).filter(Boolean).sort();
 };
 
-// Calculate the price difference between two devices
+// Calculate the price difference between two devices including service charge
 export const calculatePriceDifference = (
   tradeInDevice: DeviceData | null, 
   upgradeDevice: DeviceData | null, 
@@ -113,10 +117,23 @@ export const calculatePriceDifference = (
     return 0;
   }
   
-  return upgradeDevice.Price - finalTradeValue;
+  // Add service charge to the difference calculation
+  return upgradeDevice.Price - finalTradeValue + SERVICE_CHARGE;
 };
 
 // Calculate shipping cost for upgraded device in JMD (30% of device price)
 export const calculateShippingCost = (upgradeDevicePrice: number): number => {
   return upgradeDevicePrice * 0.3; // 30% of the upgrade device price
+};
+
+// Format service charge for display
+export const formatServiceCharge = (currency: 'USD' | 'JMD', exchangeRate: number): string => {
+  const chargeInCurrency = currency === 'USD' ? SERVICE_CHARGE : SERVICE_CHARGE * exchangeRate;
+  
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(chargeInCurrency);
 };

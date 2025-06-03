@@ -11,6 +11,8 @@ import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import { AuthProvider } from "./contexts/AuthContext";
+import { CartProvider } from "./contexts/CartContext";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -31,22 +33,26 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<SplashPage />} />
-            <Route path="/trade-in" element={<TradeIn />} />
-            <Route path="/price-list" element={<PriceList />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <ScrollToTop />
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<SplashPage />} />
+                <Route path="/trade-in" element={<TradeIn />} />
+                <Route path="/price-list" element={<PriceList />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/reviews" element={<ReviewsPage />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <ScrollToTop />
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

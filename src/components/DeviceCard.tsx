@@ -2,17 +2,30 @@
 import React from 'react';
 import { DeviceData } from '../services/deviceDataService';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, ShoppingCart } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface DeviceCardProps {
   device: DeviceData;
   currency: 'USD' | 'JMD';
   exchangeRate: number;
-  onClick: () => void;
+  onClick?: () => void;
   selected?: boolean;
+  showAddToCart?: boolean;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, exchangeRate, onClick, selected = false }) => {
+const DeviceCard: React.FC<DeviceCardProps> = ({ 
+  device, 
+  currency, 
+  exchangeRate, 
+  onClick, 
+  selected = false,
+  showAddToCart = false 
+}) => {
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+
   // Format the price according to the selected currency
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -20,6 +33,15 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, exchangeRate,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(currency === 'USD' ? device.Price : device.Price * exchangeRate);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(device);
+    toast({
+      title: "Added to cart",
+      description: `${device.Brand} ${device.Model} has been added to your cart.`,
+    });
+  };
 
   return (
     <div 
@@ -37,21 +59,36 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, currency, exchangeRate,
         <div className="flex justify-between items-center mt-4">
           <span className="text-xs text-gray-500 dark:text-gray-400">OS: {device.OS}</span>
           
-          <Button
-            onClick={onClick}
-            className={`px-4 py-2 ${
-              selected 
-                ? 'bg-[#d81570] hover:bg-[#e83a8e] text-white' 
-                : 'bg-white dark:bg-gray-700 text-[#d81570] dark:text-[#ff7eb6] border border-[#d81570] dark:border-[#ff7eb6] hover:bg-[#fce4f1] dark:hover:bg-gray-600'
-            }`}
-            size="sm"
-          >
-            {selected ? (
-              <>
-                <Check className="mr-1 h-4 w-4" /> Selected
-              </>
-            ) : 'Select'}
-          </Button>
+          <div className="flex gap-2">
+            {showAddToCart && (
+              <Button
+                onClick={handleAddToCart}
+                variant="outline"
+                size="sm"
+                className="border-[#d81570] text-[#d81570] hover:bg-[#d81570] hover:text-white"
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            )}
+            
+            {onClick && (
+              <Button
+                onClick={onClick}
+                className={`px-4 py-2 ${
+                  selected 
+                    ? 'bg-[#d81570] hover:bg-[#e83a8e] text-white' 
+                    : 'bg-white dark:bg-gray-700 text-[#d81570] dark:text-[#ff7eb6] border border-[#d81570] dark:border-[#ff7eb6] hover:bg-[#fce4f1] dark:hover:bg-gray-600'
+                }`}
+                size="sm"
+              >
+                {selected ? (
+                  <>
+                    <Check className="mr-1 h-4 w-4" /> Selected
+                  </>
+                ) : 'Select'}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
