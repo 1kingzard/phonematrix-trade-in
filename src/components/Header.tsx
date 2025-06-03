@@ -1,21 +1,42 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, History } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
-import CartSheet from './CartSheet';
+import PurchaseHistoryModal from './PurchaseHistoryModal';
 
 const Header = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [currency] = useState<'USD' | 'JMD'>('USD'); // You can make this dynamic later
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const isSplashPage = location.pathname === '/';
   const isTradeInPage = location.pathname === '/trade-in';
   const isPriceListPage = location.pathname === '/price-list';
+
+  // Watch for dark mode changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Create observer to watch for class changes on document element
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const logoSrc = isDarkMode ? 'https://i.imgur.com/dAkmFGF.png' : 'https://i.imgur.com/TcJEewx.png';
   
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-sm py-4 px-6 sticky top-0 z-50">
@@ -24,7 +45,7 @@ const Header = () => {
         <div className="flex items-center">
           <Link to="/">
             <img 
-              src="https://i.imgur.com/TcJEewx.png" 
+              src={logoSrc}
               alt="PhoneMatrix Logo" 
               className="h-10"
             />
@@ -54,12 +75,19 @@ const Header = () => {
             </Link>
           </div>
           
-          {/* Cart and Auth Section */}
+          {/* Auth Section */}
           <div className="flex items-center space-x-2">
-            <CartSheet currency={currency} />
-            
             {user ? (
               <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowHistoryModal(true)}
+                  className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
+                >
+                  <History className="h-4 w-4 mr-1" />
+                  History
+                </Button>
                 <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
                   Hello, {user.name}
                 </span>
@@ -107,6 +135,12 @@ const Header = () => {
       </div>
       
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      {user && (
+        <PurchaseHistoryModal 
+          isOpen={showHistoryModal} 
+          onClose={() => setShowHistoryModal(false)} 
+        />
+      )}
     </nav>
   );
 };

@@ -12,7 +12,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
+import { PurchaseHistoryProvider } from "./contexts/PurchaseHistoryContext";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -34,7 +34,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
+        <PurchaseHistoryProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -51,7 +51,7 @@ const App = () => {
               <ScrollToTop />
             </BrowserRouter>
           </TooltipProvider>
-        </CartProvider>
+        </PurchaseHistoryProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

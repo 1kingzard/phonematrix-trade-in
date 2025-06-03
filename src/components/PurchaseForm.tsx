@@ -6,7 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceData } from '../services/deviceDataService';
-import { Package } from 'lucide-react';
+import { Package, Percent } from 'lucide-react';
+import { usePurchaseHistory } from '../contexts/PurchaseHistoryContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 // Define currency type 
 type CurrencyType = 'USD' | 'JMD';
@@ -30,6 +33,10 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   
+  const { addPurchaseRequest, getDiscountRate } = usePurchaseHistory();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
   const destinationEmail = 'infophonematrix@gmail.com';
   
   // Format currency values
@@ -45,8 +52,14 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
   // Calculate shipping cost (30% of device price)
   const shippingCost = selectedDevice ? selectedDevice.Price * 0.3 : 0;
   
+  // Calculate discount
+  const discountRate = user ? getDiscountRate() : 0;
+  const devicePrice = selectedDevice ? selectedDevice.Price : 0;
+  const discount = devicePrice * discountRate;
+  const discountedPrice = devicePrice - discount;
+  
   // Calculate total price
-  const totalPrice = selectedDevice ? selectedDevice.Price + shippingCost : 0;
+  const totalPrice = selectedDevice ? discountedPrice + shippingCost : 0;
   
   // Prepare email subject and body
   const prepareEmail = () => {
@@ -69,10 +82,17 @@ Device Details:
 * Storage: ${selectedDevice.Storage}
 * Color: ${selectedDevice.Color}
 * Condition: ${selectedDevice.Condition}
-* Price: ${formatCurrency(selectedDevice.Price)}
+* Original Price: ${formatCurrency(selectedDevice.Price)}`;
 
+    if (discountRate > 0) {
+      body += `
+* Loyalty Discount (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discount)}
+* Discounted Price: ${formatCurrency(discountedPrice)}`;
+    }
+
+    body += `
 Price Breakdown:
-* Device Price: ${formatCurrency(selectedDevice.Price)}`;
+* Device Price: ${formatCurrency(discountedPrice)}`;
 
     if (currency === 'JMD') {
       body += `
@@ -103,6 +123,23 @@ ${notes || "None provided"}
       return;
     }
     
+    if (!selectedDevice) return;
+
+    // Add to purchase history if user is logged in
+    if (user) {
+      addPurchaseRequest({
+        device: selectedDevice,
+        customerInfo: { name, email, phone, address, notes },
+        totalPrice: currency === 'USD' ? totalPrice : totalPrice * exchangeRate,
+        currency
+      });
+      
+      toast({
+        title: "Purchase request saved",
+        description: "Your request has been saved to your account history.",
+      });
+    }
+    
     const mailtoLink = prepareEmail();
     if (mailtoLink) {
       window.location.href = mailtoLink;
@@ -129,18 +166,28 @@ ${notes || "None provided"}
               {selectedDevice.Brand} {selectedDevice.Model} ({selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition})
             </p>
             <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-1">
-              Price: {formatCurrency(selectedDevice.Price)}
+              Original Price: {formatCurrency(selectedDevice.Price)}
             </p>
           </div>
         </div>
         
-        {/* Price Breakdown - Moved to the top of the form */}
+        {/* Price Breakdown */}
         <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg mb-6">
           <div className="text-sm font-medium mb-2 dark:text-white">Price Breakdown</div>
           <div className="flex justify-between mb-1 dark:text-white">
             <span>Device Price:</span>
             <span>{formatCurrency(selectedDevice.Price)}</span>
           </div>
+          
+          {user && discountRate > 0 && (
+            <div className="flex justify-between mb-1 text-green-700 dark:text-green-400">
+              <span className="flex items-center gap-1">
+                <Percent className="h-4 w-4" />
+                Loyalty Discount ({(discountRate * 100).toFixed(0)}%):
+              </span>
+              <span>-{formatCurrency(discount)}</span>
+            </div>
+          )}
           
           {currency === 'JMD' && (
             <div className="flex justify-between mb-1 text-amber-700 dark:text-amber-400">
@@ -156,6 +203,12 @@ ${notes || "None provided"}
             <span>Total to Pay:</span>
             <span>{formatCurrency(totalPrice)}</span>
           </div>
+          
+          {!user && (
+            <p className="text-xs text-[#d81570] dark:text-[#ff7eb6] mt-2">
+              Login to earn loyalty discounts on future purchases!
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
