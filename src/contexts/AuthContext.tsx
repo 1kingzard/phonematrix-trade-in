@@ -8,7 +8,6 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error?: string }>;
 }
 
@@ -108,30 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [toast]);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      toast({
-        title: "Welcome back!",
-        description: "You have been signed in successfully.",
-      });
-
-      return {};
-    } catch (error: any) {
-      return { error: error.message || 'An unexpected error occurred' };
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
@@ -208,7 +183,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     isLoading,
     signOut,
-    signIn,
     signUp,
   };
 

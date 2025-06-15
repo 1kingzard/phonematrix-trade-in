@@ -145,15 +145,16 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowAuthModal(true)}
-                className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
-              >
-                <User className="h-4 w-4 mr-1" />
-                Login
-              </Button>
+                <Link to="/auth">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
+                  >
+                    <User className="h-4 w-4 mr-1" />
+                    Sign Up
+                  </Button>
+                </Link>
             )}
           </div>
         </div>
@@ -183,7 +184,7 @@ const Header = () => {
         </div>
       </div>
       
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      
       {user && (
         <PurchaseHistoryModal 
           isOpen={showHistoryModal} 
