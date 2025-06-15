@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { User, LogOut, History } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import AuthModal from './AuthModal';
-import PurchaseHistoryModal from './PurchaseHistoryModal';
 
 const Header = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const isSplashPage = location.pathname === '/';
@@ -54,7 +46,7 @@ const Header = () => {
         
         {/* Navigation Links */}
         <div className="flex items-center space-x-4">
-          <div className="hidden md:flex space-x-8 mr-4">
+          <div className="hidden md:flex space-x-8">
             <Link 
               to="/" 
               className={`font-medium ${isSplashPage ? 'text-[#d81570] border-b-2 border-[#d81570] pb-1' : 'text-gray-600 dark:text-gray-300 hover:text-[#d81570]'}`}
@@ -73,39 +65,6 @@ const Header = () => {
             >
               Price List
             </Link>
-          </div>
-          
-          {/* Auth Section */}
-          <div className="flex items-center space-x-2">
-            {user ? (
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowHistoryModal(true)}
-                  className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
-                >
-                  <History className="h-4 w-4 mr-1" />
-                  History
-                </Button>
-                <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
-                  Hello, {user.name}
-                </span>
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowAuthModal(true)}
-                className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
-              >
-                <User className="h-4 w-4 mr-1" />
-                Login
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -133,14 +92,6 @@ const Header = () => {
           </Link>
         </div>
       </div>
-      
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      {user && (
-        <PurchaseHistoryModal 
-          isOpen={showHistoryModal} 
-          onClose={() => setShowHistoryModal(false)} 
-        />
-      )}
     </nav>
   );
 };
