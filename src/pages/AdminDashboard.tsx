@@ -106,13 +106,10 @@ const AdminDashboard = () => {
 
   const checkAdminStatus = async () => {
     try {
-      const { data, error } = await supabase
-        .from('admin_roles')
-        .select('*')
-        .eq('user_id', user?.id)
-        .single();
+      // Use the is_admin function instead of querying admin_roles directly
+      const { data, error } = await supabase.rpc('is_admin');
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
       } else {
@@ -158,8 +155,7 @@ const AdminDashboard = () => {
         .from('profiles')
         .select(`
           *,
-          customer_loyalty (*),
-          auth_users:user_id (email)
+          customer_loyalty (*)
         `)
         .order('created_at', { ascending: false });
 
@@ -171,7 +167,7 @@ const AdminDashboard = () => {
           user_id: customer.user_id,
           first_name: customer.first_name,
           last_name: customer.last_name,
-          email: customer.auth_users?.email || 'N/A',
+          email: 'N/A', // We'll fetch emails separately if needed
           points: customer.customer_loyalty?.[0]?.points || 0,
           tier: customer.customer_loyalty?.[0]?.tier || 'bronze',
           total_spent: customer.customer_loyalty?.[0]?.total_spent || 0,
@@ -481,9 +477,9 @@ const AdminDashboard = () => {
                           <Button 
                             size="sm"
                             onClick={() => {
-                              const status = document.querySelector(`select`)?.value || order.status;
-                              const tracking = document.querySelector(`input[placeholder="Enter tracking number"]`)?.value;
-                              const notes = document.querySelector(`textarea`)?.value;
+                              const status = (document.querySelector(`select`) as HTMLSelectElement)?.value || order.status;
+                              const tracking = (document.querySelector(`input[placeholder="Enter tracking number"]`) as HTMLInputElement)?.value;
+                              const notes = (document.querySelector(`textarea`) as HTMLTextAreaElement)?.value;
                               updateOrderStatus(order.id, status, tracking, notes);
                             }}
                           >
