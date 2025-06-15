@@ -87,7 +87,7 @@ const Header = () => {
           
           {/* Auth Section */}
           <div className="flex items-center space-x-2">
-            {user ? (
+            {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -144,17 +144,6 @@ const Header = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-                <Link to="/auth">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
-                  >
-                    <User className="h-4 w-4 mr-1" />
-                    Sign Up
-                  </Button>
-                </Link>
             )}
           </div>
         </div>
