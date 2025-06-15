@@ -17,21 +17,63 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ email: '', password: '', name: '', confirmPassword: '' });
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { login, register } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Redirect to auth page instead of handling login here
-    onClose();
-    window.location.href = '/auth';
+    setIsLoading(true);
+    
+    const success = await login(loginData.email, loginData.password);
+    
+    if (success) {
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
+      onClose();
+    } else {
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password",
+        variant: "destructive",
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Redirect to auth page instead of handling register here
-    onClose();
-    window.location.href = '/auth';
+    
+    if (registerData.password !== registerData.confirmPassword) {
+      toast({
+        title: "Registration failed",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    const success = await register(registerData.email, registerData.password, registerData.name);
+    
+    if (success) {
+      toast({
+        title: "Registration successful",
+        description: "Welcome to PhoneMatrix!",
+      });
+      onClose();
+    } else {
+      toast({
+        title: "Registration failed",
+        description: "Please check your information and try again",
+        variant: "destructive",
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   return (

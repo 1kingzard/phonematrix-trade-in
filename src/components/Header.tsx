@@ -1,24 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, History, Settings, ChevronDown } from 'lucide-react';
+import { User, LogOut, History } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useAdmin } from '../hooks/useAdmin';
 import AuthModal from './AuthModal';
 import PurchaseHistoryModal from './PurchaseHistoryModal';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
   const location = useLocation();
-  const { user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { user, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -87,63 +77,34 @@ const Header = () => {
           
           {/* Auth Section */}
           <div className="flex items-center space-x-2">
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-gray-600 dark:text-gray-300 hover:text-[#d81570] flex items-center space-x-1"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:block">{user.email?.split('@')[0]}</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <DropdownMenuLabel className="text-gray-900 dark:text-gray-100">
-                    {user.email}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                  
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center w-full cursor-pointer text-gray-700 dark:text-gray-300 hover:text-[#d81570]">
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem 
-                    onClick={() => setShowHistoryModal(true)}
-                    className="flex items-center cursor-pointer text-gray-700 dark:text-gray-300 hover:text-[#d81570]"
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    Purchase History
-                  </DropdownMenuItem>
-                  
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center w-full cursor-pointer text-gray-700 dark:text-gray-300 hover:text-[#d81570]">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Admin Panel
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                  
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      signOut();
-                    }}
-                    className="flex items-center cursor-pointer text-red-600 dark:text-red-400 hover:text-red-700"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowHistoryModal(true)}
+                  className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
+                >
+                  <History className="h-4 w-4 mr-1" />
+                  History
+                </Button>
+                <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
+                  Hello, {user.name}
+                </span>
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowAuthModal(true)}
+                className="text-gray-600 dark:text-gray-300 hover:text-[#d81570]"
+              >
+                <User className="h-4 w-4 mr-1" />
+                Login
+              </Button>
             )}
           </div>
         </div>
@@ -173,7 +134,7 @@ const Header = () => {
         </div>
       </div>
       
-      
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       {user && (
         <PurchaseHistoryModal 
           isOpen={showHistoryModal} 

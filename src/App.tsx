@@ -11,9 +11,6 @@ import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
-import AuthPage from "./pages/AuthPage";
-import UserDashboard from "./pages/UserDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PurchaseHistoryProvider } from "./contexts/PurchaseHistoryContext";
 import { useEffect } from "react";
@@ -44,9 +41,6 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<SplashPage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/dashboard" element={<UserDashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/trade-in" element={<TradeIn />} />
                 <Route path="/price-list" element={<PriceList />} />
                 <Route path="/faq" element={<FAQPage />} />
