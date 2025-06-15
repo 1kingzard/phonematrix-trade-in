@@ -133,7 +133,10 @@ const Header = () => {
                   <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                   
                   <DropdownMenuItem 
-                    onClick={logout}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      logout();
+                    }}
                     className="flex items-center cursor-pointer text-red-600 dark:text-red-400 hover:text-red-700"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
