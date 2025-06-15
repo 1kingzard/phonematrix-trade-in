@@ -17,7 +17,7 @@ import {
 
 const Header = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -135,7 +135,7 @@ const Header = () => {
                   <DropdownMenuItem 
                     onClick={(e) => {
                       e.preventDefault();
-                      logout();
+                      signOut();
                     }}
                     className="flex items-center cursor-pointer text-red-600 dark:text-red-400 hover:text-red-700"
                   >
