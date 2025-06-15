@@ -162,17 +162,20 @@ const AdminDashboard = () => {
       if (customersError) {
         console.error('Error fetching customers:', customersError);
       } else {
-        const formattedCustomers = customersData?.map(customer => ({
-          id: customer.id,
-          user_id: customer.user_id,
-          first_name: customer.first_name,
-          last_name: customer.last_name,
-          email: 'N/A', // We'll fetch emails separately if needed
-          points: customer.customer_loyalty?.[0]?.points || 0,
-          tier: customer.customer_loyalty?.[0]?.tier || 'bronze',
-          total_spent: customer.customer_loyalty?.[0]?.total_spent || 0,
-          total_purchases: customer.customer_loyalty?.[0]?.total_purchases || 0
-        })) || [];
+        const formattedCustomers = customersData?.map(customer => {
+          const loyalty = Array.isArray(customer.customer_loyalty) ? customer.customer_loyalty[0] : null;
+          return {
+            id: customer.id,
+            user_id: customer.user_id,
+            first_name: customer.first_name,
+            last_name: customer.last_name,
+            email: 'N/A', // We'll fetch emails separately if needed
+            points: loyalty?.points || 0,
+            tier: loyalty?.tier || 'bronze',
+            total_spent: loyalty?.total_spent || 0,
+            total_purchases: loyalty?.total_purchases || 0
+          };
+        }) || [];
         setCustomers(formattedCustomers);
       }
 
