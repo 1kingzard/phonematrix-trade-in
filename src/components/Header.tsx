@@ -89,7 +89,7 @@ const Header = () => {
                   History
                 </Button>
                 <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
-                  Hello, {user.name}
+                  Hello, {user.email?.split('@')[0]}
                 </span>
                 <Button variant="ghost" size="sm" onClick={logout}>
                   <LogOut className="h-4 w-4" />

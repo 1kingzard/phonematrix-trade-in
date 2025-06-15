@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PurchaseHistoryProvider } from "./contexts/PurchaseHistoryContext";
 import { useEffect } from "react";
@@ -41,6 +42,7 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<SplashPage />} />
+                <Route path="/auth" element={<AuthPage />} />
                 <Route path="/trade-in" element={<TradeIn />} />
                 <Route path="/price-list" element={<PriceList />} />
                 <Route path="/faq" element={<FAQPage />} />
