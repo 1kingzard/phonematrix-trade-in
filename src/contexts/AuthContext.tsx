@@ -141,40 +141,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    if (isLoading) {
+      console.log('Sign out already in progress, skipping...');
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log('Starting sign out process...');
       
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        toast({
-          title: "Sign out failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Clear local state immediately
+      // Clear local state first
       setUser(null);
       setSession(null);
       
-      console.log('Sign out completed successfully');
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       
-      // Redirect to home page
-      window.location.href = '/';
+      if (error) {
+        console.error('Supabase sign out error:', error);
+        // Even if there's an error, continue with local cleanup
+      }
+
+      console.log('Sign out completed, clearing storage...');
+      
+      // Clear any stored auth data
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      
+      // Force page reload to clear all state
+      window.location.reload();
       
     } catch (error: any) {
       console.error('Sign out exception:', error);
-      toast({
-        title: "Sign out failed",
-        description: error.message || 'An unexpected error occurred',
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Even if there's an exception, clear local state
+      setUser(null);
+      setSession(null);
+      window.location.reload();
     }
   };
 
