@@ -470,13 +470,18 @@ const AdminDashboard = () => {
     }
 
     try {
-      // For now, we'll use a simplified approach where we just use the email
-      // as a user identifier. In a real application, you'd want to validate
-      // that the user exists first.
-      
-      // Create a temporary user ID based on email for demonstration
-      // In production, you'd want to lookup the actual user ID
-      const userId = saleEmail; // This is simplified - you'd want proper user lookup
+      // For admin inventory sales, we'll use the admin user ID and store customer email in order notes
+      // This is a simplified approach - in production you'd want proper customer management
+      const userId = user?.id;
+
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "Admin user not found",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Call the mark_inventory_sold function
       const { data, error } = await supabase.rpc('mark_inventory_sold', {
@@ -486,6 +491,20 @@ const AdminDashboard = () => {
       });
 
       if (error) throw error;
+
+      // Update the created order with customer email information
+      if (data) {
+        await supabase
+          .from('purchase_requests')
+          .update({
+            customer_info: {
+              email: saleEmail,
+              source: 'admin_inventory_sale'
+            },
+            admin_notes: `Inventory sale to customer: ${saleEmail}`
+          })
+          .eq('id', data);
+      }
 
       toast({
         title: "Success",
