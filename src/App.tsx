@@ -12,7 +12,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
+import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PurchaseHistoryProvider } from "./contexts/PurchaseHistoryContext";
@@ -49,7 +49,7 @@ const App = () => {
                 <Route path="/faq" element={<FAQPage />} />
                 <Route path="/reviews" element={<ReviewsPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
