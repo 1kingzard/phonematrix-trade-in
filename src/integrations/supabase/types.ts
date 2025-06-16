@@ -166,9 +166,12 @@ export type Database = {
           device_model: string
           id: string
           is_active: boolean | null
+          order_id: string | null
           price: number
           quantity_available: number
           sku: string | null
+          sold_at: string | null
+          sold_to_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -180,9 +183,12 @@ export type Database = {
           device_model: string
           id?: string
           is_active?: boolean | null
+          order_id?: string | null
           price: number
           quantity_available?: number
           sku?: string | null
+          sold_at?: string | null
+          sold_to_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -194,12 +200,23 @@ export type Database = {
           device_model?: string
           id?: string
           is_active?: boolean | null
+          order_id?: string | null
           price?: number
           quantity_available?: number
           sku?: string | null
+          sold_at?: string | null
+          sold_to_user_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       points_transactions: {
         Row: {
@@ -431,9 +448,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      generate_sku: {
+        Args: { brand: string; model: string; condition: string }
+        Returns: string
+      }
       is_admin: {
         Args: { user_uuid?: string }
         Returns: boolean
+      }
+      mark_inventory_sold: {
+        Args: { inventory_id: string; user_id: string; sale_price?: number }
+        Returns: string
       }
       process_referral_reward: {
         Args: {

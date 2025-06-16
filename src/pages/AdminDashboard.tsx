@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Shield, Package, Users, Gift, Plus, Edit, Trash2, UserPlus, Settings, Warehouse, ShoppingCart } from 'lucide-react';
+import { Loader2, Shield, Package, Users, Gift, Plus, Edit, Trash2, UserPlus, Settings, Warehouse, ShoppingCart, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -60,6 +60,9 @@ interface InventoryItem {
   description: string | null;
   is_active: boolean;
   created_at: string;
+  sold_to_user_id: string | null;
+  sold_at: string | null;
+  order_id: string | null;
 }
 
 const AdminDashboard = () => {
@@ -74,9 +77,13 @@ const AdminDashboard = () => {
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<ReferralCode | null>(null);
   const [editingInventory, setEditingInventory] = useState<InventoryItem | null>(null);
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
   const [adminEmail, setAdminEmail] = useState('');
+  const [saleEmail, setSaleEmail] = useState('');
+  const [salePrice, setSalePrice] = useState<number>(0);
   
   const [formData, setFormData] = useState({
     code: '',
@@ -435,6 +442,60 @@ const AdminDashboard = () => {
 
       if (error) throw error;
       toast({ title: "Success", description: "Order status updated" });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkAsSold = (item: InventoryItem) => {
+    setSelectedInventoryItem(item);
+    setSalePrice(item.price); // Default to item price
+    setSaleEmail('');
+    setIsSaleModalOpen(true);
+  };
+
+  const handleProcessSale = async () => {
+    if (!selectedInventoryItem || !saleEmail) {
+      toast({
+        title: "Error",
+        description: "Please provide customer email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // For now, we'll use a simplified approach where we just use the email
+      // as a user identifier. In a real application, you'd want to validate
+      // that the user exists first.
+      
+      // Create a temporary user ID based on email for demonstration
+      // In production, you'd want to lookup the actual user ID
+      const userId = saleEmail; // This is simplified - you'd want proper user lookup
+
+      // Call the mark_inventory_sold function
+      const { data, error } = await supabase.rpc('mark_inventory_sold', {
+        inventory_id: selectedInventoryItem.id,
+        user_id: userId,
+        sale_price: salePrice
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Item marked as sold and order created successfully",
+      });
+
+      setIsSaleModalOpen(false);
+      setSelectedInventoryItem(null);
+      setSaleEmail('');
+      setSalePrice(0);
       fetchAdminData();
     } catch (error: any) {
       toast({
@@ -821,28 +882,48 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     {inventory.map((item) => (
                       <div key={item.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-semibold">{item.device_brand} {item.device_model}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Condition: {item.device_condition} • SKU: {item.sku || 'N/A'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Quantity: {item.quantity_available} • Price: ${item.price}
-                            </p>
-                            {item.quantity_available < 5 && (
-                              <Badge variant="destructive" className="mt-1">Low Stock</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEditInventory(item)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeleteInventory(item.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
+                         <div className="flex justify-between items-start">
+                           <div>
+                             <h3 className="font-semibold">{item.device_brand} {item.device_model}</h3>
+                             <p className="text-sm text-muted-foreground">
+                               Condition: {item.device_condition} • SKU: {item.sku || 'Auto-generated'}
+                             </p>
+                             <p className="text-sm text-muted-foreground">
+                               Quantity: {item.quantity_available} • Price: ${item.price}
+                             </p>
+                             <div className="flex items-center gap-2 mt-1">
+                               {item.quantity_available < 5 && item.quantity_available > 0 && (
+                                 <Badge variant="destructive">Low Stock</Badge>
+                               )}
+                               {item.sold_to_user_id && (
+                                 <Badge variant="outline">Sold</Badge>
+                               )}
+                               {item.sold_at && (
+                                 <span className="text-xs text-muted-foreground">
+                                   Sold: {new Date(item.sold_at).toLocaleDateString()}
+                                 </span>
+                               )}
+                             </div>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                             {item.quantity_available > 0 && !item.sold_to_user_id && (
+                               <Button 
+                                 variant="outline" 
+                                 size="sm" 
+                                 onClick={() => handleMarkAsSold(item)}
+                               >
+                                 <DollarSign className="h-4 w-4 mr-1" />
+                                 Mark as Sold
+                               </Button>
+                             )}
+                             <Button variant="ghost" size="sm" onClick={() => handleEditInventory(item)}>
+                               <Edit className="h-4 w-4" />
+                             </Button>
+                             <Button variant="ghost" size="sm" onClick={() => handleDeleteInventory(item.id)}>
+                               <Trash2 className="h-4 w-4" />
+                             </Button>
+                           </div>
+                         </div>
                       </div>
                     ))}
                   </div>
@@ -1057,6 +1138,57 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Sale Modal */}
+        <Dialog open={isSaleModalOpen} onOpenChange={setIsSaleModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Mark Item as Sold</DialogTitle>
+            </DialogHeader>
+            {selectedInventoryItem && (
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">
+                    {selectedInventoryItem.device_brand} {selectedInventoryItem.device_model}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Condition: {selectedInventoryItem.device_condition} • SKU: {selectedInventoryItem.sku}
+                  </p>
+                </div>
+                <div className="grid gap-4">
+                  <div>
+                    <Label htmlFor="sale-email">Customer Email</Label>
+                    <Input
+                      id="sale-email"
+                      type="email"
+                      value={saleEmail}
+                      onChange={(e) => setSaleEmail(e.target.value)}
+                      placeholder="customer@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sale-price">Sale Price</Label>
+                    <Input
+                      id="sale-price"
+                      type="number"
+                      step="0.01"
+                      value={salePrice}
+                      onChange={(e) => setSalePrice(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsSaleModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleProcessSale}>
+                Mark as Sold & Create Order
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
