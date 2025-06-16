@@ -24,9 +24,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     setIsLoading(true);
     
-    const success = await login(loginData.email, loginData.password);
+    const result = await login(loginData.email, loginData.password);
     
-    if (success) {
+    if (result.success) {
       toast({
         title: "Login successful",
         description: "Welcome back!",

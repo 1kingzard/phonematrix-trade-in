@@ -13,6 +13,7 @@ import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PurchaseHistoryProvider } from "./contexts/PurchaseHistoryContext";
 import { useEffect } from "react";
@@ -49,6 +50,7 @@ const App = () => {
                 <Route path="/reviews" element={<ReviewsPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
