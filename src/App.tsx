@@ -11,6 +11,8 @@ import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import FAQPage from "./pages/FAQPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PurchaseHistoryProvider } from "./contexts/PurchaseHistoryContext";
 import { useEffect } from "react";
@@ -45,6 +47,8 @@ const App = () => {
                 <Route path="/price-list" element={<PriceList />} />
                 <Route path="/faq" element={<FAQPage />} />
                 <Route path="/reviews" element={<ReviewsPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
