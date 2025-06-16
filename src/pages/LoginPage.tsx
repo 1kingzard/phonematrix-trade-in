@@ -1,64 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-const registerSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-type RegisterFormData = z.infer<typeof registerSchema>;
-
 const LoginPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('login');
-  const { login, register, user } = useAuth();
+  const { user, login, register, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({ 
+    email: '', 
+    password: '', 
+    firstName: '', 
+    lastName: '',
+    confirmPassword: '' 
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (user && !isLoading) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
 
-  const loginForm = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
 
-  const registerForm = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-  });
-
-  const onLogin = async (data: LoginFormData) => {
-    setIsLoading(true);
-    setError(null);
-    
-    const result = await login(data.email, data.password);
+    const result = await login(loginForm.email, loginForm.password);
     
     if (result.success) {
       toast({
@@ -70,29 +50,56 @@ const LoginPage = () => {
       setError(result.error || 'Login failed');
     }
     
-    setIsLoading(false);
+    setIsSubmitting(false);
   };
 
-  const onRegister = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    setError(null);
-    
-    const result = await register(data.email, data.password, data.firstName, data.lastName);
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    if (registerForm.password !== registerForm.confirmPassword) {
+      setError('Passwords do not match');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (registerForm.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const result = await register(
+      registerForm.email, 
+      registerForm.password, 
+      registerForm.firstName, 
+      registerForm.lastName
+    );
     
     if (result.success) {
       toast({
         title: "Account created!",
         description: "Please check your email to verify your account.",
       });
+      // Stay on login page for email verification
     } else {
       setError(result.error || 'Registration failed');
     }
     
-    setIsLoading(false);
+    setIsSubmitting(false);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/">
@@ -103,168 +110,164 @@ const LoginPage = () => {
             />
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Welcome to PhoneMatrix</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account or create a new one</p>
+          <p className="text-muted-foreground">Sign in to your account or create a new one</p>
         </div>
 
         <Card>
-          <CardHeader className="text-center">
-            <CardTitle>Get Started</CardTitle>
-            <CardDescription>
-              Access your account to manage orders and track your devices
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Account Access</CardTitle>
+            <CardDescription className="text-center">
+              Choose your preferred method to continue
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="register">Sign Up</TabsTrigger>
               </TabsList>
-
-              {error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <TabsContent value="login" className="space-y-4 mt-6">
-                <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+              
+              <TabsContent value="login" className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
                     <Input
                       id="login-email"
                       type="email"
                       placeholder="Enter your email"
-                      {...loginForm.register('email')}
+                      value={loginForm.email}
+                      onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                      required
                     />
-                    {loginForm.formState.errors.email && (
-                      <p className="text-sm text-destructive">
-                        {loginForm.formState.errors.email.message}
-                      </p>
-                    )}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
                     <Input
                       id="login-password"
                       type="password"
                       placeholder="Enter your password"
-                      {...loginForm.register('password')}
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                      required
                     />
-                    {loginForm.formState.errors.password && (
-                      <p className="text-sm text-destructive">
-                        {loginForm.formState.errors.password.message}
-                      </p>
-                    )}
                   </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Signing In...' : 'Sign In'}
+                  
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
                   </Button>
                 </form>
               </TabsContent>
-
-              <TabsContent value="register" className="space-y-4 mt-6">
-                <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+              
+              <TabsContent value="register" className="space-y-4">
+                <form onSubmit={handleRegister} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="register-firstname">First Name</Label>
                       <Input
-                        id="firstName"
+                        id="register-firstname"
+                        type="text"
                         placeholder="First name"
-                        {...registerForm.register('firstName')}
+                        value={registerForm.firstName}
+                        onChange={(e) => setRegisterForm({ ...registerForm, firstName: e.target.value })}
+                        required
                       />
-                      {registerForm.formState.errors.firstName && (
-                        <p className="text-sm text-destructive">
-                          {registerForm.formState.errors.firstName.message}
-                        </p>
-                      )}
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="register-lastname">Last Name</Label>
                       <Input
-                        id="lastName"
+                        id="register-lastname"
+                        type="text"
                         placeholder="Last name"
-                        {...registerForm.register('lastName')}
+                        value={registerForm.lastName}
+                        onChange={(e) => setRegisterForm({ ...registerForm, lastName: e.target.value })}
+                        required
                       />
-                      {registerForm.formState.errors.lastName && (
-                        <p className="text-sm text-destructive">
-                          {registerForm.formState.errors.lastName.message}
-                        </p>
-                      )}
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>
                     <Input
                       id="register-email"
                       type="email"
                       placeholder="Enter your email"
-                      {...registerForm.register('email')}
+                      value={registerForm.email}
+                      onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                      required
                     />
-                    {registerForm.formState.errors.email && (
-                      <p className="text-sm text-destructive">
-                        {registerForm.formState.errors.email.message}
-                      </p>
-                    )}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="register-password">Password</Label>
                     <Input
                       id="register-password"
                       type="password"
                       placeholder="Create a password"
-                      {...registerForm.register('password')}
+                      value={registerForm.password}
+                      onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                      required
+                      minLength={6}
                     />
-                    {registerForm.formState.errors.password && (
-                      <p className="text-sm text-destructive">
-                        {registerForm.formState.errors.password.message}
-                      </p>
-                    )}
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="register-confirm">Confirm Password</Label>
                     <Input
-                      id="confirmPassword"
+                      id="register-confirm"
                       type="password"
                       placeholder="Confirm your password"
-                      {...registerForm.register('confirmPassword')}
+                      value={registerForm.confirmPassword}
+                      onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
+                      required
+                      minLength={6}
                     />
-                    {registerForm.formState.errors.confirmPassword && (
-                      <p className="text-sm text-destructive">
-                        {registerForm.formState.errors.confirmPassword.message}
-                      </p>
-                    )}
                   </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
+                  
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      'Create Account'
+                    )}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
-
-            <div className="text-center mt-6">
-              <p className="text-sm text-muted-foreground">
-                By continuing, you agree to our{' '}
-                <Link to="#" className="text-primary hover:underline">
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link to="#" className="text-primary hover:underline">
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
           </CardContent>
         </Card>
 
         <div className="text-center mt-6">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
+          <Link 
+            to="/" 
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
             ← Back to Home
           </Link>
         </div>
