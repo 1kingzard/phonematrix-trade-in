@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Shield, Package, Users, Gift, Plus, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Shield, Package, Users, Gift, Plus, Edit, Trash2, UserPlus, Settings, Warehouse, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ReferralCode {
   id: string;
@@ -41,6 +43,23 @@ interface PurchaseRequest {
   status: string;
   created_at: string;
   currency: string;
+  assigned_to: string | null;
+  workflow_status: string;
+  referral_code_used: string | null;
+}
+
+interface InventoryItem {
+  id: string;
+  device_brand: string;
+  device_model: string;
+  device_condition: string;
+  quantity_available: number;
+  price: number;
+  cost_price: number | null;
+  sku: string | null;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
 }
 
 const AdminDashboard = () => {
@@ -49,9 +68,16 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [referralCodes, setReferralCodes] = useState<ReferralCode[]>([]);
   const [orders, setOrders] = useState<PurchaseRequest[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<ReferralCode | null>(null);
+  const [editingInventory, setEditingInventory] = useState<InventoryItem | null>(null);
+  const [adminEmail, setAdminEmail] = useState('');
+  
   const [formData, setFormData] = useState({
     code: '',
     discount_percentage: 0,
@@ -59,6 +85,29 @@ const AdminDashboard = () => {
     max_uses: '',
     expires_at: '',
     is_active: true
+  });
+
+  const [inventoryForm, setInventoryForm] = useState({
+    device_brand: '',
+    device_model: '',
+    device_condition: '',
+    quantity_available: 0,
+    price: 0,
+    cost_price: 0,
+    sku: '',
+    description: ''
+  });
+
+  const [orderForm, setOrderForm] = useState({
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    device_brand: '',
+    device_model: '',
+    device_condition: '',
+    total_price: 0,
+    currency: 'USD',
+    referral_code: ''
   });
 
   useEffect(() => {
@@ -93,6 +142,16 @@ const AdminDashboard = () => {
 
       if (ordersData) {
         setOrders(ordersData);
+      }
+
+      // Fetch inventory
+      const { data: inventoryData } = await supabase
+        .from('inventory')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (inventoryData) {
+        setInventory(inventoryData);
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -199,6 +258,193 @@ const AdminDashboard = () => {
     setIsModalOpen(true);
   };
 
+  const handlePromoteAdmin = async () => {
+    try {
+      const { data, error } = await supabase.rpc('promote_to_admin', { 
+        user_email: adminEmail 
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        toast({
+          title: "Success",
+          description: `${adminEmail} has been promoted to admin`,
+        });
+        setAdminEmail('');
+        setIsRoleModalOpen(false);
+      } else {
+        toast({
+          title: "Error",
+          description: "User not found",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveInventory = async () => {
+    try {
+      const inventoryData = {
+        device_brand: inventoryForm.device_brand,
+        device_model: inventoryForm.device_model,
+        device_condition: inventoryForm.device_condition,
+        quantity_available: inventoryForm.quantity_available,
+        price: inventoryForm.price,
+        cost_price: inventoryForm.cost_price || null,
+        sku: inventoryForm.sku || null,
+        description: inventoryForm.description || null,
+        is_active: true
+      };
+
+      if (editingInventory) {
+        const { error } = await supabase
+          .from('inventory')
+          .update(inventoryData)
+          .eq('id', editingInventory.id);
+
+        if (error) throw error;
+        toast({ title: "Success", description: "Inventory item updated successfully" });
+      } else {
+        const { error } = await supabase
+          .from('inventory')
+          .insert([inventoryData]);
+
+        if (error) throw error;
+        toast({ title: "Success", description: "Inventory item created successfully" });
+      }
+
+      setIsInventoryModalOpen(false);
+      setEditingInventory(null);
+      setInventoryForm({
+        device_brand: '',
+        device_model: '',
+        device_condition: '',
+        quantity_available: 0,
+        price: 0,
+        cost_price: 0,
+        sku: '',
+        description: ''
+      });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteInventory = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: "Success", description: "Inventory item deleted successfully" });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditInventory = (item: InventoryItem) => {
+    setEditingInventory(item);
+    setInventoryForm({
+      device_brand: item.device_brand,
+      device_model: item.device_model,
+      device_condition: item.device_condition,
+      quantity_available: item.quantity_available,
+      price: item.price,
+      cost_price: item.cost_price || 0,
+      sku: item.sku || '',
+      description: item.description || ''
+    });
+    setIsInventoryModalOpen(true);
+  };
+
+  const handleCreateOrder = async () => {
+    try {
+      const orderData = {
+        user_id: user?.id, // Admin creating order
+        device_info: {
+          brand: orderForm.device_brand,
+          model: orderForm.device_model,
+          condition: orderForm.device_condition
+        },
+        customer_info: {
+          name: orderForm.customer_name,
+          email: orderForm.customer_email,
+          phone: orderForm.customer_phone
+        },
+        total_price: orderForm.total_price,
+        currency: orderForm.currency,
+        referral_code_used: orderForm.referral_code || null,
+        workflow_status: 'admin_created',
+        status: 'confirmed' as const
+      };
+
+      const { error } = await supabase
+        .from('purchase_requests')
+        .insert([orderData]);
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Order created successfully" });
+      setIsOrderModalOpen(false);
+      setOrderForm({
+        customer_name: '',
+        customer_email: '',
+        customer_phone: '',
+        device_brand: '',
+        device_model: '',
+        device_condition: '',
+        total_price: 0,
+        currency: 'USD',
+        referral_code: ''
+      });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('purchase_requests')
+        .update({ status: newStatus as any })
+        .eq('id', orderId);
+
+      if (error) throw error;
+      toast({ title: "Success", description: "Order status updated" });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -234,7 +480,7 @@ const AdminDashboard = () => {
           <p className="text-muted-foreground">Manage orders, referral codes, and system settings</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -242,6 +488,19 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{orders.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Inventory Items</CardTitle>
+              <Warehouse className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{inventory.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {inventory.filter(i => i.quantity_available < 5).length} low stock
+              </p>
             </CardContent>
           </Card>
 
@@ -269,14 +528,132 @@ const AdminDashboard = () => {
         <Tabs defaultValue="orders" className="space-y-4">
           <TabsList>
             <TabsTrigger value="orders">Orders Management</TabsTrigger>
+            <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="referrals">Referral Codes</TabsTrigger>
+            <TabsTrigger value="admin">Admin Tools</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>All Orders</CardTitle>
-                <CardDescription>Manage customer orders and assignments</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>All Orders</CardTitle>
+                    <CardDescription>Manage customer orders and assignments</CardDescription>
+                  </div>
+                  <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Create Order
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Create Manual Order</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="customer-name">Customer Name</Label>
+                            <Input
+                              id="customer-name"
+                              value={orderForm.customer_name}
+                              onChange={(e) => setOrderForm({...orderForm, customer_name: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="customer-email">Customer Email</Label>
+                            <Input
+                              id="customer-email"
+                              type="email"
+                              value={orderForm.customer_email}
+                              onChange={(e) => setOrderForm({...orderForm, customer_email: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="customer-phone">Customer Phone</Label>
+                            <Input
+                              id="customer-phone"
+                              value={orderForm.customer_phone}
+                              onChange={(e) => setOrderForm({...orderForm, customer_phone: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="referral-code">Referral Code (Optional)</Label>
+                            <Input
+                              id="referral-code"
+                              value={orderForm.referral_code}
+                              onChange={(e) => setOrderForm({...orderForm, referral_code: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="device-brand">Device Brand</Label>
+                            <Input
+                              id="device-brand"
+                              value={orderForm.device_brand}
+                              onChange={(e) => setOrderForm({...orderForm, device_brand: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="device-model">Device Model</Label>
+                            <Input
+                              id="device-model"
+                              value={orderForm.device_model}
+                              onChange={(e) => setOrderForm({...orderForm, device_model: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="device-condition">Condition</Label>
+                            <Select value={orderForm.device_condition} onValueChange={(value) => setOrderForm({...orderForm, device_condition: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="excellent">Excellent</SelectItem>
+                                <SelectItem value="good">Good</SelectItem>
+                                <SelectItem value="fair">Fair</SelectItem>
+                                <SelectItem value="poor">Poor</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="total-price">Total Price</Label>
+                            <Input
+                              id="total-price"
+                              type="number"
+                              step="0.01"
+                              value={orderForm.total_price}
+                              onChange={(e) => setOrderForm({...orderForm, total_price: Number(e.target.value)})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="currency">Currency</Label>
+                            <Select value={orderForm.currency} onValueChange={(value) => setOrderForm({...orderForm, currency: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="USD">USD</SelectItem>
+                                <SelectItem value="EUR">EUR</SelectItem>
+                                <SelectItem value="GBP">GBP</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleCreateOrder}>Create Order</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 {orders.length === 0 ? (
@@ -296,12 +673,174 @@ const AdminDashboard = () => {
                             <p className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString()}
                             </p>
+                            {order.referral_code_used && (
+                              <p className="text-sm text-muted-foreground">
+                                Referral: {order.referral_code_used}
+                              </p>
+                            )}
                           </div>
-                          <div className="text-right">
+                          <div className="text-right space-y-2">
                             <p className="font-semibold">${order.total_price} {order.currency}</p>
-                            <Badge className={getStatusColor(order.status)}>
-                              {order.status.toUpperCase()}
-                            </Badge>
+                            <Select value={order.status} onValueChange={(value) => updateOrderStatus(order.id, value)}>
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="shipped">Shipped</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Inventory Management</CardTitle>
+                    <CardDescription>Manage device stock and pricing</CardDescription>
+                  </div>
+                  <Dialog open={isInventoryModalOpen} onOpenChange={setIsInventoryModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Item
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{editingInventory ? 'Edit' : 'Add'} Inventory Item</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="brand">Brand</Label>
+                            <Input
+                              id="brand"
+                              value={inventoryForm.device_brand}
+                              onChange={(e) => setInventoryForm({...inventoryForm, device_brand: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="model">Model</Label>
+                            <Input
+                              id="model"
+                              value={inventoryForm.device_model}
+                              onChange={(e) => setInventoryForm({...inventoryForm, device_model: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="condition">Condition</Label>
+                            <Select value={inventoryForm.device_condition} onValueChange={(value) => setInventoryForm({...inventoryForm, device_condition: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="excellent">Excellent</SelectItem>
+                                <SelectItem value="good">Good</SelectItem>
+                                <SelectItem value="fair">Fair</SelectItem>
+                                <SelectItem value="poor">Poor</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="sku">SKU</Label>
+                            <Input
+                              id="sku"
+                              value={inventoryForm.sku}
+                              onChange={(e) => setInventoryForm({...inventoryForm, sku: e.target.value})}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="quantity">Quantity</Label>
+                            <Input
+                              id="quantity"
+                              type="number"
+                              value={inventoryForm.quantity_available}
+                              onChange={(e) => setInventoryForm({...inventoryForm, quantity_available: Number(e.target.value)})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="price">Price</Label>
+                            <Input
+                              id="price"
+                              type="number"
+                              step="0.01"
+                              value={inventoryForm.price}
+                              onChange={(e) => setInventoryForm({...inventoryForm, price: Number(e.target.value)})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="cost-price">Cost Price</Label>
+                            <Input
+                              id="cost-price"
+                              type="number"
+                              step="0.01"
+                              value={inventoryForm.cost_price}
+                              onChange={(e) => setInventoryForm({...inventoryForm, cost_price: Number(e.target.value)})}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={inventoryForm.description}
+                            onChange={(e) => setInventoryForm({...inventoryForm, description: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleSaveInventory}>
+                          {editingInventory ? 'Update' : 'Add'} Item
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {inventory.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No inventory items found</p>
+                ) : (
+                  <div className="space-y-4">
+                    {inventory.map((item) => (
+                      <div key={item.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold">{item.device_brand} {item.device_model}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Condition: {item.device_condition} • SKU: {item.sku || 'N/A'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Quantity: {item.quantity_available} • Price: ${item.price}
+                            </p>
+                            {item.quantity_available < 5 && (
+                              <Badge variant="destructive" className="mt-1">Low Stock</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEditInventory(item)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteInventory(item.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -441,6 +980,81 @@ const AdminDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="admin" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <UserPlus className="h-5 w-5 mr-2" />
+                    User Role Management
+                  </CardTitle>
+                  <CardDescription>Promote users to admin status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Promote to Admin
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Promote User to Admin</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="admin-email" className="text-right">Email</Label>
+                          <Input
+                            id="admin-email"
+                            value={adminEmail}
+                            onChange={(e) => setAdminEmail(e.target.value)}
+                            className="col-span-3"
+                            placeholder="user@example.com"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handlePromoteAdmin}>Promote to Admin</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="h-5 w-5 mr-2" />
+                    System Statistics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Total Orders:</span>
+                    <span className="text-sm font-medium">{orders.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Inventory Items:</span>
+                    <span className="text-sm font-medium">{inventory.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Active Codes:</span>
+                    <span className="text-sm font-medium">{referralCodes.filter(c => c.is_active).length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Total Revenue:</span>
+                    <span className="text-sm font-medium">${orders.reduce((sum, order) => sum + Number(order.total_price), 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Low Stock Items:</span>
+                    <span className="text-sm font-medium">{inventory.filter(i => i.quantity_available < 5).length}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

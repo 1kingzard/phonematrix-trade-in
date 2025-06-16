@@ -72,6 +72,8 @@ export type Database = {
           id: string
           points: number
           referral_code: string | null
+          referral_points_earned: number | null
+          referrals_made: number | null
           referred_by: string | null
           tier: Database["public"]["Enums"]["loyalty_tier"]
           total_purchases: number
@@ -84,6 +86,8 @@ export type Database = {
           id?: string
           points?: number
           referral_code?: string | null
+          referral_points_earned?: number | null
+          referrals_made?: number | null
           referred_by?: string | null
           tier?: Database["public"]["Enums"]["loyalty_tier"]
           total_purchases?: number
@@ -96,6 +100,8 @@ export type Database = {
           id?: string
           points?: number
           referral_code?: string | null
+          referral_points_earned?: number | null
+          referrals_made?: number | null
           referred_by?: string | null
           tier?: Database["public"]["Enums"]["loyalty_tier"]
           total_purchases?: number
@@ -147,6 +153,51 @@ export type Database = {
           min_purchase_amount?: number | null
           tier_required?: Database["public"]["Enums"]["loyalty_tier"] | null
           used_count?: number | null
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          device_brand: string
+          device_condition: string
+          device_model: string
+          id: string
+          is_active: boolean | null
+          price: number
+          quantity_available: number
+          sku: string | null
+          updated_at: string
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          device_brand: string
+          device_condition: string
+          device_model: string
+          id?: string
+          is_active?: boolean | null
+          price: number
+          quantity_available?: number
+          sku?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          device_brand?: string
+          device_condition?: string
+          device_model?: string
+          id?: string
+          is_active?: boolean | null
+          price?: number
+          quantity_available?: number
+          sku?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -219,6 +270,7 @@ export type Database = {
       purchase_requests: {
         Row: {
           admin_notes: string | null
+          assigned_to: string | null
           created_at: string
           currency: string
           customer_info: Json
@@ -230,14 +282,17 @@ export type Database = {
           notes: string | null
           points_earned: number | null
           points_used: number | null
+          referral_code_used: string | null
           status: Database["public"]["Enums"]["request_status"]
           total_price: number
           tracking_number: string | null
           updated_at: string
           user_id: string
+          workflow_status: string | null
         }
         Insert: {
           admin_notes?: string | null
+          assigned_to?: string | null
           created_at?: string
           currency?: string
           customer_info: Json
@@ -249,14 +304,17 @@ export type Database = {
           notes?: string | null
           points_earned?: number | null
           points_used?: number | null
+          referral_code_used?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           total_price: number
           tracking_number?: string | null
           updated_at?: string
           user_id: string
+          workflow_status?: string | null
         }
         Update: {
           admin_notes?: string | null
+          assigned_to?: string | null
           created_at?: string
           currency?: string
           customer_info?: Json
@@ -268,11 +326,13 @@ export type Database = {
           notes?: string | null
           points_earned?: number | null
           points_used?: number | null
+          referral_code_used?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           total_price?: number
           tracking_number?: string | null
           updated_at?: string
           user_id?: string
+          workflow_status?: string | null
         }
         Relationships: []
       }
@@ -318,6 +378,44 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          points_awarded: number
+          purchase_id: string | null
+          referred_user_id: string
+          referrer_id: string
+          reward_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_awarded: number
+          purchase_id?: string | null
+          referred_user_id: string
+          referrer_id: string
+          reward_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          purchase_id?: string | null
+          referred_user_id?: string
+          referrer_id?: string
+          reward_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -336,6 +434,14 @@ export type Database = {
       is_admin: {
         Args: { user_uuid?: string }
         Returns: boolean
+      }
+      process_referral_reward: {
+        Args: {
+          referral_code: string
+          purchase_id: string
+          purchase_amount: number
+        }
+        Returns: undefined
       }
       promote_to_admin: {
         Args: { user_email: string }

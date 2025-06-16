@@ -83,10 +83,16 @@ const DashboardPage = () => {
       return;
     }
 
+    // Redirect admins to admin dashboard
+    if (user && isAdmin) {
+      navigate('/admin');
+      return;
+    }
+
     if (user) {
       fetchUserData();
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, isAdmin, navigate]);
 
   const fetchUserData = async () => {
     try {
