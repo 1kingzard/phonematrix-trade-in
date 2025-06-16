@@ -57,9 +57,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     
     setIsLoading(true);
     
-    const success = await register(registerData.email, registerData.password, registerData.name);
+    const nameParts = registerData.name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
     
-    if (success) {
+    const result = await register(registerData.email, registerData.password, firstName, lastName);
+    
+    if (result.success) {
       toast({
         title: "Registration successful",
         description: "Welcome to PhoneMatrix!",
