@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { DeviceCard } from './DeviceCard';
+import DeviceCard from './DeviceCard';
 
 interface Device {
   id: string;
