@@ -14,7 +14,6 @@ import { DeviceGrid } from '../components/DeviceGrid';
 import DeductionCalculator from '../components/DeductionCalculator';
 import EmailForm from '../components/EmailForm';
 import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
 import OnboardingGuide from '../components/OnboardingGuide';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -369,10 +368,10 @@ const Index = () => {
   // Render content based on loading/error state
   if (loading || loadingRate) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto"></div>
-          <div className="text-2xl font-medium text-gray-900">Loading...</div>
+          <div className="w-8 h-8 border-2 border-gray-700 border-t-white rounded-full animate-spin mx-auto"></div>
+          <div className="text-2xl font-medium text-white">Loading...</div>
         </div>
       </div>
     );
@@ -380,11 +379,11 @@ const Index = () => {
   
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center space-y-4">
-          <div className="text-2xl font-semibold text-red-500">Error Loading Data</div>
-          <div className="text-gray-700">{error}</div>
-          <Button onClick={() => window.location.reload()} className="bg-black hover:bg-gray-800">
+          <div className="text-2xl font-semibold text-red-400">Error Loading Data</div>
+          <div className="text-gray-300">{error}</div>
+          <Button onClick={() => window.location.reload()} className="bg-white text-black hover:bg-gray-200">
             Try Again
           </Button>
         </div>
@@ -393,7 +392,7 @@ const Index = () => {
   }
   
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Onboarding guide */}
       {showOnboarding && <OnboardingGuide steps={[
         {
@@ -421,170 +420,141 @@ const Index = () => {
       {/* Header */}
       <Header />
       
-      {/* Main Hero Section */}
-      <HeroSection 
-        title="The future of device trading."
-        subtitle="Get the most value for your device with our transparent pricing and seamless trade-in process."
-        imageSrc="https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1600&q=80"
-        ctaText="Get Started"
-        onCtaClick={handleScrollToTradeIn}
-        height="xl"
-      />
-      
-      {/* Stats Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-5xl font-bold text-black mb-2">10,000+</div>
-              <div className="text-gray-600 text-lg">Devices Traded</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-black mb-2">4.9★</div>
-              <div className="text-gray-600 text-lg">Customer Rating</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-black mb-2">24h</div>
-              <div className="text-gray-600 text-lg">Quick Processing</div>
-            </div>
-          </div>
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)',
+            backgroundSize: '20px 20px'
+          }}></div>
         </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="py-32 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl font-bold text-black mb-6">Why choose PhoneMatrix?</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Experience the future of device trading with our innovative platform
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: Shield,
-                title: "Secure & Trusted",
-                description: "Enterprise-level security for your devices and data"
-              },
-              {
-                icon: Users,
-                title: "Expert Support",
-                description: "Our team guides you through every step"
-              },
-              {
-                icon: CheckCircle,
-                title: "Quality Guarantee",
-                description: "30-day warranty on all devices"
-              },
-              {
-                icon: Star,
-                title: "Best Value",
-                description: "Competitive pricing with transparent rates"
-              }
-            ].map((feature, index) => (
-              <div key={index} className="text-center group">
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4 text-black">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Product Showcase */}
-      <section className="py-32 bg-black text-white">
-        <div className="container mx-auto px-6">
+        
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-5xl font-bold mb-8">
-                Trade in your device.
-                <br />
-                Upgrade your life.
-              </h2>
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                From smartphones to tablets, get instant quotes and seamless upgrades. 
-                Our AI-powered valuation ensures you get the best price for your device.
-              </p>
-              <Button 
-                size="lg" 
-                className="bg-white text-black hover:bg-gray-100 px-8 py-4 text-lg"
-                onClick={handleScrollToTradeIn}
-              >
-                Start Trading
-              </Button>
+            {/* Left content */}
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+                  Boost your <span className="text-yellow-400">PhoneMatrix</span><br />
+                  game with <span className="text-yellow-400">Premium</span><br />
+                  <span className="text-yellow-400">Trade Plans</span>
+                </h1>
+                
+                <p className="text-xl text-gray-300 max-w-lg leading-relaxed">
+                  Get all the current and upcoming devices to speed up your 
+                  workflow and publish in minutes. <span className="text-white font-medium">one payment</span>, lifetime updates.
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Button 
+                  size="lg" 
+                  className="bg-yellow-400 text-black hover:bg-yellow-300 px-8 py-4 text-lg font-medium rounded-full"
+                  onClick={handleScrollToTradeIn}
+                >
+                  See Premium Plans
+                </Button>
+                
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map((i) => (
+                      <div key={i} className="w-2 h-2 rounded-full bg-gray-600"></div>
+                    ))}
+                  </div>
+                  <span>Save $194</span>
+                </div>
+              </div>
             </div>
-            <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=800&q=80"
-                alt="Device Showcase"
-                className="w-full rounded-2xl"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-32 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl font-bold text-black mb-6">How it works</h2>
-            <p className="text-xl text-gray-600">Simple, fast, and transparent</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-            {[
-              {
-                step: "1",
-                title: "Select Device",
-                description: "Choose your current device and get an instant quote",
-                image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80"
-              },
-              {
-                step: "2", 
-                title: "Choose Upgrade",
-                description: "Browse and select your next device (optional)",
-                image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=400&q=80"
-              },
-              {
-                step: "3",
-                title: "Complete Trade",
-                description: "Submit your request and we'll handle everything",
-                image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=400&q=80"
-              }
-            ].map((step, index) => (
-              <div key={index} className="text-center group">
-                <div className="relative mb-8">
-                  <img 
-                    src={step.image}
-                    alt={step.title}
-                    className="w-full h-64 object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center text-xl font-bold">
-                    {step.step}
+            
+            {/* Right content - Floating devices */}
+            <div className="relative h-96 lg:h-[500px]">
+              {/* Large device mockup */}
+              <div className="absolute top-0 right-0 w-64 h-80 bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl border border-gray-700 shadow-2xl transform rotate-12 hover:rotate-6 transition-transform duration-500">
+                <div className="p-8 h-full flex flex-col justify-center items-center">
+                  <div className="w-16 h-16 bg-yellow-400 rounded-2xl mb-4 flex items-center justify-center">
+                    <div className="grid grid-cols-3 gap-1">
+                      {[...Array(9)].map((_, i) => (
+                        <div key={i} className="w-2 h-2 bg-black rounded-sm"></div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-white font-bold text-lg mb-2">PhoneMatrix</div>
+                    <div className="text-gray-400 text-sm">Premium Trade</div>
                   </div>
                 </div>
-                <h3 className="text-2xl font-semibold mb-4 text-black">{step.title}</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">{step.description}</p>
               </div>
-            ))}
+              
+              {/* Small device mockup */}
+              <div className="absolute bottom-8 left-8 w-48 h-60 bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl border border-gray-600 shadow-xl transform -rotate-6 hover:rotate-0 transition-transform duration-500">
+                <div className="p-6 h-full flex flex-col justify-center items-center">
+                  <div className="w-12 h-12 bg-yellow-400 rounded-xl mb-3 flex items-center justify-center">
+                    <div className="grid grid-cols-3 gap-1">
+                      {[...Array(9)].map((_, i) => (
+                        <div key={i} className="w-1.5 h-1.5 bg-black rounded-sm"></div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-white font-semibold mb-1">PhoneMatrix</div>
+                    <div className="text-gray-400 text-xs">Trade Pro</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Premium Features Section */}
+      <section className="py-32 bg-gradient-to-b from-black to-gray-900">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-4xl lg:text-6xl font-bold mb-8 leading-tight">
+            Get your premium, neatly<br />
+            crafted <span className="text-yellow-400">PhoneMatrix</span> assets and<br />
+            <span className="text-yellow-400">every next future release</span>
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-8 h-8 text-black" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Lifetime Updates</h3>
+              <p className="text-gray-400">Get all future device releases and updates with one payment</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Star className="w-8 h-8 text-black" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Premium Support</h3>
+              <p className="text-gray-400">Priority customer support and dedicated assistance</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-black" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Best Prices</h3>
+              <p className="text-gray-400">Guaranteed highest trade-in values in the market</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Trade-in Calculator Section */}
       {showTradeInSection && (
-        <section className="py-32 bg-white" ref={tradeInSectionRef}>
+        <section className="py-32 bg-gray-900" ref={tradeInSectionRef}>
           <div className="container mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-black mb-6">Start your trade-in</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Select your current device to get an instant quote
+              <h2 className="text-4xl lg:text-6xl font-bold text-white mb-6">Start your premium trade</h2>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                Select your current device to get an instant premium quote
               </p>
             </div>
 
@@ -611,7 +581,7 @@ const Index = () => {
 
             {/* Quick Brand Filters */}
             <div className="mb-8">
-              <h3 className="text-lg font-medium mb-4 text-gray-900">Filter by brand:</h3>
+              <h3 className="text-lg font-medium mb-4 text-white">Filter by brand:</h3>
               <QuickFilters 
                 filters={brands}
                 activeFilter={quickBrandFilter}
@@ -635,7 +605,7 @@ const Index = () => {
             <div className="mt-12">
               {filteredDevices.length === 0 ? (
                 <div className="text-center py-16">
-                  <p className="text-gray-500 text-lg">No devices match your selected filters.</p>
+                  <p className="text-gray-400 text-lg">No devices match your selected filters.</p>
                 </div>
               ) : (
                 <DeviceGrid
@@ -651,7 +621,7 @@ const Index = () => {
             {/* Selected device details */}
             {selectedDevice && (
               <div className="mt-16 max-w-4xl mx-auto" ref={selectedDeviceDetailsRef}>
-                <Card className="p-8">
+                <Card className="p-8 bg-gray-800 border-gray-700">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <DeductionCalculator 
                       basePrice={selectedDevice.Price} 
@@ -661,27 +631,27 @@ const Index = () => {
                     
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-2xl font-bold text-black mb-2">Selected Device</h3>
-                        <p className="text-xl text-gray-900">{selectedDevice.Brand} {selectedDevice.Model}</p>
-                        <p className="text-gray-600">
+                        <h3 className="text-2xl font-bold text-white mb-2">Selected Device</h3>
+                        <p className="text-xl text-white">{selectedDevice.Brand} {selectedDevice.Model}</p>
+                        <p className="text-gray-300">
                           {selectedDevice.Storage} • {selectedDevice.Color} • {selectedDevice.Condition}
                         </p>
                       </div>
                       
-                      <Separator />
+                      <Separator className="bg-gray-700" />
                       
                       <div>
-                        <p className="text-gray-600 mb-2">Trade-in Value:</p>
-                        <p className="text-3xl font-bold text-black mb-6">
+                        <p className="text-gray-300 mb-2">Premium Trade-in Value:</p>
+                        <p className="text-3xl font-bold text-yellow-400 mb-6">
                           {formatCurrency(finalTradeValue)}
                         </p>
                         
                         <Button 
                           size="lg"
-                          className="w-full bg-black hover:bg-gray-800 text-white py-4 text-lg" 
+                          className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 text-lg font-medium" 
                           onClick={() => setShowUpgradeSelection(true)}
                         >
-                          Continue to Upgrade
+                          Continue to Premium Upgrade
                         </Button>
                       </div>
                     </div>
@@ -693,33 +663,28 @@ const Index = () => {
         </section>
       )}
 
-      {/* Testimonials */}
-      <section className="py-32 bg-gray-50">
-        <Testimonials testimonials={testimonials} />
-      </section>
-
       {/* CTA Section */}
-      <section className="py-32 bg-black text-white">
+      <section className="py-32 bg-black">
         <div className="container mx-auto px-6 text-center">
-          <h2 className="text-5xl font-bold mb-8">Ready to trade?</h2>
+          <h2 className="text-4xl lg:text-6xl font-bold mb-8">Ready for premium?</h2>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied customers who trust PhoneMatrix
+            Join thousands of satisfied customers who trust PhoneMatrix Premium
           </p>
           <Button 
             size="lg" 
-            className="bg-white text-black hover:bg-gray-100 px-8 py-4 text-lg"
+            className="bg-yellow-400 text-black hover:bg-yellow-300 px-8 py-4 text-lg font-medium rounded-full"
             onClick={handleScrollToTradeIn}
           >
-            Get Started Now
+            Get Premium Access
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-white border-t border-gray-200">
+      <footer className="py-12 bg-gray-900 border-t border-gray-800">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-gray-500">
-            &copy; {new Date().getFullYear()} PhoneMatrix. All rights reserved.
+          <p className="text-gray-400">
+            &copy; {new Date().getFullYear()} PhoneMatrix Premium. All rights reserved.
           </p>
         </div>
       </footer>
