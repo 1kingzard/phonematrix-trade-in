@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Card } from './ui/card';
+import { Button } from './ui/button';
+import { ArrowRight } from 'lucide-react';
 
 interface HeroSectionProps {
   title: string;
@@ -8,44 +9,66 @@ interface HeroSectionProps {
   imageSrc: string;
   primaryColor?: string;
   secondaryColor?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  onCtaClick?: () => void;
+  height?: 'sm' | 'md' | 'lg' | 'xl';
+  overlay?: boolean;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   title, 
   subtitle, 
   imageSrc,
-  primaryColor = '#d81570',
-  secondaryColor = '#fce4f1'
+  primaryColor = '#000000',
+  secondaryColor = '#ffffff',
+  ctaText,
+  ctaLink,
+  onCtaClick,
+  height = 'lg',
+  overlay = true
 }) => {
-  const gradientStyle = {
-    background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
+  const heightClasses = {
+    sm: 'h-[50vh]',
+    md: 'h-[60vh]',
+    lg: 'h-[80vh]',
+    xl: 'h-screen'
   };
 
   return (
-    <div className="relative overflow-hidden" style={gradientStyle}>
-      <div className="absolute inset-0 z-0 opacity-20">
+    <section className={`relative ${heightClasses[height]} flex items-center justify-center overflow-hidden`}>
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
         <img 
           src={imageSrc} 
-          alt="Background" 
-          className="w-full h-full object-cover object-center"
+          alt="Hero Background" 
+          className="w-full h-full object-cover"
         />
+        {overlay && (
+          <div className="absolute inset-0 bg-black/40"></div>
+        )}
       </div>
-      <div className="relative z-10 py-16 container mx-auto px-4 flex flex-col items-center text-white">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4">
+      
+      {/* Content */}
+      <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
           {title}
         </h1>
-        <p className="text-lg md:text-xl text-center max-w-2xl mx-auto">
+        <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
           {subtitle}
         </p>
         
-        <Card className="mt-8 p-6 bg-white/10 backdrop-blur-sm border border-white/20 text-white max-w-lg w-full">
-          <p className="text-center text-sm md:text-base">
-            Find the perfect device for your needs or trade in your current one for an upgrade.
-            Our easy-to-use tools help you make the right choice.
-          </p>
-        </Card>
+        {ctaText && (
+          <Button 
+            size="lg" 
+            className="bg-white text-black hover:bg-gray-100 px-8 py-4 text-lg font-medium"
+            onClick={onCtaClick}
+          >
+            {ctaText} <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        )}
       </div>
-    </div>
+    </section>
   );
 };
 
