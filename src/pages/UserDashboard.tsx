@@ -394,7 +394,7 @@ const UserDashboard = () => {
                         <p className="text-sm text-muted-foreground">Current Points</p>
                       </div>
                       <div className="text-center">
-                        <Badge className={getTierColor(loyalty.tier)} variant="outline" size="lg">
+                        <Badge className={`${getTierColor(loyalty.tier)} px-4 py-2 text-base`} variant="outline">
                           {loyalty.tier.toUpperCase()} TIER
                         </Badge>
                         <p className="text-sm text-muted-foreground mt-1">Current Tier</p>
