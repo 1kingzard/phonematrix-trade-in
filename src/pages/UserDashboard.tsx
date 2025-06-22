@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { User, Package, Gift, Star, Edit2, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface UserProfile {
   id: string;
@@ -71,61 +71,46 @@ const UserDashboard = () => {
     }
   }, [user, isLoading, isAdmin, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserData();
-    }
-  }, [user]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (!user) return;
 
     try {
-      // Fetch user profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const [profileResponse, ordersResponse, loyaltyResponse] = await Promise.all([
+        supabase.from('profiles').select('*').eq('user_id', user.id).single(),
+        supabase.from('purchase_requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('customer_loyalty').select('*').eq('user_id', user.id).single()
+      ]);
 
-      if (profileData) {
-        setProfile(profileData);
+      if (profileResponse.data) {
+        setProfile(profileResponse.data);
         setProfileForm({
-          first_name: profileData.first_name || '',
-          last_name: profileData.last_name || '',
-          phone: profileData.phone || '',
-          address: profileData.address || '',
-          date_of_birth: profileData.date_of_birth || ''
+          first_name: profileResponse.data.first_name || '',
+          last_name: profileResponse.data.last_name || '',
+          phone: profileResponse.data.phone || '',
+          address: profileResponse.data.address || '',
+          date_of_birth: profileResponse.data.date_of_birth || ''
         });
       }
 
-      // Fetch user orders
-      const { data: ordersData } = await supabase
-        .from('purchase_requests')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (ordersData) {
-        setOrders(ordersData);
+      if (ordersResponse.data) {
+        setOrders(ordersResponse.data);
       }
 
-      // Fetch loyalty information
-      const { data: loyaltyData } = await supabase
-        .from('customer_loyalty')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (loyaltyData) {
-        setLoyalty(loyaltyData);
+      if (loyaltyResponse.data) {
+        setLoyalty(loyaltyResponse.data);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
-  };
+  }, [user]);
 
-  const handleSaveProfile = async () => {
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+    }
+  }, [user, fetchUserData]);
+
+  const handleSaveProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -156,9 +141,9 @@ const UserDashboard = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [user, profileForm, toast, fetchUserData]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status?.toLowerCase()) {
       case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'shipped': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -167,21 +152,21 @@ const UserDashboard = () => {
       case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
-  };
+  }, []);
 
-  const getTierColor = (tier: string) => {
+  const getTierColor = useCallback((tier: string) => {
     switch (tier?.toLowerCase()) {
       case 'platinum': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
       case 'gold': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'silver': return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
       default: return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
     }
-  };
+  }, []);
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

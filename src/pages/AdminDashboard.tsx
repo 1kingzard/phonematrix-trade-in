@@ -1,13 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Shield, Package, Users, Gift, Warehouse } from 'lucide-react';
+import { Shield, Package, Users, Gift, Warehouse } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import InventoryManagement from '@/components/admin/InventoryManagement';
 import OrderManagement from '@/components/admin/OrderManagement';
 import ReferralCodeManagement from '@/components/admin/ReferralCodeManagement';
@@ -70,43 +70,17 @@ const AdminDashboard = () => {
     }
   }, [user, authLoading, isAdmin, navigate]);
 
-  useEffect(() => {
-    if (user && isAdmin) {
-      fetchAdminData();
-    }
-  }, [user, isAdmin]);
-
-  const fetchAdminData = async () => {
+  const fetchAdminData = useCallback(async () => {
     try {
-      // Fetch referral codes
-      const { data: codesData } = await supabase
-        .from('referral_codes')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [codesResponse, ordersResponse, inventoryResponse] = await Promise.all([
+        supabase.from('referral_codes').select('*').order('created_at', { ascending: false }),
+        supabase.from('purchase_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('inventory').select('*').order('created_at', { ascending: false })
+      ]);
 
-      if (codesData) {
-        setReferralCodes(codesData);
-      }
-
-      // Fetch all orders
-      const { data: ordersData } = await supabase
-        .from('purchase_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (ordersData) {
-        setOrders(ordersData);
-      }
-
-      // Fetch inventory
-      const { data: inventoryData } = await supabase
-        .from('inventory')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (inventoryData) {
-        setInventory(inventoryData);
-      }
+      if (codesResponse.data) setReferralCodes(codesResponse.data);
+      if (ordersResponse.data) setOrders(ordersResponse.data);
+      if (inventoryResponse.data) setInventory(inventoryResponse.data);
     } catch (error) {
       console.error('Error fetching admin data:', error);
       toast({
@@ -117,12 +91,30 @@ const AdminDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      fetchAdminData();
+    }
+  }, [user, isAdmin, fetchAdminData]);
+
+  const totalRevenue = React.useMemo(() => 
+    orders.reduce((sum, order) => sum + Number(order.total_price), 0).toFixed(2)
+  , [orders]);
+
+  const lowStockCount = React.useMemo(() => 
+    inventory.filter(i => i.quantity_available < 5).length
+  , [inventory]);
+
+  const activeCodes = React.useMemo(() => 
+    referralCodes.filter(c => c.is_active).length
+  , [referralCodes]);
 
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -162,7 +154,7 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{inventory.length}</div>
               <p className="text-xs text-muted-foreground">
-                {inventory.filter(i => i.quantity_available < 5).length} low stock
+                {lowStockCount} low stock
               </p>
             </CardContent>
           </Card>
@@ -173,7 +165,7 @@ const AdminDashboard = () => {
               <Gift className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{referralCodes.filter(c => c.is_active).length}</div>
+              <div className="text-2xl font-bold">{activeCodes}</div>
             </CardContent>
           </Card>
 
@@ -183,7 +175,7 @@ const AdminDashboard = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${orders.reduce((sum, order) => sum + Number(order.total_price), 0).toFixed(2)}</div>
+              <div className="text-2xl font-bold">${totalRevenue}</div>
             </CardContent>
           </Card>
         </div>
