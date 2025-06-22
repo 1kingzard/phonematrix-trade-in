@@ -1,26 +1,20 @@
 
 import React from 'react';
 import DeviceCard from './DeviceCard';
-
-interface Device {
-  id: string;
-  brand: string;
-  model: string;
-  condition: string;
-  price: number;
-  image?: string;
-}
+import { DeviceData } from '../services/deviceDataService';
 
 interface DeviceGridProps {
-  devices: Device[];
-  currency: string;
-  onDeviceSelect: (device: Device) => void;
+  devices: DeviceData[];
+  currency: 'USD' | 'JMD';
+  exchangeRate: number;
+  onDeviceSelect: (device: DeviceData) => void;
   isLoading?: boolean;
 }
 
 export const DeviceGrid: React.FC<DeviceGridProps> = React.memo(({
   devices,
   currency,
+  exchangeRate,
   onDeviceSelect,
   isLoading = false
 }) => {
@@ -48,11 +42,12 @@ export const DeviceGrid: React.FC<DeviceGridProps> = React.memo(({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {devices.map((device) => (
+      {devices.map((device, index) => (
         <DeviceCard
-          key={device.id}
+          key={`${device.Brand}-${device.Model}-${device.Storage}-${device.Condition}-${index}`}
           device={device}
           currency={currency}
+          exchangeRate={exchangeRate}
           onClick={() => onDeviceSelect(device)}
         />
       ))}
