@@ -172,9 +172,9 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, on
       }
 
       const { data, error } = await supabase.rpc('mark_inventory_sold', {
-        inventory_id: selectedInventoryItem.id,
-        user_id: userId,
-        sale_price: salePrice
+        item_id: selectedInventoryItem.id,
+        buyer_id: userId,
+        sale_order_id: selectedInventoryItem.id
       });
 
       if (error) throw error;
@@ -189,7 +189,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, on
             },
             admin_notes: `Inventory sale to customer: ${saleEmail}`
           })
-          .eq('id', data);
+          .eq('id', selectedInventoryItem.id);
       }
 
       toast({

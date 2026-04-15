@@ -41,7 +41,7 @@ interface CustomerLoyalty {
   points: number;
   tier: string;
   referral_code: string;
-  referrals_made: number;
+  referrals_made?: number;
   total_purchases: number;
   total_spent: number;
 }
