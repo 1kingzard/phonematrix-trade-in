@@ -14,16 +14,260 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customer_loyalty: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          referral_code: string | null
+          tier: string
+          total_purchases: number
+          total_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points?: number
+          referral_code?: string | null
+          tier?: string
+          total_purchases?: number
+          total_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          referral_code?: string | null
+          tier?: string
+          total_purchases?: number
+          total_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          device_brand: string
+          device_condition: string
+          device_model: string
+          id: string
+          is_active: boolean
+          order_id: string | null
+          price: number
+          quantity_available: number
+          sku: string | null
+          sold_at: string | null
+          sold_to_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          device_brand: string
+          device_condition: string
+          device_model: string
+          id?: string
+          is_active?: boolean
+          order_id?: string | null
+          price?: number
+          quantity_available?: number
+          sku?: string | null
+          sold_at?: string | null
+          sold_to_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          device_brand?: string
+          device_condition?: string
+          device_model?: string
+          id?: string
+          is_active?: boolean
+          order_id?: string | null
+          price?: number
+          quantity_available?: number
+          sku?: string | null
+          sold_at?: string | null
+          sold_to_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          date_of_birth: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      purchase_requests: {
+        Row: {
+          admin_notes: string | null
+          assigned_to: string | null
+          created_at: string
+          currency: string
+          customer_info: Json | null
+          device_info: Json | null
+          id: string
+          referral_code_used: string | null
+          status: string
+          total_price: number
+          tracking_number: string | null
+          updated_at: string
+          user_id: string | null
+          workflow_status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          currency?: string
+          customer_info?: Json | null
+          device_info?: Json | null
+          id?: string
+          referral_code_used?: string | null
+          status?: string
+          total_price?: number
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string | null
+          workflow_status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          currency?: string
+          customer_info?: Json | null
+          device_info?: Json | null
+          id?: string
+          referral_code_used?: string | null
+          status?: string
+          total_price?: number
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string | null
+          workflow_status?: string | null
+        }
+        Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          discount_amount: number
+          discount_percentage: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          discount_amount?: number
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          discount_amount?: number
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { user_uuid: string }; Returns: boolean }
+      mark_inventory_sold: {
+        Args: { buyer_id: string; item_id: string; sale_order_id: string }
+        Returns: boolean
+      }
+      promote_to_admin: { Args: { user_email: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +394,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
