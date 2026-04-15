@@ -7,485 +7,23 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      admin_roles: {
-        Row: {
-          created_at: string
-          id: string
-          permissions: Json | null
-          role: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          permissions?: Json | null
-          role?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          permissions?: Json | null
-          role?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      communication_logs: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          status: string | null
-          subject: string | null
-          type: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          status?: string | null
-          subject?: string | null
-          type: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          status?: string | null
-          subject?: string | null
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      customer_loyalty: {
-        Row: {
-          created_at: string
-          id: string
-          points: number
-          referral_code: string | null
-          referral_points_earned: number | null
-          referrals_made: number | null
-          referred_by: string | null
-          tier: Database["public"]["Enums"]["loyalty_tier"]
-          total_purchases: number
-          total_spent: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          points?: number
-          referral_code?: string | null
-          referral_points_earned?: number | null
-          referrals_made?: number | null
-          referred_by?: string | null
-          tier?: Database["public"]["Enums"]["loyalty_tier"]
-          total_purchases?: number
-          total_spent?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          points?: number
-          referral_code?: string | null
-          referral_points_earned?: number | null
-          referrals_made?: number | null
-          referred_by?: string | null
-          tier?: Database["public"]["Enums"]["loyalty_tier"]
-          total_purchases?: number
-          total_spent?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      discount_codes: {
-        Row: {
-          code: string
-          created_at: string
-          description: string | null
-          discount_type: string
-          discount_value: number
-          expires_at: string | null
-          id: string
-          is_active: boolean | null
-          max_uses: number | null
-          min_purchase_amount: number | null
-          tier_required: Database["public"]["Enums"]["loyalty_tier"] | null
-          used_count: number | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description?: string | null
-          discount_type: string
-          discount_value: number
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          max_uses?: number | null
-          min_purchase_amount?: number | null
-          tier_required?: Database["public"]["Enums"]["loyalty_tier"] | null
-          used_count?: number | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string | null
-          discount_type?: string
-          discount_value?: number
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          max_uses?: number | null
-          min_purchase_amount?: number | null
-          tier_required?: Database["public"]["Enums"]["loyalty_tier"] | null
-          used_count?: number | null
-        }
-        Relationships: []
-      }
-      inventory: {
-        Row: {
-          cost_price: number | null
-          created_at: string
-          description: string | null
-          device_brand: string
-          device_condition: string
-          device_model: string
-          id: string
-          is_active: boolean | null
-          order_id: string | null
-          price: number
-          quantity_available: number
-          sku: string | null
-          sold_at: string | null
-          sold_to_user_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          cost_price?: number | null
-          created_at?: string
-          description?: string | null
-          device_brand: string
-          device_condition: string
-          device_model: string
-          id?: string
-          is_active?: boolean | null
-          order_id?: string | null
-          price: number
-          quantity_available?: number
-          sku?: string | null
-          sold_at?: string | null
-          sold_to_user_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          cost_price?: number | null
-          created_at?: string
-          description?: string | null
-          device_brand?: string
-          device_condition?: string
-          device_model?: string
-          id?: string
-          is_active?: boolean | null
-          order_id?: string | null
-          price?: number
-          quantity_available?: number
-          sku?: string | null
-          sold_at?: string | null
-          sold_to_user_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inventory_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      points_transactions: {
-        Row: {
-          created_at: string
-          description: string
-          id: string
-          points: number
-          reference_id: string | null
-          transaction_type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          id?: string
-          points: number
-          reference_id?: string | null
-          transaction_type: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          id?: string
-          points?: number
-          reference_id?: string | null
-          transaction_type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          address: string | null
-          created_at: string
-          date_of_birth: string | null
-          first_name: string | null
-          id: string
-          last_name: string | null
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          date_of_birth?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          date_of_birth?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      purchase_requests: {
-        Row: {
-          admin_notes: string | null
-          assigned_to: string | null
-          created_at: string
-          currency: string
-          customer_info: Json
-          device_info: Json
-          discount_amount: number | null
-          discount_code: string | null
-          estimated_delivery: string | null
-          id: string
-          notes: string | null
-          points_earned: number | null
-          points_used: number | null
-          referral_code_used: string | null
-          status: Database["public"]["Enums"]["request_status"]
-          total_price: number
-          tracking_number: string | null
-          updated_at: string
-          user_id: string
-          workflow_status: string | null
-        }
-        Insert: {
-          admin_notes?: string | null
-          assigned_to?: string | null
-          created_at?: string
-          currency?: string
-          customer_info: Json
-          device_info: Json
-          discount_amount?: number | null
-          discount_code?: string | null
-          estimated_delivery?: string | null
-          id?: string
-          notes?: string | null
-          points_earned?: number | null
-          points_used?: number | null
-          referral_code_used?: string | null
-          status?: Database["public"]["Enums"]["request_status"]
-          total_price: number
-          tracking_number?: string | null
-          updated_at?: string
-          user_id: string
-          workflow_status?: string | null
-        }
-        Update: {
-          admin_notes?: string | null
-          assigned_to?: string | null
-          created_at?: string
-          currency?: string
-          customer_info?: Json
-          device_info?: Json
-          discount_amount?: number | null
-          discount_code?: string | null
-          estimated_delivery?: string | null
-          id?: string
-          notes?: string | null
-          points_earned?: number | null
-          points_used?: number | null
-          referral_code_used?: string | null
-          status?: Database["public"]["Enums"]["request_status"]
-          total_price?: number
-          tracking_number?: string | null
-          updated_at?: string
-          user_id?: string
-          workflow_status?: string | null
-        }
-        Relationships: []
-      }
-      referral_codes: {
-        Row: {
-          code: string
-          created_at: string
-          created_by: string | null
-          discount_amount: number | null
-          discount_percentage: number | null
-          expires_at: string | null
-          id: string
-          is_active: boolean | null
-          max_uses: number | null
-          updated_at: string
-          used_count: number | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          created_by?: string | null
-          discount_amount?: number | null
-          discount_percentage?: number | null
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          max_uses?: number | null
-          updated_at?: string
-          used_count?: number | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          created_by?: string | null
-          discount_amount?: number | null
-          discount_percentage?: number | null
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          max_uses?: number | null
-          updated_at?: string
-          used_count?: number | null
-        }
-        Relationships: []
-      }
-      referral_rewards: {
-        Row: {
-          created_at: string
-          id: string
-          points_awarded: number
-          purchase_id: string | null
-          referred_user_id: string
-          referrer_id: string
-          reward_type: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          points_awarded: number
-          purchase_id?: string | null
-          referred_user_id: string
-          referrer_id: string
-          reward_type?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          points_awarded?: number
-          purchase_id?: string | null
-          referred_user_id?: string
-          referrer_id?: string
-          reward_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "referral_rewards_purchase_id_fkey"
-            columns: ["purchase_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      add_loyalty_points: {
-        Args: {
-          user_uuid: string
-          points_amount: number
-          transaction_type: string
-          description: string
-          reference_uuid?: string
-        }
-        Returns: undefined
-      }
-      generate_sku: {
-        Args: { brand: string; model: string; condition: string }
-        Returns: string
-      }
-      is_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      mark_inventory_sold: {
-        Args: { inventory_id: string; user_id: string; sale_price?: number }
-        Returns: string
-      }
-      process_referral_reward: {
-        Args: {
-          referral_code: string
-          purchase_id: string
-          purchase_amount: number
-        }
-        Returns: undefined
-      }
-      promote_to_admin: {
-        Args: { user_email: string }
-        Returns: boolean
-      }
-      update_loyalty_tier: {
-        Args: { user_uuid: string }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
-      loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
-      request_status:
-        | "pending"
-        | "confirmed"
-        | "processed"
-        | "shipped"
-        | "completed"
-        | "cancelled"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -493,21 +31,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -525,14 +67,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -548,14 +92,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -571,14 +117,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -586,30 +134,22 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
-    Enums: {
-      loyalty_tier: ["bronze", "silver", "gold", "platinum"],
-      request_status: [
-        "pending",
-        "confirmed",
-        "processed",
-        "shipped",
-        "completed",
-        "cancelled",
-      ],
-    },
+    Enums: {},
   },
 } as const
