@@ -11,6 +11,7 @@ import { useDeviceData, useExchangeRate, DeviceData, formatCurrency } from '@/se
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
+import DeviceImage from '@/components/DeviceImage';
 
 const WHATSAPP_NUMBER = '18765472061';
 const SERVICE_FEE_PCT = 0.30;
@@ -359,12 +360,18 @@ Phone: ${phone}`;
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="p-4 bg-muted/30">
+                  <div className="w-24 mb-3 rounded-md overflow-hidden bg-background">
+                    <DeviceImage brand={t.brand} model={t.model} aspectClass="aspect-[3/4]" />
+                  </div>
                   <p className="text-xs uppercase text-muted-foreground mb-2">Your Trade-In</p>
                   <p className="font-semibold">{t.brand} {t.model}</p>
                   <p className="text-sm text-muted-foreground">{t.storage} • {t.color}</p>
                   <Badge variant="outline" className="mt-2">Assessed: {estimate.condition}</Badge>
                 </Card>
                 <Card className="p-4 bg-primary/5 border-primary/30">
+                  <div className="w-24 mb-3 rounded-md overflow-hidden bg-background">
+                    <DeviceImage brand={n.brand} model={n.model} aspectClass="aspect-[3/4]" />
+                  </div>
                   <p className="text-xs uppercase text-muted-foreground mb-2">New Device</p>
                   <p className="font-semibold">{n.brand} {n.model}</p>
                   <p className="text-sm text-muted-foreground">{n.storage} • {n.condition} • {n.color}</p>
