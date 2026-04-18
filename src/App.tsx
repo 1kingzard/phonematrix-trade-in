@@ -19,6 +19,7 @@ import FAQPage from '@/pages/FAQPage';
 import LoginPage from '@/pages/LoginPage';
 import SplashPage from '@/pages/SplashPage';
 import NotFound from '@/pages/NotFound';
+import PageTransition from '@/components/PageTransition';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -40,19 +41,21 @@ function App() {
               <PurchaseHistoryProvider>
                 <Router>
                   <div className="min-h-screen bg-background">
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/trade-in" element={<TradeIn />} />
-                      <Route path="/dashboard" element={<UserDashboard />} />
-                      <Route path="/admin" element={<AdminDashboard />} />
-                      <Route path="/admin/login" element={<AdminLogin />} />
-                      <Route path="/price-list" element={<PriceList />} />
-                      <Route path="/reviews" element={<ReviewsPage />} />
-                      <Route path="/faq" element={<FAQPage />} />
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route path="/splash" element={<SplashPage />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <PageTransition>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/trade-in" element={<TradeIn />} />
+                        <Route path="/dashboard" element={<UserDashboard />} />
+                        <Route path="/admin" element={<AdminDashboard />} />
+                        <Route path="/admin/login" element={<AdminLogin />} />
+                        <Route path="/price-list" element={<PriceList />} />
+                        <Route path="/reviews" element={<ReviewsPage />} />
+                        <Route path="/faq" element={<FAQPage />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/splash" element={<SplashPage />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </PageTransition>
                     <Toaster />
                   </div>
                 </Router>
