@@ -12,6 +12,7 @@ import TradeIn from '@/pages/TradeIn';
 import Dashboard from '@/pages/Dashboard';
 import UserDashboard from '@/pages/UserDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
+import AdminLogin from '@/pages/AdminLogin';
 import PriceList from '@/pages/PriceList';
 import ReviewsPage from '@/pages/ReviewsPage';
 import FAQPage from '@/pages/FAQPage';
@@ -44,6 +45,7 @@ function App() {
                       <Route path="/trade-in" element={<TradeIn />} />
                       <Route path="/dashboard" element={<UserDashboard />} />
                       <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/admin/login" element={<AdminLogin />} />
                       <Route path="/price-list" element={<PriceList />} />
                       <Route path="/reviews" element={<ReviewsPage />} />
                       <Route path="/faq" element={<FAQPage />} />

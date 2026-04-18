@@ -1,788 +1,420 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  useDeviceData, 
-  DeviceData, 
-  calculatePriceDifference, 
-  calculateShippingCost,
-  useExchangeRate,
-  getUniqueValues
-} from '../services/deviceDataService';
-import CurrencyToggle from '../components/CurrencyToggle';
-import DeviceFilters, { FilterOptions } from '../components/DeviceFilters';
-import DeviceCard from '../components/DeviceCard';
-import DeductionCalculator from '../components/DeductionCalculator';
-import EmailForm from '../components/EmailForm';
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
-import OnboardingGuide from '../components/OnboardingGuide';
-import { Separator } from '@/components/ui/separator';
+import React, { useState, useMemo, useEffect } from 'react';
+import Header from '@/components/Header';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-import { ArrowLeft, Package, Smartphone, RefreshCcw, AlertTriangle } from 'lucide-react';
-import SearchBar from '../components/SearchBar';
-import SortDropdown, { SortOption } from '../components/SortDropdown';
-import Testimonials from '../components/Testimonials';
-import FAQSection from '../components/FAQSection';
-import DeviceComparison from '../components/DeviceComparison';
-import RecentlyViewedDevices from '../components/RecentlyViewedDevices';
-import FeaturedDevices from '../components/FeaturedDevices';
-import ThemeToggle from '../components/ThemeToggle';
-import QuickFilters from '../components/QuickFilters';
-import useLocalStorage from '../hooks/useLocalStorage';
-import ScrollToTop from '../components/ScrollToTop';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useDeviceData, useExchangeRate, DeviceData, formatCurrency } from '@/services/deviceDataService';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
 
-// Define currency type to avoid comparison errors
-type CurrencyType = 'USD' | 'JMD';
+const WHATSAPP_NUMBER = '18765472061';
+const SERVICE_FEE_PCT = 0.30;
+const SHIPPING_PCT = 0.30;
 
-const TradeIn = () => {
-  // Data state
-  const { devices, loading, error } = useDeviceData();
-  const { exchangeRate, loading: loadingRate } = useExchangeRate();
-  const [filteredDevices, setFilteredDevices] = useState<DeviceData[]>([]);
-  
-  // UI state
-  const [currency, setCurrency] = useState<CurrencyType>('JMD'); // Default to JMD
-  const [selectedDevice, setSelectedDevice] = useState<DeviceData | null>(null);
-  const [upgradeDevice, setUpgradeDevice] = useState<DeviceData | null>(null);
-  const [finalTradeValue, setFinalTradeValue] = useState<number>(0);
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const [showUpgradeSelection, setShowUpgradeSelection] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  
-  // Search and sort state
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortOption, setSortOption] = useState<SortOption | undefined>(undefined);
-  
-  // Quick filter state
-  const [quickBrandFilter, setQuickBrandFilter] = useState<string | null>(null);
-  
-  // Comparison state
-  const [devicesToCompare, setDevicesToCompare] = useState<DeviceData[]>([]);
-  
-  // Recently viewed devices
-  const [recentlyViewed, setRecentlyViewed] = useLocalStorage<DeviceData[]>('recentlyViewedDevicesTrade', []);
-  
-  // Refs for scrolling
-  const upgradeDeviceRef = useRef<HTMLDivElement>(null);
-  const emailFormRef = useRef<HTMLDivElement>(null);
-  const selectedDeviceDetailsRef = useRef<HTMLDivElement>(null);
-  const comparisonRef = useRef<HTMLDivElement>(null);
-  
-  // Get unique brands for quick filters
-  const brands = getUniqueValues(devices, 'Brand');
-  
-  // Check if onboarding was previously dismissed
-  useEffect(() => {
-    const dismissed = localStorage.getItem('onboardingDismissed') === 'true';
-    setShowOnboarding(!dismissed);
-  }, []);
-  
-  // Apply filters to device data
-  const handleFilterChange = (filters: FilterOptions) => {
-    let results = devices;
-    
-    if (filters.os && filters.os !== 'all-os') {
-      results = results.filter(device => device.OS === filters.os);
+type Cond = 'Like New' | 'Good' | 'Fair' | 'Poor';
+const ORDER: Cond[] = ['Like New', 'Good', 'Fair', 'Poor'];
+const downgrade = (c: Cond, target: Cond): Cond => ORDER.indexOf(target) > ORDER.indexOf(c) ? target : c;
+const batteryToCondition = (pct: number): Cond => pct >= 90 ? 'Like New' : pct >= 83 ? 'Good' : pct >= 77 ? 'Fair' : 'Poor';
+
+interface TradeIn {
+  imei: string; brand: string; model: string; storage: string; color: string;
+  batteryPct: number; scratch: 'A' | 'B' | 'C' | '';
+  brokenScreen: boolean; brokenBackGlass: boolean; brokenCamera: boolean;
+  faceIdWorks: boolean; speakersWork: boolean; unlocked: 'unlocked' | 'locked' | '';
+}
+interface NewDev { brand: string; model: string; storage: string; condition: string; color: string; }
+
+const STEPS = [
+  { num: 1, title: 'Your Device', icon: Smartphone },
+  { num: 2, title: 'Battery', icon: Battery },
+  { num: 3, title: 'Scratches', icon: Sparkles },
+  { num: 4, title: 'Faults', icon: Wrench },
+  { num: 5, title: 'New Device', icon: ShoppingBag },
+  { num: 6, title: 'Estimate', icon: FileCheck },
+];
+
+const TradeIn: React.FC = () => {
+  const { devices, loading } = useDeviceData();
+  const { exchangeRate } = useExchangeRate();
+  const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [t, setT] = useState<TradeIn>({
+    imei: '', brand: '', model: '', storage: '', color: '',
+    batteryPct: 100, scratch: '', brokenScreen: false, brokenBackGlass: false,
+    brokenCamera: false, faceIdWorks: true, speakersWork: true, unlocked: '',
+  });
+  const [n, setN] = useState<NewDev>({ brand: '', model: '', storage: '', condition: '', color: '' });
+
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
+
+  const tradeBrands = useMemo(() => Array.from(new Set(devices.map(d => d.Brand))).sort(), [devices]);
+  const tradeModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === t.brand).map(d => d.Model))).sort(), [devices, t.brand]);
+  const tradeStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === t.brand && d.Model === t.model).map(d => d.Storage))).sort(), [devices, t.brand, t.model]);
+  const tradeColors = useMemo(() => devices.find(d => d.Brand === t.brand && d.Model === t.model && d.Storage === t.storage)?.Colors || [], [devices, t.brand, t.model, t.storage]);
+
+  const newBrands = tradeBrands;
+  const newModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === n.brand).map(d => d.Model))).sort(), [devices, n.brand]);
+  const newStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === n.brand && d.Model === n.model).map(d => d.Storage))).sort(), [devices, n.brand, n.model]);
+  const newConditions = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === n.brand && d.Model === n.model && d.Storage === n.storage).map(d => d.Condition))), [devices, n.brand, n.model, n.storage]);
+  const newColors = useMemo(() => devices.find(d => d.Brand === n.brand && d.Model === n.model && d.Storage === n.storage)?.Colors || [], [devices, n.brand, n.model, n.storage]);
+
+  const estimate = useMemo(() => {
+    let cond: Cond = batteryToCondition(t.batteryPct);
+    if (t.scratch === 'B' && cond === 'Like New') cond = 'Good';
+    if (t.scratch === 'C') cond = downgrade(cond, 'Fair');
+    const anyFault = t.brokenScreen || t.brokenBackGlass || t.brokenCamera || !t.faceIdWorks || !t.speakersWork;
+    if (anyFault) cond = 'Poor';
+
+    const tradeRow: DeviceData | undefined =
+      devices.find(d => d.Brand === t.brand && d.Model === t.model && d.Storage === t.storage && d.Condition === cond) ||
+      devices.find(d => d.Brand === t.brand && d.Model === t.model && d.Storage === t.storage);
+
+    let repairs = 0;
+    const repairBreakdown: { label: string; amount: number }[] = [];
+    if (t.batteryPct <= 82 && tradeRow?.BatteryReplacement) {
+      repairs += tradeRow.BatteryReplacement;
+      repairBreakdown.push({ label: 'Battery replacement', amount: tradeRow.BatteryReplacement });
     }
-    
-    if (filters.brand && filters.brand !== 'all-brands') {
-      results = results.filter(device => device.Brand === filters.brand);
+    if (t.brokenScreen && tradeRow?.ScreenReplacement) {
+      repairs += tradeRow.ScreenReplacement;
+      repairBreakdown.push({ label: 'Screen replacement', amount: tradeRow.ScreenReplacement });
     }
-    
-    if (filters.model && filters.model !== 'all-models') {
-      results = results.filter(device => device.Model === filters.model);
+    if (t.brokenBackGlass && tradeRow?.RearGlassReplacement) {
+      repairs += tradeRow.RearGlassReplacement;
+      repairBreakdown.push({ label: 'Rear glass replacement', amount: tradeRow.RearGlassReplacement });
     }
-    
-    if (filters.storage && filters.storage !== 'all-storage') {
-      results = results.filter(device => device.Storage === filters.storage);
+
+    const tradePrice = tradeRow?.Price || 0;
+    const tradeValue = Math.max(0, tradePrice * (1 - SERVICE_FEE_PCT) - repairs);
+    const newRow = devices.find(d => d.Brand === n.brand && d.Model === n.model && d.Storage === n.storage && d.Condition === n.condition);
+    const newPrice = newRow?.Price || 0;
+    const estimateUSD = Math.max(0, newPrice - tradeValue);
+
+    return {
+      condition: cond, tradePrice, tradeValue, newPrice,
+      estimateUSD, estimateJMD: estimateUSD * exchangeRate,
+      shippingJMD: newPrice * SHIPPING_PCT * exchangeRate,
+      repairs, repairBreakdown,
+    };
+  }, [t, n, devices, exchangeRate]);
+
+  const canNext = (): boolean => {
+    switch (step) {
+      case 1: return !!(t.brand && t.model && t.storage && t.color);
+      case 2: return t.batteryPct >= 0 && t.batteryPct <= 100;
+      case 3: return !!t.scratch;
+      case 4: return !!t.unlocked;
+      case 5: return !!(n.brand && n.model && n.storage && n.condition && n.color);
+      default: return true;
     }
-    
-    if (filters.condition && filters.condition !== 'all-conditions') {
-      results = results.filter(device => device.Condition === filters.condition);
-    }
-    
-    // Apply search term filter
-    if (searchTerm) {
-      results = results.filter(device => 
-        device.Brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.Model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.Storage.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.Color.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.Condition.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Apply quick brand filter
-    if (quickBrandFilter) {
-      results = results.filter(device => device.Brand === quickBrandFilter);
-    }
-    
-    // Apply sorting
-    if (sortOption) {
-      results = [...results].sort((a, b) => {
-        const key = sortOption.value as keyof DeviceData;
-        const valueA = a[key];
-        const valueB = b[key];
-        
-        if (typeof valueA === 'string' && typeof valueB === 'string') {
-          return sortOption.direction === 'asc' 
-            ? valueA.localeCompare(valueB) 
-            : valueB.localeCompare(valueA);
-        } 
-        
-        if (typeof valueA === 'number' && typeof valueB === 'number') {
-          return sortOption.direction === 'asc' 
-            ? valueA - valueB 
-            : valueB - valueA;
-        }
-        
-        return 0;
-      });
-    }
-    
-    setFilteredDevices(results);
   };
-  
-  // Reset selection when filters change
-  useEffect(() => {
-    if (!showUpgradeSelection) {
-      setSelectedDevice(null);
-    }
-    setUpgradeDevice(null);
-    setShowEmailForm(false);
-  }, [filteredDevices, showUpgradeSelection]);
-  
-  // Initialize filtered devices
-  useEffect(() => {
-    if (devices.length > 0) {
-      setFilteredDevices(devices);
-    }
-  }, [devices]);
-  
-  // Handle device selection
-  const handleDeviceSelect = (device: DeviceData) => {
-    if (showUpgradeSelection) {
-      setUpgradeDevice(device);
-      // Scroll to selected device details section when upgrade device is selected
-      setTimeout(() => {
-        if (emailFormRef.current) {
-          emailFormRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } else {
-      setSelectedDevice(device);
-      setFinalTradeValue(device.Price);
-      
-      // Add to recently viewed
-      if (!recentlyViewed.some(item => 
-        item.Brand === device.Brand && 
-        item.Model === device.Model && 
-        item.Storage === device.Storage && 
-        item.Condition === device.Condition
-      )) {
-        setRecentlyViewed(prev => [device, ...prev.slice(0, 4)]);
-      }
-      
-      // Scroll to selected device details section
-      setTimeout(() => {
-        if (selectedDeviceDetailsRef.current) {
-          selectedDeviceDetailsRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
-    setShowEmailForm(false);
-  };
-  
-  // Handle adding device to comparison
-  const handleAddToComparison = (device: DeviceData) => {
-    if (devicesToCompare.length >= 3) {
-      toast({
-        title: "Maximum Comparison Limit",
-        description: "You can compare up to 3 devices at a time",
-        variant: "destructive"
-      });
+
+  const sendWhatsApp = () => {
+    if (!name.trim() || !phone.trim()) {
+      toast({ title: 'Almost there', description: 'Please enter your name and phone.', variant: 'destructive' });
       return;
     }
-    
-    if (!devicesToCompare.some(item => 
-      item.Brand === device.Brand && 
-      item.Model === device.Model && 
-      item.Storage === device.Storage && 
-      item.Condition === device.Condition
-    )) {
-      setDevicesToCompare(prev => [...prev, device]);
-      
-      // Scroll to comparison section
-      setTimeout(() => {
-        if (comparisonRef.current) {
-          comparisonRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
+    const repairsList = estimate.repairBreakdown.length
+      ? estimate.repairBreakdown.map(r => `  • ${r.label}`).join('\n') : '  • None';
+    const msg = `Hello Phone Matrix! I'd like to submit a trade-in request.
+
+— TRADE-IN DEVICE —
+${t.brand} ${t.model}
+Storage: ${t.storage}
+Color: ${t.color}
+IMEI: ${t.imei || 'Not provided'}
+Assessed Condition: ${estimate.condition}
+Battery Health: ${t.batteryPct}%
+Unlock Status: ${t.unlocked}
+
+— REPAIRS APPLIED —
+${repairsList}
+
+— NEW DEVICE —
+${n.brand} ${n.model}
+Storage: ${n.storage}
+Condition: ${n.condition}
+Color: ${n.color}
+
+— ESTIMATE —
+Estimated Cost: ${formatCurrency(estimate.estimateUSD, 'USD')}
+Estimated Cost (JMD): ${formatCurrency(estimate.estimateJMD, 'JMD')}
+Shipping to Jamaica (JMD): ${formatCurrency(estimate.shippingJMD, 'JMD')}
+
+— CUSTOMER —
+Name: ${name}
+Phone: ${phone}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    toast({ title: 'Opening WhatsApp', description: 'Your trade-in request is ready to send.' });
   };
-  
-  // Handle deduction calculator value change
-  const handleTradeValueChange = (value: number) => {
-    setFinalTradeValue(value);
-  };
-  
-  // Handle proceed to upgrade selection
-  const handleProceedToUpgrade = () => {
-    setShowUpgradeSelection(true);
-    // Scroll to upgrade device selection
-    setTimeout(() => {
-      if (upgradeDeviceRef.current) {
-        upgradeDeviceRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
-  
-  // Handle back from upgrade selection
-  const handleBackFromUpgrade = () => {
-    setShowUpgradeSelection(false);
-    setUpgradeDevice(null);
-  };
-  
-  // Handle proceed to email form
-  const handleProceedToEmail = () => {
-    setShowEmailForm(true);
-    // Scroll to email form
-    setTimeout(() => {
-      if (emailFormRef.current) {
-        emailFormRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
-  
-  // Handle email submission success
-  const handleEmailSuccess = () => {
-    toast({
-      title: "Trade-in Request Sent",
-      description: "Your trade-in request has been sent successfully. We'll contact you shortly.",
-    });
-    
-    // Reset selection for a new quote
-    setSelectedDevice(null);
-    setUpgradeDevice(null);
-    setShowUpgradeSelection(false);
-    setShowEmailForm(false);
-  };
-  
-  // Handle going back from email form
-  const handleBackFromEmail = () => {
-    setShowEmailForm(false);
-  };
-  
-  // Calculate price difference and additional costs
-  const priceDifference = calculatePriceDifference(selectedDevice, upgradeDevice, finalTradeValue);
-  
-  // Calculate shipping cost only for the upgrade device in JMD
-  const shippingCost = currency === 'JMD' && upgradeDevice 
-    ? calculateShippingCost(upgradeDevice.Price) 
-    : 0;
-  
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(currency === 'USD' ? value : value * exchangeRate);
-  };
-  
-  // Get featured devices (5 most expensive devices)
-  const featuredDevices = [...devices]
-    .sort((a, b) => b.Price - a.Price)
-    .slice(0, 3);
-    
-  // Sort options
-  const sortOptions: SortOption[] = [
-    { label: 'Price (Low to High)', value: 'Price', direction: 'asc' },
-    { label: 'Price (High to Low)', value: 'Price', direction: 'desc' },
-    { label: 'Brand', value: 'Brand', direction: 'asc' },
-    { label: 'Model', value: 'Model', direction: 'asc' },
-    { label: 'Storage', value: 'Storage', direction: 'asc' },
-    { label: 'Condition', value: 'Condition', direction: 'asc' },
-  ];
-  
-  // Testimonials data
-  const testimonials = [
-    {
-      id: 1,
-      author: "Sarah Johnson",
-      text: "The trade-in process was so smooth! Got a great price for my old iPhone and the upgrade was hassle-free.",
-      rating: 5,
-    },
-    {
-      id: 2,
-      author: "Michael Chen",
-      text: "I was skeptical at first, but the pricing was fair and the customer service was excellent.",
-      rating: 4,
-    },
-    {
-      id: 3,
-      author: "Aisha Patel",
-      text: "Compared prices everywhere, and Phone Matrix offered the best trade-in value by far. Highly recommend!",
-      rating: 5,
-    }
-  ];
-  
-  // FAQ data
-  const faqs = [
-    {
-      question: "How does the trade-in process work?",
-      answer: "Our trade-in process is simple: Select your current device, choose a device to upgrade to (optional), submit your trade-in request, and our team will contact you to arrange inspection and payment."
-    },
-    {
-      question: "What condition should my device be in?",
-      answer: "We accept devices in various conditions from mint to poor. The better the condition, the higher the trade-in value. Devices should be functional unless specified otherwise."
-    },
-    {
-      question: "How long does the trade-in process take?",
-      answer: "Once you submit your request, our team will contact you within 24-48 hours. The entire process typically takes 3-5 business days from inspection to payment."
-    },
-    {
-      question: "Can I trade in multiple devices at once?",
-      answer: "Yes, you can trade in multiple devices. Please submit separate trade-in requests for each device."
-    },
-    {
-      question: "What payment methods do you offer?",
-      answer: "We offer payment via bank transfer, cash, or store credit. Store credit offers an additional 10% bonus on your trade-in value."
-    }
-  ];
-  
-  // Render content based on loading/error state
-  if (loading || loadingRate) {
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center space-y-4">
-          <div className="loading-spinner"></div>
-          <div className="text-2xl font-bold dark:text-white">Loading Device Data...</div>
-          <div className="text-gray-500 dark:text-gray-400">Please wait while we fetch the latest trade-in values.</div>
-        </div>
+      <div className="min-h-screen flex flex-col">
+        <Header /><div className="flex-1 flex items-center justify-center"><LoadingSpinner size="lg" /></div>
       </div>
     );
   }
-  
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center space-y-4">
-          <div className="text-2xl font-bold text-red-500">Error Loading Data</div>
-          <div className="text-gray-700 dark:text-gray-300">{error}</div>
-          <Button onClick={() => window.location.reload()} className="bg-[#d81570] hover:bg-[#e83a8e]">
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-10 dark:bg-gray-900">
-      {/* Onboarding guide */}
-      {showOnboarding && <OnboardingGuide steps={[
-        {
-          title: "Welcome to Trade-In Calculator",
-          description: "Find the best value for your device trade-in",
-          image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=500&q=80"
-        },
-        {
-          title: "Select Your Current Device",
-          description: "Choose the device you want to trade in",
-          image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=500&q=80"
-        },
-        {
-          title: "Select Your Upgrade",
-          description: "Browse available devices for your upgrade",
-          image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=500&q=80"
-        },
-        {
-          title: "Complete Your Trade-in",
-          description: "Submit your request and we'll contact you",
-          image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80"
-        }
-      ]} />}
-      
-      {/* Header section */}
+    <div className="min-h-screen bg-background">
       <Header />
-      
-      {/* Hero Section */}
-      <HeroSection 
-        title="Device Trade-in Value Calculator"
-        subtitle="Get the best value when you upgrade your device"
-        imageSrc="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1600&q=80"
-      />
-      
-      <main className="container mt-8">
-        {/* Top Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <CurrencyToggle currency={currency} setCurrency={setCurrency} />
-          </div>
-          
-          <SearchBar onSearch={setSearchTerm} placeholder="Search brand, model, storage..." />
-        </div>
-        
-        {/* Featured Devices */}
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="mb-8">
-          <FeaturedDevices 
-            devices={featuredDevices} 
-            onSelectDevice={handleDeviceSelect} 
-            currency={currency}
-            exchangeRate={exchangeRate}
-          />
-        </div>
-        
-        {/* How to use guide */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm dark:bg-gray-800 dark:border dark:border-gray-700">
-          <h2 className="font-semibold text-lg mb-3 flex items-center text-[#d81570]">
-            <AlertTriangle className="h-5 w-5 mr-2" /> 
-            How to Use This Tool
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-700">
-              <div className="rounded-full bg-[#fce4f1] p-3 mb-3 dark:bg-[#d81570]/20">
-                <Smartphone className="h-6 w-6 text-[#d81570]" />
-              </div>
-              <h3 className="font-medium mb-1">1. Select Your Device</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-300">Choose your current device from the available options</p>
-            </div>
-            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-700">
-              <div className="rounded-full bg-[#fce4f1] p-3 mb-3 dark:bg-[#d81570]/20">
-                <RefreshCcw className="h-6 w-6 text-[#d81570]" />
-              </div>
-              <h3 className="font-medium mb-1">2. Choose Your Upgrade</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-300">Select a new device to upgrade to</p>
-            </div>
-            <div className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-700">
-              <div className="rounded-full bg-[#fce4f1] p-3 mb-3 dark:bg-[#d81570]/20">
-                <Package className="h-6 w-6 text-[#d81570]" />
-              </div>
-              <h3 className="font-medium mb-1">3. Complete Your Request</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-300">Submit the form and we'll contact you about your trade-in</p>
-            </div>
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-2xl md:text-3xl font-bold">Trade-In Builder</h1>
+            <span className="text-sm text-muted-foreground">Step {step} of {STEPS.length}</span>
           </div>
-          <p className="text-xs text-gray-500 mt-3 text-center dark:text-gray-400">
-            Note: For devices in JMD, a 30% shipping cost applies for upgrades coming to Jamaica
-          </p>
-        </div>
-        
-        {/* Quick Brand Filters */}
-        <div className="mb-6">
-          <h3 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Quick Brand Filter:</h3>
-          <QuickFilters 
-            filters={brands}
-            activeFilter={quickBrandFilter}
-            onFilterChange={setQuickBrandFilter}
-            type="brand"
-          />
-        </div>
-        
-        {/* Email form view */}
-        {selectedDevice && showEmailForm ? (
-          <div className="space-y-6" ref={emailFormRef}>
-            <Button 
-              variant="outline" 
-              onClick={handleBackFromEmail}
-              className="flex items-center gap-1 text-[#d81570]"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to Calculator
-            </Button>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <DeductionCalculator 
-                basePrice={selectedDevice.Price} 
-                currency={currency}
-                onValueChange={handleTradeValueChange}
-              />
-              <EmailForm 
-                selectedDevice={selectedDevice}
-                upgradeDevice={upgradeDevice}
-                finalTradeValue={finalTradeValue}
-                priceDifference={priceDifference}
-                shippingCost={shippingCost}
-                currency={currency}
-                exchangeRate={exchangeRate}
-                onSubmitSuccess={handleEmailSuccess}
-              />
-            </div>
+          <Progress value={(step / STEPS.length) * 100} className="h-2" />
+          <div className="hidden md:flex justify-between mt-3">
+            {STEPS.map(s => {
+              const Icon = s.icon; const active = s.num === step; const done = s.num < step;
+              return (
+                <div key={s.num} className="flex flex-col items-center gap-1 flex-1">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors ${
+                    done ? 'bg-primary border-primary text-primary-foreground' :
+                    active ? 'border-primary text-primary' : 'border-border text-muted-foreground'}`}>
+                    {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                  </div>
+                  <span className={`text-xs ${active ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{s.title}</span>
+                </div>
+              );
+            })}
           </div>
-        ) : showUpgradeSelection && selectedDevice ? (
-          /* Upgrade device selection view */
-          <div className="space-y-6">
-            <Button 
-              variant="outline" 
-              onClick={handleBackFromUpgrade}
-              className="flex items-center gap-1 text-[#d81570]"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to Trade-in Selection
-            </Button>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm mb-6 dark:bg-gray-800 dark:border dark:border-gray-700">
-              <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Selected Trade-in Device</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-lg font-medium">{selectedDevice.Brand} {selectedDevice.Model}</p>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {selectedDevice.Storage} • {selectedDevice.Color} • {selectedDevice.Condition}
-                  </p>
-                </div>
-                <div className="md:text-right">
-                  <p className="text-gray-600 dark:text-gray-300">Trade-in Value:</p>
-                  <p className="text-xl font-bold text-[#d81570]">{formatCurrency(finalTradeValue)}</p>
-                </div>
+        </div>
+
+        <Card className="p-6 md:p-8">
+          {step === 1 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Your Current Device</h2>
+                <p className="text-sm text-muted-foreground">Let's start with the basics. We'll use your IMEI to identify the device.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="imei">IMEI Number</Label>
+                <Input id="imei" value={t.imei} onChange={e => setT({ ...t, imei: e.target.value })} placeholder="15-digit IMEI (optional)" maxLength={20} />
+                <p className="text-xs text-muted-foreground">Dial *#06# on your phone to find this number.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Brand</Label>
+                  <Select value={t.brand} onValueChange={v => setT({ ...t, brand: v, model: '', storage: '', color: '' })}>
+                    <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
+                    <SelectContent>{tradeBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2"><Label>Model</Label>
+                  <Select value={t.model} onValueChange={v => setT({ ...t, model: v, storage: '', color: '' })} disabled={!t.brand}>
+                    <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger>
+                    <SelectContent>{tradeModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2"><Label>Storage</Label>
+                  <Select value={t.storage} onValueChange={v => setT({ ...t, storage: v, color: '' })} disabled={!t.model}>
+                    <SelectTrigger><SelectValue placeholder="Select storage" /></SelectTrigger>
+                    <SelectContent>{tradeStorages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2"><Label>Color</Label>
+                  <Select value={t.color} onValueChange={v => setT({ ...t, color: v })} disabled={!t.storage || tradeColors.length === 0}>
+                    <SelectTrigger><SelectValue placeholder="Select color" /></SelectTrigger>
+                    <SelectContent>{tradeColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select></div>
               </div>
             </div>
-            
-            {/* Device Comparison */}
-            {devicesToCompare.length > 0 && (
-              <div className="mb-8" ref={comparisonRef}>
-                <DeviceComparison 
-                  devices={devicesToCompare}
-                  onRemoveDevice={(device) => {
-                    setDevicesToCompare(prev => prev.filter(d => 
-                      !(d.Brand === device.Brand && 
-                        d.Model === device.Model && 
-                        d.Storage === device.Storage && 
-                        d.Condition === device.Condition)
-                    ));
-                  }}
-                  currency={currency}
-                  exchangeRate={exchangeRate}
-                />
+          )}
+
+          {step === 2 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Battery Health</h2>
+                <p className="text-sm text-muted-foreground">Settings → Battery → Battery Health on iPhone. On Android, check Settings → Battery.</p>
               </div>
-            )}
-            
-            <h2 className="text-xl font-semibold mb-4 text-[#d81570]" ref={upgradeDeviceRef}>Select Your Upgrade Device</h2>
-            
-            {/* Sort and search controls */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-              <SortDropdown 
-                options={sortOptions}
-                onSort={setSortOption}
-                activeOption={sortOption}
-              />
-              
-              <SearchBar onSearch={setSearchTerm} placeholder="Search devices..." />
-            </div>
-            
-            {/* Filters for upgrade device */}
-            <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
-            
-            {/* Upgrade device selection */}
-            <div className="mt-8">
-              {filteredDevices.length === 0 ? (
-                <div className="bg-white rounded-lg p-8 text-center dark:bg-gray-800">
-                  <p className="text-gray-500 dark:text-gray-400">No devices match your selected filters. Please try different criteria.</p>
+              <div className="space-y-2">
+                <Label htmlFor="bat">Battery Health (%)</Label>
+                <div className="flex items-center gap-3">
+                  <Input id="bat" type="number" min={0} max={100} value={t.batteryPct}
+                    onChange={e => setT({ ...t, batteryPct: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })}
+                    className="w-32 text-2xl font-bold h-14" />
+                  <span className="text-2xl font-bold">%</span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredDevices.map((device, index) => (
-                    <DeviceCard
-                      key={`${device.Model}-${device.Storage}-${device.Condition}-${index}`}
-                      device={device}
-                      currency={currency}
-                      exchangeRate={exchangeRate}
-                      onClick={() => handleDeviceSelect(device)}
-                      selected={upgradeDevice === device}
-                    />
-                  ))}
+                <Progress value={t.batteryPct} className="h-3 mt-2" />
+              </div>
+              {t.batteryPct <= 82 && (
+                <div className="rounded-md bg-amber-500/10 border border-amber-500/30 p-3 text-sm">
+                  Battery health is below 82%. Battery replacement cost will be deducted from your trade-in value.
                 </div>
               )}
             </div>
-            
-            {/* Selected upgrade device details */}
-            {upgradeDevice && (
-              <div className="mt-8 bg-white p-6 rounded-lg shadow-sm dark:bg-gray-800 dark:border dark:border-gray-700" ref={emailFormRef}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2 text-[#d81570]">Your Trade-in</h3>
-                    <p>{selectedDevice.Brand} {selectedDevice.Model}</p>
-                    <p className="text-gray-600 text-sm dark:text-gray-300">
-                      {selectedDevice.Storage} • {selectedDevice.Condition}
-                    </p>
-                    <p className="font-bold mt-2 text-[#d81570]">{formatCurrency(finalTradeValue)}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2 text-[#d81570]">Your Upgrade</h3>
-                    <p>{upgradeDevice.Brand} {upgradeDevice.Model}</p>
-                    <p className="text-gray-600 text-sm dark:text-gray-300">
-                      {upgradeDevice.Storage} • {upgradeDevice.Condition}
-                    </p>
-                    <p className="font-bold mt-2 text-[#d81570]">{formatCurrency(upgradeDevice.Price)}</p>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Physical Condition</h2>
+                <p className="text-sm text-muted-foreground">How would you describe the outside of your device?</p>
+              </div>
+              <div className="grid gap-3">
+                {[
+                  { v: 'A', label: 'Pristine', desc: 'No blemishes or scratches anywhere.' },
+                  { v: 'B', label: 'Light wear', desc: 'Shows signs of use — minor marks but nothing serious.' },
+                  { v: 'C', label: 'Noticeable scratches', desc: 'Visible scratches on screen or body.' },
+                ].map(opt => (
+                  <button key={opt.v} type="button" onClick={() => setT({ ...t, scratch: opt.v as any })}
+                    className={`text-left rounded-lg border-2 p-4 transition-all ${t.scratch === opt.v ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                    <p className="font-semibold">{opt.label}</p>
+                    <p className="text-sm text-muted-foreground">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Detailed Issues</h2>
+                <p className="text-sm text-muted-foreground">Be honest — accurate answers mean an accurate quote.</p>
+              </div>
+              {[
+                { key: 'brokenScreen', label: 'Broken screen?', val: t.brokenScreen },
+                { key: 'brokenBackGlass', label: 'Broken back glass?', val: t.brokenBackGlass },
+                { key: 'brokenCamera', label: 'Broken camera lens?', val: t.brokenCamera },
+                { key: 'faceIdWorks', label: 'Face ID / biometrics work?', val: t.faceIdWorks },
+                { key: 'speakersWork', label: 'Both speakers work?', val: t.speakersWork },
+              ].map(q => (
+                <div key={q.key} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <span className="text-sm font-medium">{q.label}</span>
+                  <div className="flex gap-2">
+                    {[true, false].map(v => (
+                      <Button key={String(v)} size="sm" variant={q.val === v ? 'default' : 'outline'}
+                        onClick={() => setT({ ...t, [q.key]: v } as any)}>{v ? 'Yes' : 'No'}</Button>
+                    ))}
                   </div>
                 </div>
-                
-                <Separator className="my-6" />
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>Price Difference:</span>
-                    <span className="font-medium">{formatCurrency(priceDifference)}</span>
-                  </div>
-                  
-                  {currency === 'JMD' && (
-                    <div className="flex justify-between text-amber-700">
-                      <span className="flex items-center gap-1">
-                        <Package className="h-4 w-4" />
-                        Shipping Cost (30% of upgrade):
-                      </span>
-                      <span className="font-medium">{formatCurrency(shippingCost)}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between font-bold text-lg pt-3">
-                    <span>Total to Pay:</span>
-                    <span className="text-[#d81570]">{formatCurrency(priceDifference + shippingCost)}</span>
-                  </div>
+              ))}
+              <div className="space-y-2">
+                <Label>Unlock status</Label>
+                <Select value={t.unlocked} onValueChange={(v: any) => setT({ ...t, unlocked: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unlocked">Unlocked</SelectItem>
+                    <SelectItem value="locked">Locked to carrier</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Pick Your New Device</h2>
+                <p className="text-sm text-muted-foreground">What would you like to upgrade to?</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Brand</Label>
+                  <Select value={n.brand} onValueChange={v => setN({ ...n, brand: v, model: '', storage: '', condition: '', color: '' })}>
+                    <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
+                    <SelectContent>{newBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2"><Label>Model</Label>
+                  <Select value={n.model} onValueChange={v => setN({ ...n, model: v, storage: '', condition: '', color: '' })} disabled={!n.brand}>
+                    <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger>
+                    <SelectContent>{newModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2"><Label>Storage</Label>
+                  <Select value={n.storage} onValueChange={v => setN({ ...n, storage: v, condition: '', color: '' })} disabled={!n.model}>
+                    <SelectTrigger><SelectValue placeholder="Select storage" /></SelectTrigger>
+                    <SelectContent>{newStorages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2"><Label>Condition</Label>
+                  <Select value={n.condition} onValueChange={v => setN({ ...n, condition: v })} disabled={!n.storage}>
+                    <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+                    <SelectContent>{newConditions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select></div>
+                <div className="space-y-2 md:col-span-2"><Label>Color</Label>
+                  <Select value={n.color} onValueChange={v => setN({ ...n, color: v })} disabled={!n.storage || newColors.length === 0}>
+                    <SelectTrigger><SelectValue placeholder="Select color" /></SelectTrigger>
+                    <SelectContent>{newColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select></div>
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Your Estimate</h2>
+                <p className="text-sm text-muted-foreground">Live exchange rate: 1 USD = {exchangeRate.toFixed(2)} JMD</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="p-4 bg-muted/30">
+                  <p className="text-xs uppercase text-muted-foreground mb-2">Your Trade-In</p>
+                  <p className="font-semibold">{t.brand} {t.model}</p>
+                  <p className="text-sm text-muted-foreground">{t.storage} • {t.color}</p>
+                  <Badge variant="outline" className="mt-2">Assessed: {estimate.condition}</Badge>
+                </Card>
+                <Card className="p-4 bg-primary/5 border-primary/30">
+                  <p className="text-xs uppercase text-muted-foreground mb-2">New Device</p>
+                  <p className="font-semibold">{n.brand} {n.model}</p>
+                  <p className="text-sm text-muted-foreground">{n.storage} • {n.condition} • {n.color}</p>
+                </Card>
+              </div>
+              {estimate.repairBreakdown.length > 0 && (
+                <Card className="p-4 bg-amber-500/5 border-amber-500/30">
+                  <p className="text-sm font-semibold mb-2">Repairs applied</p>
+                  <ul className="text-sm space-y-1">
+                    {estimate.repairBreakdown.map(r => <li key={r.label} className="text-muted-foreground">• {r.label}</li>)}
+                  </ul>
+                </Card>
+              )}
+              <div className="rounded-xl bg-gradient-to-br from-primary/10 to-pink-500/10 border border-primary/30 p-6 space-y-3">
+                <div className="flex justify-between items-end">
+                  <span className="text-sm text-muted-foreground">You pay (USD)</span>
+                  <span className="text-3xl md:text-4xl font-bold">{formatCurrency(estimate.estimateUSD, 'USD')}</span>
                 </div>
-                
-                <Button 
-                  className="w-full mt-6 bg-[#d81570] hover:bg-[#e83a8e]" 
-                  onClick={handleProceedToEmail}
-                >
-                  Complete Trade-in Request
+                <div className="flex justify-between items-center pt-2 border-t border-border/40">
+                  <span className="text-sm text-muted-foreground">You pay (JMD)</span>
+                  <span className="text-xl font-semibold">{formatCurrency(estimate.estimateJMD, 'JMD')}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Shipping to Jamaica (JMD)</span>
+                  <span className="text-base font-medium">{formatCurrency(estimate.shippingJMD, 'JMD')}</span>
+                </div>
+              </div>
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2"><Label htmlFor="name">Your Name</Label>
+                    <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="Full name" /></div>
+                  <div className="space-y-2"><Label htmlFor="phone">Phone</Label>
+                    <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 (876) 555-0000" /></div>
+                </div>
+                <Button onClick={sendWhatsApp} className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white h-12 text-base">
+                  <MessageCircle className="h-5 w-5 mr-2" />Send Trade-In Request via WhatsApp
                 </Button>
               </div>
+            </div>
+          )}
+
+          <div className="flex justify-between mt-8 pt-6 border-t border-border">
+            <Button variant="ghost" onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+            {step < STEPS.length ? (
+              <Button onClick={() => setStep(s => Math.min(STEPS.length, s + 1))} disabled={!canNext()}>
+                Next <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setStep(1)}>Start over</Button>
             )}
           </div>
-        ) : (
-          <>
-            {/* Recently Viewed Devices */}
-            {recentlyViewed.length > 0 && (
-              <div className="mb-8">
-                <RecentlyViewedDevices 
-                  devices={recentlyViewed}
-                  onSelectDevice={handleDeviceSelect}
-                  onCompareDevice={handleAddToComparison}
-                  currency={currency}
-                  exchangeRate={exchangeRate}
-                />
-              </div>
-            )}
-            
-            {/* Device Comparison */}
-            {devicesToCompare.length > 0 && (
-              <div className="mb-8" ref={comparisonRef}>
-                <DeviceComparison 
-                  devices={devicesToCompare}
-                  onRemoveDevice={(device) => {
-                    setDevicesToCompare(prev => prev.filter(d => 
-                      !(d.Brand === device.Brand && 
-                        d.Model === device.Model && 
-                        d.Storage === device.Storage && 
-                        d.Condition === device.Condition)
-                    ));
-                  }}
-                  currency={currency}
-                  exchangeRate={exchangeRate}
-                />
-              </div>
-            )}
-            
-            {/* Sort and search controls */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-              <SortDropdown 
-                options={sortOptions}
-                onSort={setSortOption}
-                activeOption={sortOption}
-              />
-              
-              <SearchBar onSearch={setSearchTerm} placeholder="Search devices..." />
-            </div>
-            
-            {/* Filters section */}
-            <DeviceFilters devices={devices} onFilterChange={handleFilterChange} />
-            
-            {/* Results section */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4 text-[#d81570]">Select Your Current Device for Trade-in</h2>
-              
-              {filteredDevices.length === 0 ? (
-                <div className="bg-white rounded-lg p-8 text-center dark:bg-gray-800">
-                  <p className="text-gray-500 dark:text-gray-400">No devices match your selected filters. Please try different criteria.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredDevices.map((device, index) => (
-                    <DeviceCard
-                      key={`${device.Model}-${device.Storage}-${device.Condition}-${index}`}
-                      device={device}
-                      currency={currency}
-                      exchangeRate={exchangeRate}
-                      onClick={() => handleDeviceSelect(device)}
-                      selected={selectedDevice === device}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Selected device details */}
-            {selectedDevice && (
-              <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8" ref={selectedDeviceDetailsRef}>
-                <DeductionCalculator 
-                  basePrice={selectedDevice.Price} 
-                  currency={currency}
-                  onValueChange={handleTradeValueChange}
-                />
-                
-                <div className="bg-white p-6 rounded-lg shadow-sm space-y-6 dark:bg-gray-800 dark:border dark:border-gray-700">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2 text-[#d81570]">Selected Device</h3>
-                    <p className="text-lg">{selectedDevice.Brand} {selectedDevice.Model}</p>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {selectedDevice.Storage} &bull; {selectedDevice.Color} &bull; {selectedDevice.Condition}
-                    </p>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-gray-600 dark:text-gray-300">Final Trade-in Value:</p>
-                      <p className="text-2xl font-bold text-[#d81570]">
-                        {formatCurrency(finalTradeValue)}
-                      </p>
-                    </div>
-                    
-                    <Button 
-                      className="w-full bg-[#d81570] hover:bg-[#e83a8e]" 
-                      onClick={handleProceedToUpgrade}
-                    >
-                      Select Upgrade Device
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </main>
-      
-      {/* Testimonials Section */}
-      <div className="mt-16">
-        <Testimonials testimonials={testimonials} />
+        </Card>
       </div>
-      
-      {/* FAQ Section */}
-      <div className="container mx-auto px-4 mt-8">
-        <FAQSection faqs={faqs} />
-      </div>
-      
-      {/* Footer */}
-      <footer className="mt-16 py-6 bg-gray-100 border-t dark:bg-gray-800 dark:border-gray-700">
-        <div className="container text-center text-sm text-gray-600 dark:text-gray-400">
-          &copy; {new Date().getFullYear()} Phone Matrix Trade-in Calculator. All rights reserved.
-        </div>
-      </footer>
-      
-      {/* ScrollToTop Component */}
-      <ScrollToTop />
     </div>
   );
 };

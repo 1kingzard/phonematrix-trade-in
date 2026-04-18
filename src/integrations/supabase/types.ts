@@ -233,6 +233,36 @@ export type Database = {
         }
         Relationships: []
       }
+      site_media: {
+        Row: {
+          asset_key: string
+          created_at: string
+          file_path: string
+          file_url: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          asset_key: string
+          created_at?: string
+          file_path: string
+          file_url: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          asset_key?: string
+          created_at?: string
+          file_path?: string
+          file_url?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
