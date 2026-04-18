@@ -33,7 +33,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="light" storageKey="theme">
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <CartProvider>
