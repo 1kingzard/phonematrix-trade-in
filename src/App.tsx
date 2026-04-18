@@ -20,6 +20,7 @@ import LoginPage from '@/pages/LoginPage';
 import SplashPage from '@/pages/SplashPage';
 import NotFound from '@/pages/NotFound';
 import PageTransition from '@/components/PageTransition';
+import FaviconSync from '@/components/FaviconSync';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -41,6 +42,7 @@ function App() {
               <PurchaseHistoryProvider>
                 <Router>
                   <div className="min-h-screen bg-background">
+                    <FaviconSync />
                     <PageTransition>
                       <Routes>
                         <Route path="/" element={<Index />} />
