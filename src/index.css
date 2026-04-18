@@ -157,6 +157,89 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ---------- Reveal-on-scroll ---------- */
+.reveal {
+  opacity: 0;
+  will-change: opacity, transform;
+  transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+              transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-fade-up { transform: translateY(24px); }
+.reveal-fade-scale { transform: scale(0.94); }
+.reveal-fade { transform: none; }
+.reveal-in { opacity: 1; transform: none; }
+
+/* ---------- Page transition ---------- */
+.page-transition {
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.page-transition-in { opacity: 1; }
+
+/* ---------- Brand button micro-interaction ---------- */
+.btn-pop {
+  transition: transform 200ms ease, box-shadow 250ms ease, filter 250ms ease;
+}
+.btn-pop:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 28px -8px hsl(var(--brand-pink) / 0.55),
+              0 0 0 1px hsl(var(--brand-pink) / 0.25);
+}
+.btn-pop:active { transform: scale(0.99); }
+
+/* ---------- Card lift ---------- */
+.card-lift {
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 280ms ease, border-color 280ms ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px -18px hsl(var(--brand-pink) / 0.45);
+}
+
+/* ---------- Search expand ---------- */
+.search-expand {
+  transition: box-shadow 250ms ease, transform 250ms ease, border-color 250ms ease;
+}
+.search-expand:focus-within {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px hsl(var(--brand-pink) / 0.18);
+}
+
+/* ---------- Wizard step slide ---------- */
+.step-slide-forward {
+  animation: stepInFromRight 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.step-slide-back {
+  animation: stepInFromLeft 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes stepInFromRight {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes stepInFromLeft {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ---------- Reduced motion: disable everything non-essential ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .page-transition,
+  .btn-pop,
+  .card-lift,
+  .search-expand,
+  .step-slide-forward,
+  .step-slide-back,
+  .animate-fade-in,
+  .animate-float {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 640px) {
   .container {
