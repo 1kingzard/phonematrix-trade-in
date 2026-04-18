@@ -63,7 +63,7 @@ const Index = () => {
               <Button asChild size="lg" className="bg-white text-brand-pink-deep hover:bg-white/90 rounded-full font-semibold shadow-xl">
                 <Link to="/price-list">Browse Devices <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full font-semibold bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 hover:text-white">
+              <Button asChild size="lg" variant="outline" className="rounded-full font-semibold bg-background/20 dark:bg-white/10 backdrop-blur border-foreground/30 dark:border-white/30 text-foreground dark:text-white hover:bg-background/40 dark:hover:bg-white/20 hover:text-foreground dark:hover:text-white">
                 <Link to="/trade-in">Start a Trade-In</Link>
               </Button>
             </div>
