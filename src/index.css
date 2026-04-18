@@ -51,9 +51,16 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Brand Colors */
-    --brand-blue: 333 82% 45%;
-    --brand-orange: 333 82% 45%;
+    /* Brand Colors - Purple/Pink */
+    --brand-purple: 280 75% 55%;
+    --brand-pink: 326 85% 60%;
+    --brand-pink-deep: 333 82% 45%;
+    --brand-purple-deep: 270 70% 40%;
+
+    --gradient-brand: linear-gradient(135deg, hsl(var(--brand-purple)), hsl(var(--brand-pink)));
+    --gradient-brand-soft: linear-gradient(135deg, hsl(var(--brand-purple) / 0.15), hsl(var(--brand-pink) / 0.15));
+    --shadow-brand: 0 20px 60px -15px hsl(var(--brand-pink) / 0.45);
+    --shadow-glow: 0 0 40px hsl(var(--brand-pink) / 0.35);
   }
 
   .dark {
