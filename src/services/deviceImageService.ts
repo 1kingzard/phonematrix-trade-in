@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
  * URLs are cached forever (no TTL) — clear localStorage to refresh.
  */
 
-const CACHE_PREFIX = 'pm_device_img:';
+const CACHE_PREFIX = 'pm_device_img_v2:';
 const NEGATIVE_VALUE = '__none__';
 
 const cacheKey = (brand: string, model: string) =>
