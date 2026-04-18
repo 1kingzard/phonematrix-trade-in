@@ -43,8 +43,12 @@ const TradeIn: React.FC = () => {
   const { exchangeRate } = useExchangeRate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+
+  const goNext = () => { setDirection('forward'); setStep(s => Math.min(STEPS.length, s + 1)); };
+  const goBack = () => { setDirection('back'); setStep(s => Math.max(1, s - 1)); };
 
   const [t, setT] = useState<TradeIn>({
     imei: '', brand: '', model: '', storage: '', color: '',
@@ -191,7 +195,8 @@ Phone: ${phone}`;
           </div>
         </div>
 
-        <Card className="p-6 md:p-8">
+        <Card className="p-6 md:p-8 overflow-hidden">
+          <div key={step} className={direction === 'forward' ? 'step-slide-forward' : 'step-slide-back'}>
           {step === 1 && (
             <div className="space-y-5">
               <div>
@@ -402,16 +407,17 @@ Phone: ${phone}`;
           )}
 
           <div className="flex justify-between mt-8 pt-6 border-t border-border">
-            <Button variant="ghost" onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1}>
+            <Button variant="ghost" onClick={goBack} disabled={step === 1} className="btn-pop">
               <ArrowLeft className="h-4 w-4 mr-1" /> Back
             </Button>
             {step < STEPS.length ? (
-              <Button onClick={() => setStep(s => Math.min(STEPS.length, s + 1))} disabled={!canNext()}>
+              <Button onClick={goNext} disabled={!canNext()} className="btn-pop">
                 Next <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => setStep(1)}>Start over</Button>
+              <Button variant="outline" onClick={() => { setDirection('back'); setStep(1); }} className="btn-pop">Start over</Button>
             )}
+          </div>
           </div>
         </Card>
       </div>
