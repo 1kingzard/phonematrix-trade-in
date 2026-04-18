@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import PurchaseRequestModal from '@/components/PurchaseRequestModal';
 import { Search, Smartphone, X } from 'lucide-react';
+import Reveal from '@/components/Reveal';
 
 const ALL = '__all__';
 
@@ -103,7 +104,7 @@ const PriceList: React.FC = () => {
 
         <Card className="p-4 md:p-6 mb-6 bg-card/60 backdrop-blur border-border/60">
           <div className="flex flex-col gap-4">
-            <div className="relative">
+            <div className="relative search-expand rounded-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search brand, model, storage…" value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11" />
             </div>
@@ -151,36 +152,42 @@ const PriceList: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((d, i) => (
-              <Card key={`${d.Brand}-${d.Model}-${d.Storage}-${d.Condition}-${i}`} className="group overflow-hidden border-border/60 hover:border-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col">
-                <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center relative overflow-hidden">
-                  <Smartphone className="h-20 w-20 text-muted-foreground/30 group-hover:scale-110 transition-transform" strokeWidth={1} />
-                  <Badge variant="outline" className={`absolute top-3 right-3 ${conditionColor(d.Condition)} border`}>{d.Condition}</Badge>
-                </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="mb-2">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">{d.Brand}</p>
-                    <h3 className="font-semibold text-base leading-tight">{d.Model}</h3>
+              <Reveal
+                key={`${d.Brand}-${d.Model}-${d.Storage}-${d.Condition}-${i}`}
+                variant="fade-up"
+                delay={Math.min(i, 8) * 60}
+              >
+                <Card className="card-lift group overflow-hidden border-border/60 hover:border-primary/50 flex flex-col h-full">
+                  <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center relative overflow-hidden">
+                    <Smartphone className="h-20 w-20 text-muted-foreground/30 group-hover:scale-110 transition-transform" strokeWidth={1} />
+                    <Badge variant="outline" className={`absolute top-3 right-3 ${conditionColor(d.Condition)} border`}>{d.Condition}</Badge>
                   </div>
-                  <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-                    <span className="px-2 py-0.5 bg-muted rounded text-xs font-medium">{d.Storage}</span>
-                  </div>
-                  {d.Colors.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {d.Colors.slice(0, 5).map(c => (
-                        <span key={c} title={c} className="w-5 h-5 rounded-full border border-border/60 ring-1 ring-background" style={{ backgroundColor: colorSwatch(c) }} />
-                      ))}
-                      {d.Colors.length > 5 && <span className="text-xs text-muted-foreground self-center">+{d.Colors.length - 5}</span>}
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="mb-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{d.Brand}</p>
+                      <h3 className="font-semibold text-base leading-tight">{d.Model}</h3>
                     </div>
-                  )}
-                  <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Price</p>
-                      <p className="text-2xl font-bold text-foreground">{formatCurrency(d.Price)}</p>
+                    <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+                      <span className="px-2 py-0.5 bg-muted rounded text-xs font-medium">{d.Storage}</span>
                     </div>
-                    <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="shrink-0">Request</Button>
+                    {d.Colors.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {d.Colors.slice(0, 5).map(c => (
+                          <span key={c} title={c} className="w-5 h-5 rounded-full border border-border/60 ring-1 ring-background" style={{ backgroundColor: colorSwatch(c) }} />
+                        ))}
+                        {d.Colors.length > 5 && <span className="text-xs text-muted-foreground self-center">+{d.Colors.length - 5}</span>}
+                      </div>
+                    )}
+                    <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Price</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(d.Price)}</p>
+                      </div>
+                      <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop shrink-0">Request</Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </Reveal>
             ))}
           </div>
         )}
