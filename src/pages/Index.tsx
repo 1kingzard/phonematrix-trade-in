@@ -164,26 +164,26 @@ const Index = () => {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-gray-950 text-gray-300">
+      <footer className="bg-background text-foreground border-t border-border/60">
         <div className="container mx-auto px-6 py-14">
           <div className="grid md:grid-cols-3 gap-10 items-start">
             <div>
               <img src={footerLogo} alt="PhoneMatrix" className="h-10 mb-4 transition-opacity duration-300" />
-              <p className="text-sm text-gray-400 max-w-xs">
+              <p className="text-sm text-muted-foreground max-w-xs">
                 Buy, sell and trade premium smartphones in Jamaica with confidence.
               </p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-3">Navigation</h4>
+              <h4 className="font-semibold mb-3">Navigation</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/" className="hover:text-brand-pink transition-colors">Home</Link></li>
-                <li><Link to="/trade-in" className="hover:text-brand-pink transition-colors">Trade-In</Link></li>
-                <li><Link to="/price-list" className="hover:text-brand-pink transition-colors">Price List</Link></li>
-                <li><Link to="/login" className="hover:text-brand-pink transition-colors">Login</Link></li>
+                <li><Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link></li>
+                <li><Link to="/trade-in" className="text-muted-foreground hover:text-foreground transition-colors">Trade-In</Link></li>
+                <li><Link to="/price-list" className="text-muted-foreground hover:text-foreground transition-colors">Price List</Link></li>
+                <li><Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">Login</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-3">Contact</h4>
+              <h4 className="font-semibold mb-3">Contact</h4>
               <a
                 href="https://wa.me/18765472061"
                 target="_blank"
@@ -194,7 +194,7 @@ const Index = () => {
               </a>
             </div>
           </div>
-          <div className="mt-10 pt-6 border-t border-white/10 text-center text-xs text-gray-500">
+          <div className="mt-10 pt-6 border-t border-border text-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} Phone Matrix. All rights reserved.
           </div>
         </div>
