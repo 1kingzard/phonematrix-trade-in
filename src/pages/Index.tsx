@@ -4,6 +4,7 @@ import { ArrowRight, Smartphone, RefreshCcw, Truck, MessageCircle } from 'lucide
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import Reveal from '@/components/Reveal';
+import { useSiteLogo } from '@/hooks/useSiteLogo';
 
 const features = [
   {
@@ -24,6 +25,7 @@ const features = [
 ];
 
 const Index = () => {
+  const footerLogo = useSiteLogo();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -166,7 +168,7 @@ const Index = () => {
         <div className="container mx-auto px-6 py-14">
           <div className="grid md:grid-cols-3 gap-10 items-start">
             <div>
-              <img src="https://i.imgur.com/dAkmFGF.png" alt="PhoneMatrix" className="h-10 mb-4" />
+              <img src={footerLogo} alt="PhoneMatrix" className="h-10 mb-4 transition-opacity duration-300" />
               <p className="text-sm text-gray-400 max-w-xs">
                 Buy, sell and trade premium smartphones in Jamaica with confidence.
               </p>

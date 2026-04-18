@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useSiteMedia, uploadSiteAsset, SITE_ASSET_SLOTS } from '@/services/mediaService';
+import { useSiteMedia, uploadSiteAsset, SITE_ASSET_SLOTS, ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '@/services/mediaService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, ImageIcon, Loader2, Plus } from 'lucide-react';
@@ -17,14 +17,18 @@ const MediaManagement: React.FC = () => {
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleUpload = async (key: string, file: File | null) => {
-    if (!file || !user) return;
+    if (!file) return;
+    if (!user) {
+      toast({ title: 'Not signed in', description: 'You must be signed in as admin.', variant: 'destructive' });
+      return;
+    }
     setUploadingKey(key);
     try {
       await uploadSiteAsset(key, file, user.id);
       await refresh();
-      toast({ title: 'Uploaded', description: `${key} updated successfully.` });
+      toast({ title: 'Upload successful', description: `${key} updated and applied site-wide.` });
     } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+      toast({ title: 'Upload failed', description: e.message || 'Something went wrong.', variant: 'destructive' });
     } finally { setUploadingKey(null); }
   };
 
@@ -70,7 +74,7 @@ const MediaManagement: React.FC = () => {
                     <input
                       ref={el => (fileInputs.current[slot.key] = el)}
                       type="file"
-                      accept="image/*"
+                      accept=".png,.jpg,.jpeg,.svg,.webp,.ico,image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon"
                       className="hidden"
                       onChange={e => handleUpload(slot.key, e.target.files?.[0] || null)}
                     />
@@ -110,7 +114,7 @@ const MediaManagement: React.FC = () => {
             <Label className="block mb-2">File</Label>
             <Input
               type="file"
-              accept="image/*"
+              accept=".png,.jpg,.jpeg,.svg,.webp,.ico,image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon"
               disabled={!customKey || uploadingKey === customKey}
               onChange={e => {
                 if (customKey) {
@@ -119,6 +123,9 @@ const MediaManagement: React.FC = () => {
                 }
               }}
             />
+            <p className="text-xs text-muted-foreground mt-2">
+              Allowed: {ALLOWED_EXTENSIONS.join(', ')} · Max {(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)}MB
+            </p>
           </div>
         </CardContent>
       </Card>
