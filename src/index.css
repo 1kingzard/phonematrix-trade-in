@@ -108,7 +108,7 @@
   }
 
   html, body {
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   }
 
   body {
@@ -121,18 +121,18 @@
   button,
   .card-title,
   [role="button"] {
-    font-family: 'Bebas Neue', 'Nunito', sans-serif;
+    font-family: 'Bebas Neue', 'Poppins', sans-serif;
     letter-spacing: 0.02em;
   }
 
-  /* Form controls and body content stay in Nunito */
+  /* Form controls and body content stay in Poppins */
   p, label, span, li, input, select, textarea, td, th {
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   }
 
   /* Inputs/selects shouldn't pick up the heading font from the button rule above */
   input, textarea, select {
-    font-family: 'Nunito', system-ui, -apple-system, sans-serif !important;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
     letter-spacing: normal;
   }
 }
