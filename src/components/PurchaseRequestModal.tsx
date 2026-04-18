@@ -9,6 +9,7 @@ import { DeviceData, formatCurrency } from '@/services/deviceDataService';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { MessageCircle } from 'lucide-react';
+import DeviceImage from '@/components/DeviceImage';
 
 const WHATSAPP_NUMBER = '18765472061';
 
@@ -73,11 +74,16 @@ Notes: ${notes || 'N/A'}`;
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Device</span><span className="font-medium">{device.Brand} {device.Model}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Condition</span><span className="font-medium">{device.Condition}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Storage</span><span className="font-medium">{device.Storage}</span></div>
-            <div className="flex justify-between pt-1 border-t border-border/60 mt-1"><span className="text-muted-foreground">Price</span><span className="font-bold text-base">{formatCurrency(device.Price)}</span></div>
+          <div className="flex gap-3 rounded-lg bg-muted/50 p-3">
+            <div className="w-20 shrink-0 rounded-md overflow-hidden bg-background">
+              <DeviceImage brand={device.Brand} model={device.Model} aspectClass="aspect-[3/4]" />
+            </div>
+            <div className="flex-1 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Device</span><span className="font-medium">{device.Brand} {device.Model}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Condition</span><span className="font-medium">{device.Condition}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Storage</span><span className="font-medium">{device.Storage}</span></div>
+              <div className="flex justify-between pt-1 border-t border-border/60 mt-1"><span className="text-muted-foreground">Price</span><span className="font-bold text-base">{formatCurrency(device.Price)}</span></div>
+            </div>
           </div>
 
           <div className="space-y-2">
