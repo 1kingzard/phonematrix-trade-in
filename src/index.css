@@ -107,8 +107,33 @@
     @apply border-border;
   }
 
+  html, body {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-display,
+  .nav-link,
+  button,
+  .card-title,
+  [role="button"] {
+    font-family: 'Bebas Neue', 'Nunito', sans-serif;
+    letter-spacing: 0.02em;
+  }
+
+  /* Form controls and body content stay in Nunito */
+  p, label, span, li, input, select, textarea, td, th {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Inputs/selects shouldn't pick up the heading font from the button rule above */
+  input, textarea, select {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif !important;
+    letter-spacing: normal;
   }
 }
 
