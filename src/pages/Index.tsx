@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Smartphone, RefreshCcw, Truck, MessageCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
+import Reveal from '@/components/Reveal';
 
 const features = [
   {
@@ -46,27 +47,35 @@ const Index = () => {
         </div>
 
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center relative">
-          <div className="text-foreground dark:text-white space-y-6 animate-fade-in">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-background/40 dark:bg-white/15 backdrop-blur-md border border-foreground/20 dark:border-white/20 text-xs font-medium uppercase tracking-widest">
-              Phone Matrix · Jamaica
-            </span>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
-              Your Next Device <br />
-              <span className="bg-gradient-to-r from-foreground to-brand-pink-deep dark:from-white dark:to-pink-100 bg-clip-text text-transparent">
-                Starts Here.
+          <div className="text-foreground dark:text-white space-y-6">
+            <Reveal variant="fade-up" delay={0}>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-background/40 dark:bg-white/15 backdrop-blur-md border border-foreground/20 dark:border-white/20 text-xs font-medium uppercase tracking-widest">
+                Phone Matrix · Jamaica
               </span>
-            </h1>
-            <p className="text-lg sm:text-xl text-foreground/85 dark:text-white/85 max-w-xl leading-relaxed">
-              Phone Matrix makes it effortless to buy, sell and trade premium smartphones — fair prices, fast shipping, real humans.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button asChild size="lg" className="bg-white text-brand-pink-deep hover:bg-white/90 rounded-full font-semibold shadow-xl">
-                <Link to="/price-list">Browse Devices <ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full font-semibold bg-background/20 dark:bg-white/10 backdrop-blur border-foreground/30 dark:border-white/30 text-foreground dark:text-white hover:bg-background/40 dark:hover:bg-white/20 hover:text-foreground dark:hover:text-white">
-                <Link to="/trade-in">Start a Trade-In</Link>
-              </Button>
-            </div>
+            </Reveal>
+            <Reveal variant="fade-up" delay={120}>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
+                Your Next Device <br />
+                <span className="bg-gradient-to-r from-foreground to-brand-pink-deep dark:from-white dark:to-pink-100 bg-clip-text text-transparent">
+                  Starts Here.
+                </span>
+              </h1>
+            </Reveal>
+            <Reveal variant="fade-up" delay={260}>
+              <p className="text-lg sm:text-xl text-foreground/85 dark:text-white/85 max-w-xl leading-relaxed">
+                Phone Matrix makes it effortless to buy, sell and trade premium smartphones — fair prices, fast shipping, real humans.
+              </p>
+            </Reveal>
+            <Reveal variant="fade-up" delay={400}>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button asChild size="lg" className="btn-pop bg-white text-brand-pink-deep hover:bg-white/90 rounded-full font-semibold shadow-xl">
+                  <Link to="/price-list">Browse Devices <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="btn-pop rounded-full font-semibold bg-background/20 dark:bg-white/10 backdrop-blur border-foreground/30 dark:border-white/30 text-foreground dark:text-white hover:bg-background/40 dark:hover:bg-white/20 hover:text-foreground dark:hover:text-white">
+                  <Link to="/trade-in">Start a Trade-In</Link>
+                </Button>
+              </div>
+            </Reveal>
           </div>
 
           {/* Floating phone mockup */}
@@ -108,18 +117,19 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="group relative rounded-3xl p-8 bg-card/50 backdrop-blur-xl border border-brand-pink/20 hover:border-brand-pink/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_-15px_hsl(var(--brand-pink)/0.4)]"
-              >
-                <div className="absolute inset-0 rounded-3xl bg-gradient-brand-soft opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
-                <div className="w-14 h-14 rounded-2xl bg-gradient-brand flex items-center justify-center mb-5 shadow-lg">
-                  <f.icon className="h-7 w-7 text-white" />
+            {features.map((f, i) => (
+              <Reveal key={f.title} variant="fade-scale" delay={i * 150}>
+                <div
+                  className="card-lift group relative rounded-3xl p-8 bg-card/50 backdrop-blur-xl border border-brand-pink/20 hover:border-brand-pink/50 h-full"
+                >
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-brand-soft opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-brand flex items-center justify-center mb-5 shadow-lg">
+                    <f.icon className="h-7 w-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{f.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{f.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -139,10 +149,10 @@ const Index = () => {
                 Browse our price list or start your trade-in today — it only takes a minute.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button asChild size="lg" className="bg-white text-brand-pink-deep hover:bg-white/90 rounded-full font-semibold">
+                <Button asChild size="lg" className="btn-pop bg-white text-brand-pink-deep hover:bg-white/90 rounded-full font-semibold">
                   <Link to="/price-list">Browse Devices <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full font-semibold bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 hover:text-white">
+                <Button asChild size="lg" variant="outline" className="btn-pop rounded-full font-semibold bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 hover:text-white">
                   <Link to="/trade-in">Start a Trade-In</Link>
                 </Button>
               </div>
