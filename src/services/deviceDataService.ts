@@ -1,7 +1,45 @@
-
 import { useState, useEffect } from 'react';
 
-// Define the type for our device data
+// Updated CSV with new columns: Color 1-6, Screen Replacement, Battery Replacement, Rear Glass replacement
+const DEFAULT_CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_hMufMdiRt6SRdz5LGd_bWTGJuW1eEO6GEx13FA9tRZYmkqHtrz28brn8yTiS94HKUPuwSgPZkxP/pub?output=csv';
+
+const CSV_URL_KEY = 'pm_csv_url';
+const CSV_MAPPING_KEY = 'pm_csv_mapping';
+
+export const getCsvUrl = (): string => {
+  if (typeof window === 'undefined') return DEFAULT_CSV_URL;
+  return localStorage.getItem(CSV_URL_KEY) || DEFAULT_CSV_URL;
+};
+
+export const setCsvUrl = (url: string) => {
+  localStorage.setItem(CSV_URL_KEY, url);
+};
+
+export const getDefaultCsvUrl = () => DEFAULT_CSV_URL;
+
+// Expected canonical field names
+export const CANONICAL_FIELDS = [
+  'OS', 'Brand', 'Model', 'Condition', 'Price', 'Storage',
+  'Color 1', 'Color 2', 'Color 3', 'Color 4', 'Color 5', 'Color 6',
+  'Screen Replacement', 'Battery Replacement', 'Rear Glass Replacement',
+] as const;
+
+export type CanonicalField = typeof CANONICAL_FIELDS[number];
+
+export type ColumnMapping = Partial<Record<CanonicalField, string>>;
+
+export const getColumnMapping = (): ColumnMapping => {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(CSV_MAPPING_KEY) || '{}');
+  } catch { return {}; }
+};
+
+export const setColumnMapping = (m: ColumnMapping) => {
+  localStorage.setItem(CSV_MAPPING_KEY, JSON.stringify(m));
+};
+
 export interface DeviceData {
   OS: string;
   Brand: string;
@@ -9,131 +47,152 @@ export interface DeviceData {
   Condition: string;
   Price: number;
   Storage: string;
-  Color: string;
+  Colors: string[]; // filtered (no "None" / empty)
+  ScreenReplacement: number;
+  BatteryReplacement: number;
+  RearGlassReplacement: number;
 }
 
-// CSV URL from Google Sheets
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL9a5fmRtcYCgO0q9VHHSvIIQM_kJryefPZDQmzbCoPuw7jtlpMgLVV5JEgoi60lAtjIbZjD46QVJw/pub?output=csv";
+export const SERVICE_CHARGE = 50;
 
-// Service charge for trading devices
-export const SERVICE_CHARGE = 50; // $50 service charge
-
-// Function to parse CSV data
-const parseCSV = (csvText: string): DeviceData[] => {
-  const lines = csvText.split('\n');
-  const headers = lines[0].split(',').map(header => header.trim());
-  
-  return lines.slice(1).map(line => {
-    const values = line.split(',').map(value => value.trim());
-    const deviceData: Partial<DeviceData> = {};
-    
-    headers.forEach((header, index) => {
-      const key = header as keyof DeviceData;
-      if (key === 'Price') {
-        deviceData[key] = parseFloat(values[index]) || 0;
-      } else {
-        deviceData[key] = values[index];
-      }
-    });
-    
-    return deviceData as DeviceData;
-  }).filter(device => device.Model && device.Price); // Filter out any incomplete rows
+const parseCSVLine = (line: string): string[] => {
+  // Simple CSV split — these sheets don't appear to use quoted fields with commas
+  return line.split(',').map(v => v.trim());
 };
 
-// Hook to fetch and provide device data
+const findHeaderIndex = (headers: string[], canonical: CanonicalField, mapping: ColumnMapping): number => {
+  const mapped = mapping[canonical];
+  if (mapped) {
+    const i = headers.findIndex(h => h.toLowerCase() === mapped.toLowerCase());
+    if (i >= 0) return i;
+  }
+  // Case-insensitive match on canonical name
+  const i = headers.findIndex(h => h.toLowerCase() === canonical.toLowerCase());
+  return i;
+};
+
+const num = (v: string | undefined): number => {
+  if (!v) return 0;
+  const n = parseFloat(v.replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? 0 : n;
+};
+
+const parseCSV = (csvText: string, mapping: ColumnMapping): DeviceData[] => {
+  const lines = csvText.split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+  const headers = parseCSVLine(lines[0]);
+
+  const idx = {
+    OS: findHeaderIndex(headers, 'OS', mapping),
+    Brand: findHeaderIndex(headers, 'Brand', mapping),
+    Model: findHeaderIndex(headers, 'Model', mapping),
+    Condition: findHeaderIndex(headers, 'Condition', mapping),
+    Price: findHeaderIndex(headers, 'Price', mapping),
+    Storage: findHeaderIndex(headers, 'Storage', mapping),
+    C1: findHeaderIndex(headers, 'Color 1', mapping),
+    C2: findHeaderIndex(headers, 'Color 2', mapping),
+    C3: findHeaderIndex(headers, 'Color 3', mapping),
+    C4: findHeaderIndex(headers, 'Color 4', mapping),
+    C5: findHeaderIndex(headers, 'Color 5', mapping),
+    C6: findHeaderIndex(headers, 'Color 6', mapping),
+    Screen: findHeaderIndex(headers, 'Screen Replacement', mapping),
+    Battery: findHeaderIndex(headers, 'Battery Replacement', mapping),
+    Rear: findHeaderIndex(headers, 'Rear Glass Replacement', mapping),
+  };
+
+  return lines.slice(1).map(line => {
+    const v = parseCSVLine(line);
+    const colors = [v[idx.C1], v[idx.C2], v[idx.C3], v[idx.C4], v[idx.C5], v[idx.C6]]
+      .filter(c => c && c.toLowerCase() !== 'none' && c !== '');
+    return {
+      OS: v[idx.OS] || '',
+      Brand: v[idx.Brand] || '',
+      Model: v[idx.Model] || '',
+      Condition: v[idx.Condition] || '',
+      Price: num(v[idx.Price]),
+      Storage: v[idx.Storage] || '',
+      Colors: colors,
+      ScreenReplacement: num(v[idx.Screen]),
+      BatteryReplacement: num(v[idx.Battery]),
+      RearGlassReplacement: num(v[idx.Rear]),
+    };
+  }).filter(d => d.Model && d.Brand);
+};
+
 export const useDeviceData = () => {
   const [devices, setDevices] = useState<DeviceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [headers, setHeaders] = useState<string[]>([]);
+
   useEffect(() => {
-    const fetchData = async () => {
+    let cancelled = false;
+    const load = async () => {
       try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) {
-          throw new Error('Failed to fetch device data');
+        setLoading(true);
+        const url = getCsvUrl();
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to fetch CSV');
+        const text = await res.text();
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length) setHeaders(parseCSVLine(lines[0]));
+        const data = parseCSV(text, getColumnMapping());
+        if (!cancelled) {
+          setDevices(data);
+          setError(null);
         }
-        const csvText = await response.text();
-        const parsedData = parseCSV(csvText);
-        setDevices(parsedData);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching device data:', err);
-        setError('Failed to load device data. Please try again later.');
-        setLoading(false);
+      } catch (e) {
+        if (!cancelled) setError('Failed to load device data.');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
-    
-    fetchData();
+    load();
+    const handler = () => load();
+    window.addEventListener('pm-csv-config-changed', handler);
+    return () => { cancelled = true; window.removeEventListener('pm-csv-config-changed', handler); };
   }, []);
-  
-  return { devices, loading, error };
+
+  return { devices, loading, error, headers };
 };
 
-// Hook to get the current exchange rate
 export const useExchangeRate = () => {
-  const [exchangeRate, setExchangeRate] = useState<number>(158); // Default fallback rate
-  const [loading, setLoading] = useState<boolean>(true);
-  
+  const [exchangeRate, setExchangeRate] = useState<number>(158);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const fetchExchangeRate = async () => {
-      try {
-        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        const data = await response.json();
-
-        if (data.rates && data.rates.JMD) {
-          setExchangeRate(data.rates.JMD);
-          console.log("Successfully fetched exchange rate:", data.rates.JMD);
-        } else {
-          console.error("Error fetching exchange rate: Invalid response", data);
-        }
-      } catch (error) {
-        console.error("Error fetching exchange rate:", error);
-        // Keep the fallback rate if there's an error
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchExchangeRate();
+    fetch('https://api.exchangerate-api.com/v4/latest/USD')
+      .then(r => r.json())
+      .then(d => { if (d?.rates?.JMD) setExchangeRate(d.rates.JMD); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
-  
   return { exchangeRate, loading };
 };
 
-// Function to get unique values for a specific field from device data
-export const getUniqueValues = (devices: DeviceData[], field: keyof DeviceData): string[] => {
-  const uniqueValues = new Set(devices.map(device => device[field] as string));
-  return Array.from(uniqueValues).filter(Boolean).sort();
+export const getUniqueValues = <K extends keyof DeviceData>(devices: DeviceData[], field: K): string[] => {
+  const set = new Set<string>();
+  devices.forEach(d => {
+    const v = d[field];
+    if (typeof v === 'string' && v) set.add(v);
+  });
+  return Array.from(set).sort();
 };
 
-// Calculate the price difference between two devices including service charge
 export const calculatePriceDifference = (
-  tradeInDevice: DeviceData | null, 
-  upgradeDevice: DeviceData | null, 
+  tradeIn: DeviceData | null,
+  upgrade: DeviceData | null,
   finalTradeValue: number
 ): number => {
-  if (!tradeInDevice || !upgradeDevice) {
-    return 0;
-  }
-  
-  // Add service charge to the difference calculation
-  return upgradeDevice.Price - finalTradeValue + SERVICE_CHARGE;
+  if (!tradeIn || !upgrade) return 0;
+  return upgrade.Price - finalTradeValue + SERVICE_CHARGE;
 };
 
-// Calculate shipping cost for upgraded device in JMD (30% of device price)
-export const calculateShippingCost = (upgradeDevicePrice: number): number => {
-  return upgradeDevicePrice * 0.3; // 30% of the upgrade device price
+export const calculateShippingCost = (price: number) => price * 0.3;
+
+export const formatServiceCharge = (currency: 'USD' | 'JMD', exchangeRate: number) => {
+  const v = currency === 'USD' ? SERVICE_CHARGE : SERVICE_CHARGE * exchangeRate;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v);
 };
 
-// Format service charge for display
-export const formatServiceCharge = (currency: 'USD' | 'JMD', exchangeRate: number): string => {
-  const chargeInCurrency = currency === 'USD' ? SERVICE_CHARGE : SERVICE_CHARGE * exchangeRate;
-  
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(chargeInCurrency);
-};
+export const formatCurrency = (amount: number, currency: 'USD' | 'JMD' = 'USD') =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
