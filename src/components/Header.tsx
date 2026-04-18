@@ -12,6 +12,7 @@ import {
 import { User, LogOut, Settings, Shield, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { cn } from '@/lib/utils';
+import { useSiteLogo } from '@/hooks/useSiteLogo';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -24,7 +25,7 @@ const Header = () => {
   const { user, logout, isAdmin } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const logoSrc = useSiteLogo();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -32,16 +33,6 @@ const Header = () => {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    const check = () => setIsDarkMode(document.documentElement.classList.contains('dark'));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, []);
-
-  const logoSrc = isDarkMode ? 'https://i.imgur.com/dAkmFGF.png' : 'https://i.imgur.com/TcJEewx.png';
 
   return (
     <header
@@ -53,7 +44,7 @@ const Header = () => {
     >
       <div className="container mx-auto flex items-center justify-between h-16 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logoSrc} alt="PhoneMatrix" className="h-8 sm:h-9" />
+          <img src={logoSrc} alt="PhoneMatrix" className="h-8 sm:h-9 transition-opacity duration-300" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
