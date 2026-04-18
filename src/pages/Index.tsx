@@ -30,7 +30,7 @@ const Index = () => {
       {/* HERO */}
       <section className="relative min-h-screen flex items-center overflow-hidden pt-16">
         {/* Gradient background */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-gradient-to-br from-brand-purple via-brand-pink-deep to-brand-pink opacity-95" />
           {/* Geometric overlay */}
           <div
@@ -45,7 +45,7 @@ const Index = () => {
           <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-brand-purple-deep/40 blur-3xl" />
         </div>
 
-        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center relative">
           <div className="text-white space-y-6 animate-fade-in">
             <span className="inline-block px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-medium uppercase tracking-widest">
               Phone Matrix · Jamaica
