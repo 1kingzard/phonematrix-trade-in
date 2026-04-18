@@ -36,10 +36,74 @@ const setCachedDeviceImage = (brand: string, model: string, url: string | null) 
 };
 
 /**
- * Try Wikipedia REST API summary endpoint, which returns a `thumbnail.source`
- * for most product pages. We try a few title variations to maximize hits.
+ * Search Wikimedia Commons for a back-of-device image.
+ * We bias the query toward "back" / "rear" / "back panel" so we get the
+ * rear of the phone (where the cameras are) instead of the screen.
  */
-const fetchFromWikipedia = async (brand: string, model: string): Promise<string | null> => {
+const searchWikimediaForBack = async (brand: string, model: string): Promise<string | null> => {
+  const queries = [
+    `${brand} ${model} back`,
+    `${brand} ${model} rear`,
+    `${brand} ${model} back panel`,
+  ];
+
+  for (const q of queries) {
+    const url = `https://commons.wikimedia.org/w/api.php?` + new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      generator: 'search',
+      gsrsearch: `${q} filetype:bitmap`,
+      gsrlimit: '8',
+      gsrnamespace: '6', // File namespace
+      prop: 'imageinfo',
+      iiprop: 'url',
+      iiurlwidth: '600',
+      origin: '*',
+    }).toString();
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const pages = data?.query?.pages;
+      if (!pages) continue;
+
+      const candidates = Object.values(pages) as Array<{
+        title?: string;
+        imageinfo?: Array<{ url?: string; thumburl?: string }>;
+      }>;
+
+      // Prefer titles that mention "back" or "rear" explicitly
+      const ranked = candidates
+        .map((p) => {
+          const title = (p.title || '').toLowerCase();
+          const info = p.imageinfo?.[0];
+          const src = info?.thumburl || info?.url;
+          if (!src || !/\.(jpg|jpeg|png|webp)$/i.test(src)) return null;
+          let score = 0;
+          if (/\bback\b/.test(title)) score += 3;
+          if (/\brear\b/.test(title)) score += 3;
+          if (/back\s*panel|rear\s*panel|backside/.test(title)) score += 2;
+          if (/\bfront\b|\bscreen\b|\bdisplay\b/.test(title)) score -= 5;
+          return { src, score };
+        })
+        .filter((x): x is { src: string; score: number } => !!x)
+        .sort((a, b) => b.score - a.score);
+
+      const top = ranked[0];
+      if (top && top.score > 0) return top.src;
+    } catch {
+      // try next query
+    }
+  }
+  return null;
+};
+
+/**
+ * Fallback: Wikipedia REST API summary thumbnail (usually shows the front).
+ * Used only when no back-of-device image was found.
+ */
+const fetchFromWikipediaSummary = async (brand: string, model: string): Promise<string | null> => {
   const candidates = [
     `${brand} ${model}`,
     `${model}`,
@@ -53,14 +117,13 @@ const fetchFromWikipedia = async (brand: string, model: string): Promise<string 
       const res = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!res.ok) continue;
       const data = await res.json();
-      // Prefer originalimage (higher res) then thumbnail
       const src: string | undefined =
         data?.originalimage?.source || data?.thumbnail?.source;
       if (src && /\.(jpg|jpeg|png|webp|svg)/i.test(src)) {
         return src;
       }
     } catch {
-      // try next candidate
+      // try next
     }
   }
   return null;
@@ -71,7 +134,11 @@ export const fetchDeviceImage = async (brand: string, model: string): Promise<st
   const cached = getCachedDeviceImage(brand, model);
   if (cached !== undefined) return cached;
 
-  const result = await fetchFromWikipedia(brand, model);
+  // Prefer back-of-device shot, fall back to Wikipedia summary thumbnail
+  const result =
+    (await searchWikimediaForBack(brand, model)) ??
+    (await fetchFromWikipediaSummary(brand, model));
+
   setCachedDeviceImage(brand, model, result);
   return result;
 };
