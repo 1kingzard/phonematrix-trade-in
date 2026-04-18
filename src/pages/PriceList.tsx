@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import PurchaseRequestModal from '@/components/PurchaseRequestModal';
 import { Search, Smartphone, X } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import DeviceImage from '@/components/DeviceImage';
 
 const ALL = '__all__';
 
@@ -158,8 +159,8 @@ const PriceList: React.FC = () => {
                 delay={Math.min(i, 8) * 60}
               >
                 <Card className="card-lift group overflow-hidden border-border/60 hover:border-primary/50 flex flex-col h-full">
-                  <div className="aspect-[4/3] bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center relative overflow-hidden">
-                    <Smartphone className="h-20 w-20 text-muted-foreground/30 group-hover:scale-110 transition-transform" strokeWidth={1} />
+                  <div className="relative">
+                    <DeviceImage brand={d.Brand} model={d.Model} aspectClass="aspect-[3/4]" />
                     <Badge variant="outline" className={`absolute top-3 right-3 ${conditionColor(d.Condition)} border`}>{d.Condition}</Badge>
                   </div>
                   <div className="p-4 flex flex-col flex-1">
