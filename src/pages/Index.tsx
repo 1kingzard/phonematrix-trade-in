@@ -46,17 +46,17 @@ const Index = () => {
         </div>
 
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center relative">
-          <div className="text-white space-y-6 animate-fade-in">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-medium uppercase tracking-widest">
+          <div className="text-foreground dark:text-white space-y-6 animate-fade-in">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-background/40 dark:bg-white/15 backdrop-blur-md border border-foreground/20 dark:border-white/20 text-xs font-medium uppercase tracking-widest">
               Phone Matrix · Jamaica
             </span>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
               Your Next Device <br />
-              <span className="bg-gradient-to-r from-white to-pink-100 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-foreground to-brand-pink-deep dark:from-white dark:to-pink-100 bg-clip-text text-transparent">
                 Starts Here.
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-white/85 max-w-xl leading-relaxed">
+            <p className="text-lg sm:text-xl text-foreground/85 dark:text-white/85 max-w-xl leading-relaxed">
               Phone Matrix makes it effortless to buy, sell and trade premium smartphones — fair prices, fast shipping, real humans.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
