@@ -4,6 +4,7 @@ import { ArrowRight, Smartphone, RefreshCcw, Truck, MessageCircle } from 'lucide
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import Reveal from '@/components/Reveal';
+import { useSiteLogo } from '@/hooks/useSiteLogo';
 
 const features = [
   {
@@ -24,6 +25,7 @@ const features = [
 ];
 
 const Index = () => {
+  const footerLogo = useSiteLogo();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
