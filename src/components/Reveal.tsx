@@ -7,7 +7,6 @@ interface RevealProps {
   variant?: Variant;
   delay?: number; // ms
   className?: string;
-  as?: keyof JSX.IntrinsicElements;
   once?: boolean;
 }
 
@@ -20,10 +19,9 @@ export const Reveal: React.FC<RevealProps> = ({
   variant = 'fade-up',
   delay = 0,
   className = '',
-  as: Tag = 'div',
   once = true,
 }) => {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -51,19 +49,14 @@ export const Reveal: React.FC<RevealProps> = ({
     return () => io.disconnect();
   }, [once]);
 
-  const base = 'reveal';
-  const state = visible ? 'reveal-in' : '';
-  const variantClass = `reveal-${variant}`;
-
   return (
-    // @ts-expect-error dynamic tag
-    <Tag
+    <div
       ref={ref}
-      className={`${base} ${variantClass} ${state} ${className}`}
+      className={`reveal reveal-${variant} ${visible ? 'reveal-in' : ''} ${className}`}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
-    </Tag>
+    </div>
   );
 };
 
