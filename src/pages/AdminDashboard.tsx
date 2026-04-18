@@ -12,6 +12,8 @@ import InventoryManagement from '@/components/admin/InventoryManagement';
 import OrderManagement from '@/components/admin/OrderManagement';
 import ReferralCodeManagement from '@/components/admin/ReferralCodeManagement';
 import AdminTools from '@/components/admin/AdminTools';
+import CsvManagement from '@/components/admin/CsvManagement';
+import MediaManagement from '@/components/admin/MediaManagement';
 
 interface ReferralCode {
   id: string;
@@ -182,10 +184,12 @@ const AdminDashboard = () => {
 
         <Tabs defaultValue="orders" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="orders">Orders Management</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="referrals">Referral Codes</TabsTrigger>
-            <TabsTrigger value="admin">Admin Tools</TabsTrigger>
+            <TabsTrigger value="referrals">Referrals</TabsTrigger>
+            <TabsTrigger value="csv">CSV</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="admin">Tools</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="space-y-4">
@@ -198,6 +202,14 @@ const AdminDashboard = () => {
 
           <TabsContent value="referrals" className="space-y-4">
             <ReferralCodeManagement referralCodes={referralCodes} onRefresh={fetchAdminData} user={user} />
+          </TabsContent>
+
+          <TabsContent value="csv" className="space-y-4">
+            <CsvManagement />
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-4">
+            <MediaManagement />
           </TabsContent>
 
           <TabsContent value="admin" className="space-y-4">
