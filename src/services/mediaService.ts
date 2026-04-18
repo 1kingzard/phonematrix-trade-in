@@ -36,8 +36,8 @@ export const useSiteMedia = () => {
   useEffect(() => {
     refresh();
     const channel = supabase
-      .channel('site-media-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_media' }, refresh)
+      .channel(`site-media-changes-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'site_media' }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
