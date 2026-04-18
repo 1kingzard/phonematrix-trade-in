@@ -48,6 +48,8 @@ export interface DeviceData {
   Price: number;
   Storage: string;
   Colors: string[]; // filtered (no "None" / empty)
+  /** Backward-compat: space-separated string of colors */
+  Color: string;
   ScreenReplacement: number;
   BatteryReplacement: number;
   RearGlassReplacement: number;
@@ -112,6 +114,7 @@ const parseCSV = (csvText: string, mapping: ColumnMapping): DeviceData[] => {
       Price: num(v[idx.Price]),
       Storage: v[idx.Storage] || '',
       Colors: colors,
+      Color: colors.join(' '),
       ScreenReplacement: num(v[idx.Screen]),
       BatteryReplacement: num(v[idx.Battery]),
       RearGlassReplacement: num(v[idx.Rear]),
