@@ -25,12 +25,15 @@ const FlagUS = () => (
 );
 
 const FlagJM = () => (
-  <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm" aria-hidden="true">
+  <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm overflow-hidden" aria-hidden="true">
+    {/* Yellow saltire base */}
     <rect width="24" height="16" fill="#fed100" />
-    <polygon points="0,0 12,8 0,16" fill="#009b3a" />
-    <polygon points="24,0 12,8 24,16" fill="#009b3a" />
-    <polygon points="0,0 12,8 24,0" fill="#000" />
-    <polygon points="0,16 12,8 24,16" fill="#000" />
+    {/* Green left & right triangles, inset to leave yellow saltire visible */}
+    <polygon points="0,2 10.5,8 0,14" fill="#009b3a" />
+    <polygon points="24,2 13.5,8 24,14" fill="#009b3a" />
+    {/* Black top & bottom triangles, inset */}
+    <polygon points="2,0 12,6.8 22,0" fill="#000" />
+    <polygon points="2,16 12,9.2 22,16" fill="#000" />
   </svg>
 );
 
