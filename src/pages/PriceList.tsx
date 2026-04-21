@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useDeviceData, DeviceData, formatCurrency, getUniqueValues } from '@/services/deviceDataService';
+import { useDeviceData, DeviceData, getUniqueValues } from '@/services/deviceDataService';
 import { useSiteMedia } from '@/services/mediaService';
 import Header from '@/components/Header';
 import { Card } from '@/components/ui/card';
