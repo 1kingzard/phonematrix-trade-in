@@ -16,6 +16,26 @@ import { useExchangeRate, formatJMD, formatUSD, calcBreakdown } from '@/hooks/us
 
 const ALL = '__all__';
 
+const FlagUS = () => (
+  <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm" aria-hidden="true">
+    <rect width="24" height="16" fill="#fff" />
+    {[1,3,5,7,9,11,13].map(y => <rect key={y} y={y} width="24" height="1.23" fill="#b22234" />)}
+    <rect width="10" height="8.6" fill="#3c3b6e" />
+  </svg>
+);
+
+const FlagJM = () => (
+  <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm" aria-hidden="true">
+    <rect width="24" height="16" fill="#000" />
+    <polygon points="0,0 12,8 0,16" fill="#009b3a" />
+    <polygon points="24,0 12,8 24,16" fill="#009b3a" />
+    <polygon points="0,0 12,8 24,0" fill="#000" />
+    <polygon points="0,16 12,8 24,16" fill="#000" />
+    <polygon points="0,0 24,0 12,8" fill="#000" opacity="0" />
+    <path d="M0,0 L24,16 M24,0 L0,16" stroke="#fed100" strokeWidth="2.2" />
+  </svg>
+);
+
 const colorSwatch = (name: string): string => {
   const lower = name.toLowerCase();
   const map: Record<string, string> = {
@@ -147,12 +167,12 @@ const PriceList: React.FC = () => {
                 <div className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 p-0.5 text-xs">
                   <button
                     onClick={() => setCurrency('USD')}
-                    className={`px-3 py-1.5 rounded-full transition-colors ${currency === 'USD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  >🇺🇸 USD</button>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${currency === 'USD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  ><FlagUS /> USD</button>
                   <button
                     onClick={() => setCurrency('JMD')}
-                    className={`px-3 py-1.5 rounded-full transition-colors ${currency === 'JMD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  >🇯🇲 JMD</button>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${currency === 'JMD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  ><FlagJM /> JMD</button>
                 </div>
                 {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8"><X className="h-3.5 w-3.5 mr-1" /> Clear</Button>}
               </div>
