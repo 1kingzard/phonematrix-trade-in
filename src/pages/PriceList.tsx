@@ -167,12 +167,12 @@ const PriceList: React.FC = () => {
                 <div className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 p-0.5 text-xs">
                   <button
                     onClick={() => setCurrency('USD')}
-                    className={`px-3 py-1.5 rounded-full transition-colors ${currency === 'USD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  >🇺🇸 USD</button>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${currency === 'USD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  ><FlagUS /> USD</button>
                   <button
                     onClick={() => setCurrency('JMD')}
-                    className={`px-3 py-1.5 rounded-full transition-colors ${currency === 'JMD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  >🇯🇲 JMD</button>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${currency === 'JMD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  ><FlagJM /> JMD</button>
                 </div>
                 {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8"><X className="h-3.5 w-3.5 mr-1" /> Clear</Button>}
               </div>
