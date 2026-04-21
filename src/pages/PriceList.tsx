@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useDeviceData, DeviceData, formatCurrency, getUniqueValues } from '@/services/deviceDataService';
 import { useSiteMedia } from '@/services/mediaService';
 import Header from '@/components/Header';
@@ -12,6 +12,7 @@ import PurchaseRequestModal from '@/components/PurchaseRequestModal';
 import { Search, Smartphone, X } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import DeviceImage from '@/components/DeviceImage';
+import { useExchangeRate, formatJMD, formatUSD, calcBreakdown } from '@/hooks/useExchangeRate';
 
 const ALL = '__all__';
 
@@ -36,6 +37,11 @@ const PriceList: React.FC = () => {
   const { devices, loading } = useDeviceData();
   const { media } = useSiteMedia();
   const logoUrl = media['logo']?.file_url;
+  const { rate, isFallback } = useExchangeRate();
+  const [currency, setCurrency] = useState<'USD' | 'JMD'>(() => {
+    try { return (localStorage.getItem('preferred_currency') as 'USD' | 'JMD') || 'USD'; } catch { return 'USD'; }
+  });
+  useEffect(() => { try { localStorage.setItem('preferred_currency', currency); } catch {} }, [currency]);
 
   const [search, setSearch] = useState('');
   const [os, setOs] = useState(ALL);
@@ -137,8 +143,23 @@ const PriceList: React.FC = () => {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground"><span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? 'device' : 'devices'} found</span>
-              {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8"><X className="h-3.5 w-3.5 mr-1" /> Clear</Button>}
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 p-0.5 text-xs">
+                  <button
+                    onClick={() => setCurrency('USD')}
+                    className={`px-3 py-1.5 rounded-full transition-colors ${currency === 'USD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  >🇺🇸 USD</button>
+                  <button
+                    onClick={() => setCurrency('JMD')}
+                    className={`px-3 py-1.5 rounded-full transition-colors ${currency === 'JMD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  >🇯🇲 JMD</button>
+                </div>
+                {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8"><X className="h-3.5 w-3.5 mr-1" /> Clear</Button>}
+              </div>
             </div>
+            {currency === 'JMD' && isFallback && (
+              <p className="text-xs text-muted-foreground -mt-2">Using estimated rate (~{Math.round(rate)} JMD per USD)</p>
+            )}
           </div>
         </Card>
 
@@ -179,13 +200,38 @@ const PriceList: React.FC = () => {
                         {d.Colors.length > 5 && <span className="text-xs text-muted-foreground self-center">+{d.Colors.length - 5}</span>}
                       </div>
                     )}
-                    <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Price</p>
-                        <p className="text-2xl font-bold text-foreground">{formatCurrency(d.Price)}</p>
+                    {currency === 'USD' ? (
+                      <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Price</p>
+                          <p className="text-2xl font-bold text-foreground">{formatUSD(d.Price)}</p>
+                        </div>
+                        <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop shrink-0">Request</Button>
                       </div>
-                      <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop shrink-0">Request</Button>
-                    </div>
+                    ) : (
+                      (() => {
+                        const b = calcBreakdown(d.Price, rate);
+                        return (
+                          <div className="mt-auto pt-2 space-y-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Device Price</p>
+                              <p className="text-2xl font-bold text-foreground">{formatJMD(b.deviceJmd)}</p>
+                            </div>
+                            <div className="border-t border-border/60 pt-2 space-y-1 text-xs">
+                              <div className="flex justify-between text-muted-foreground">
+                                <span>Shipping to Jamaica</span>
+                                <span>{formatJMD(b.shippingJmd)}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold">
+                                <span>Total with Shipping</span>
+                                <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">{formatJMD(b.totalJmd)}</span>
+                              </div>
+                            </div>
+                            <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop w-full">Request</Button>
+                          </div>
+                        );
+                      })()
+                    )}
                   </div>
                 </Card>
               </Reveal>
