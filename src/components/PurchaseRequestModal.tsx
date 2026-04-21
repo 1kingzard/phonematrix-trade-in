@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DeviceData, formatCurrency } from '@/services/deviceDataService';
+import { DeviceData } from '@/services/deviceDataService';
+import { useExchangeRate, formatJMD, formatUSD, calcBreakdown } from '@/hooks/useExchangeRate';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { MessageCircle } from 'lucide-react';
@@ -29,6 +30,8 @@ interface Props {
 
 const PurchaseRequestModal: React.FC<Props> = ({ open, onClose, device, initialColor }) => {
   const { toast } = useToast();
+  const { rate } = useExchangeRate();
+  const breakdown = calcBreakdown(device.Price, rate);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [color, setColor] = useState(initialColor || device.Colors[0] || '');
@@ -51,8 +54,14 @@ Device: ${device.Brand} ${device.Model}
 Condition: ${device.Condition}
 Storage: ${device.Storage}
 Color: ${color}
-Price: ${formatCurrency(device.Price)}
 
+💰 Price Breakdown:
+- Device Price (USD): ${formatUSD(breakdown.priceUsd)}
+- Device Price (JMD): ${formatJMD(breakdown.deviceJmd)}
+- Estimated Shipping (JMD): ${formatJMD(breakdown.shippingJmd)}
+- Estimated Total (JMD): ${formatJMD(breakdown.totalJmd)}
+
+👤 Customer Info:
 Name: ${name}
 Phone: ${phone}
 Notes: ${notes || 'N/A'}`;
@@ -82,8 +91,16 @@ Notes: ${notes || 'N/A'}`;
               <div className="flex justify-between"><span className="text-muted-foreground">Device</span><span className="font-medium">{device.Brand} {device.Model}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Condition</span><span className="font-medium">{device.Condition}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Storage</span><span className="font-medium">{device.Storage}</span></div>
-              <div className="flex justify-between pt-1 border-t border-border/60 mt-1"><span className="text-muted-foreground">Price</span><span className="font-bold text-base">{formatCurrency(device.Price)}</span></div>
             </div>
+          </div>
+
+          <div className="rounded-lg border border-border/60 p-3 space-y-1.5 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Cost Summary</p>
+            <div className="flex justify-between"><span className="text-muted-foreground">Device Price (USD)</span><span className="font-medium">{formatUSD(breakdown.priceUsd)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Device Price (JMD)</span><span className="font-medium">{formatJMD(breakdown.deviceJmd)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Est. Shipping (JMD)</span><span className="font-medium">{formatJMD(breakdown.shippingJmd)}</span></div>
+            <div className="flex justify-between pt-1.5 border-t border-border/60"><span className="font-semibold">Estimated Total (JMD)</span><span className="font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">{formatJMD(breakdown.totalJmd)}</span></div>
+            <p className="text-[11px] text-muted-foreground pt-1">Shipping is an estimate. Final cost may vary based on weight and carrier.</p>
           </div>
 
           <div className="space-y-2">
