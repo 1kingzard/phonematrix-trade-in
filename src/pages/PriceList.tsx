@@ -26,13 +26,11 @@ const FlagUS = () => (
 
 const FlagJM = () => (
   <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm" aria-hidden="true">
-    <rect width="24" height="16" fill="#000" />
+    <rect width="24" height="16" fill="#fed100" />
     <polygon points="0,0 12,8 0,16" fill="#009b3a" />
     <polygon points="24,0 12,8 24,16" fill="#009b3a" />
     <polygon points="0,0 12,8 24,0" fill="#000" />
     <polygon points="0,16 12,8 24,16" fill="#000" />
-    <polygon points="0,0 24,0 12,8" fill="#000" opacity="0" />
-    <path d="M0,0 L24,16 M24,0 L0,16" stroke="#fed100" strokeWidth="2.2" />
   </svg>
 );
 
