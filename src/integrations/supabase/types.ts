@@ -104,6 +104,338 @@ export type Database = {
         }
         Relationships: []
       }
+      parts_audit_log: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          payload: Json | null
+          rate_used: number | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+          rate_used?: number | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+          rate_used?: number | null
+        }
+        Relationships: []
+      }
+      parts_collections: {
+        Row: {
+          amount_jmd: number
+          collected_at: string
+          id: string
+          recorded_by: string | null
+          sale_id: string
+        }
+        Insert: {
+          amount_jmd: number
+          collected_at?: string
+          id?: string
+          recorded_by?: string | null
+          sale_id: string
+        }
+        Update: {
+          amount_jmd?: number
+          collected_at?: string
+          id?: string
+          recorded_by?: string | null
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_collections_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "parts_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts_deposits: {
+        Row: {
+          amount_jmd: number
+          created_at: string
+          deposited_at: string
+          id: string
+          recorded_by: string | null
+          reference: string | null
+          status: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount_jmd: number
+          created_at?: string
+          deposited_at?: string
+          id?: string
+          recorded_by?: string | null
+          reference?: string | null
+          status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount_jmd?: number
+          created_at?: string
+          deposited_at?: string
+          id?: string
+          recorded_by?: string | null
+          reference?: string | null
+          status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      parts_exchange_rate_history: {
+        Row: {
+          effective_at: string
+          id: string
+          rate: number
+          set_by: string | null
+        }
+        Insert: {
+          effective_at?: string
+          id?: string
+          rate: number
+          set_by?: string | null
+        }
+        Update: {
+          effective_at?: string
+          id?: string
+          rate?: number
+          set_by?: string | null
+        }
+        Relationships: []
+      }
+      parts_inventory: {
+        Row: {
+          archived: boolean
+          category: string | null
+          cost_per_unit_usd: number
+          created_at: string
+          created_by: string | null
+          date_ordered: string | null
+          discount_is_percent: boolean
+          discount_value: number
+          id: string
+          item_name: string
+          locked_rate: number | null
+          product_cost_usd: number
+          qty_available: number
+          qty_ordered: number
+          selling_price_jmd: number
+          shipping_usd: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          category?: string | null
+          cost_per_unit_usd?: number
+          created_at?: string
+          created_by?: string | null
+          date_ordered?: string | null
+          discount_is_percent?: boolean
+          discount_value?: number
+          id?: string
+          item_name: string
+          locked_rate?: number | null
+          product_cost_usd?: number
+          qty_available?: number
+          qty_ordered?: number
+          selling_price_jmd?: number
+          shipping_usd?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          category?: string | null
+          cost_per_unit_usd?: number
+          created_at?: string
+          created_by?: string | null
+          date_ordered?: string | null
+          discount_is_percent?: boolean
+          discount_value?: number
+          id?: string
+          item_name?: string
+          locked_rate?: number | null
+          product_cost_usd?: number
+          qty_available?: number
+          qty_ordered?: number
+          selling_price_jmd?: number
+          shipping_usd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parts_misc_orders: {
+        Row: {
+          cost_currency: string
+          cost_input: number
+          cost_jmd: number
+          created_at: string
+          created_by: string | null
+          date_added: string
+          description: string
+          id: string
+          rate_used: number
+        }
+        Insert: {
+          cost_currency: string
+          cost_input: number
+          cost_jmd: number
+          created_at?: string
+          created_by?: string | null
+          date_added?: string
+          description: string
+          id?: string
+          rate_used: number
+        }
+        Update: {
+          cost_currency?: string
+          cost_input?: number
+          cost_jmd?: number
+          created_at?: string
+          created_by?: string | null
+          date_added?: string
+          description?: string
+          id?: string
+          rate_used?: number
+        }
+        Relationships: []
+      }
+      parts_misc_payments: {
+        Row: {
+          amount_jmd: number
+          id: string
+          misc_order_id: string
+          paid_at: string
+          recorded_by: string | null
+        }
+        Insert: {
+          amount_jmd: number
+          id?: string
+          misc_order_id: string
+          paid_at?: string
+          recorded_by?: string | null
+        }
+        Update: {
+          amount_jmd?: number
+          id?: string
+          misc_order_id?: string
+          paid_at?: string
+          recorded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_misc_payments_misc_order_id_fkey"
+            columns: ["misc_order_id"]
+            isOneToOne: false
+            referencedRelation: "parts_misc_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parts_misc_payments_misc_order_id_fkey"
+            columns: ["misc_order_id"]
+            isOneToOne: false
+            referencedRelation: "parts_misc_orders_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts_sales: {
+        Row: {
+          created_at: string
+          customer_note: string | null
+          id: string
+          inventory_id: string
+          rate_at_sale: number
+          sold_by: string | null
+          total_jmd: number
+          unit_price_jmd: number
+          units_sold: number
+        }
+        Insert: {
+          created_at?: string
+          customer_note?: string | null
+          id?: string
+          inventory_id: string
+          rate_at_sale: number
+          sold_by?: string | null
+          total_jmd: number
+          unit_price_jmd: number
+          units_sold: number
+        }
+        Update: {
+          created_at?: string
+          customer_note?: string | null
+          id?: string
+          inventory_id?: string
+          rate_at_sale?: number
+          sold_by?: string | null
+          total_jmd?: number
+          unit_price_jmd?: number
+          units_sold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_sales_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "parts_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parts_sales_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "parts_inventory_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts_settings: {
+        Row: {
+          exchange_rate: number
+          id: string
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          exchange_rate?: number
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          exchange_rate?: number
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -286,9 +618,67 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      parts_inventory_public: {
+        Row: {
+          archived: boolean | null
+          category: string | null
+          id: string | null
+          item_name: string | null
+          qty_available: number | null
+          selling_price_jmd: number | null
+        }
+        Insert: {
+          archived?: boolean | null
+          category?: string | null
+          id?: string | null
+          item_name?: string | null
+          qty_available?: number | null
+          selling_price_jmd?: number | null
+        }
+        Update: {
+          archived?: boolean | null
+          category?: string | null
+          id?: string | null
+          item_name?: string | null
+          qty_available?: number | null
+          selling_price_jmd?: number | null
+        }
+        Relationships: []
+      }
+      parts_misc_orders_public: {
+        Row: {
+          cost_jmd: number | null
+          created_at: string | null
+          date_added: string | null
+          description: string | null
+          id: string | null
+        }
+        Insert: {
+          cost_jmd?: number | null
+          created_at?: string | null
+          date_added?: string | null
+          description?: string | null
+          id?: string | null
+        }
+        Update: {
+          cost_jmd?: number | null
+          created_at?: string | null
+          date_added?: string | null
+          description?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      assign_parts_guest: { Args: { user_email: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: { Args: { user_uuid: string }; Returns: boolean }
       mark_inventory_sold: {
         Args: { buyer_id: string; item_id: string; sale_order_id: string }
@@ -297,7 +687,7 @@ export type Database = {
       promote_to_admin: { Args: { user_email: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "parts_guest"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -425,7 +815,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "parts_guest"],
     },
   },
 } as const
