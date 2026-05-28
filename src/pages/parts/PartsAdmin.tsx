@@ -16,6 +16,7 @@ import ReportsTab from '@/components/parts/ReportsTab';
 
 const PartsAdmin = () => {
   const { role, loading, user } = usePartsRole();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +28,11 @@ const PartsAdmin = () => {
   if (loading || role !== 'admin') {
     return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background">
