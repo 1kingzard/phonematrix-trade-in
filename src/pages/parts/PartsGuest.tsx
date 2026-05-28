@@ -77,6 +77,11 @@ const PartsGuest = () => {
     return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
+
   const invMap: Record<string, any> = {}; inv.forEach(i => invMap[i.id] = i);
   const collectedBySale = cols.reduce<Record<string, number>>((a, c) => { a[c.sale_id] = (a[c.sale_id] || 0) + Number(c.amount_jmd); return a; }, {});
   const outstanding = sales.reduce((a, s) => a + Math.max(0, Number(s.total_jmd) - (collectedBySale[s.id] || 0)), 0);
