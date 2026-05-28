@@ -19,6 +19,9 @@ import FAQPage from '@/pages/FAQPage';
 import LoginPage from '@/pages/LoginPage';
 import SplashPage from '@/pages/SplashPage';
 import NotFound from '@/pages/NotFound';
+import PartsIndex from '@/pages/parts/PartsIndex';
+import PartsAdmin from '@/pages/parts/PartsAdmin';
+import PartsGuest from '@/pages/parts/PartsGuest';
 import PageTransition from '@/components/PageTransition';
 import FaviconSync from '@/components/FaviconSync';
 import './App.css';
@@ -55,6 +58,9 @@ function App() {
                         <Route path="/faq" element={<FAQPage />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/splash" element={<SplashPage />} />
+                        <Route path="/parts" element={<PartsIndex />} />
+                        <Route path="/parts/admin" element={<PartsAdmin />} />
+                        <Route path="/parts/guest" element={<PartsGuest />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </PageTransition>
