@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { usePartsRole } from '@/hooks/usePartsRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3 } from 'lucide-react';
+import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3, LogOut } from 'lucide-react';
 import InventoryTab from '@/components/parts/InventoryTab';
 import SalesTab from '@/components/parts/SalesTab';
 import CollectionsTab from '@/components/parts/CollectionsTab';
