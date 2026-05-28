@@ -37,12 +37,18 @@ const PartsAdmin = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center gap-3">
-          <Wrench className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Auto Parts — Admin</h1>
-            <p className="text-sm text-muted-foreground">Private inventory & sales control panel</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Wrench className="h-7 w-7 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Auto Parts — Admin</h1>
+              <p className="text-sm text-muted-foreground">Private inventory & sales control panel</p>
+            </div>
           </div>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </Button>
         </div>
 
         <Tabs defaultValue="inventory" className="space-y-4">
