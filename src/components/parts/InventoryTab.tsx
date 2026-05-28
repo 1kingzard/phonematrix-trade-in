@@ -1,19 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Archive, ArchiveRestore } from 'lucide-react';
+import { Plus, Pencil, Archive, ArchiveRestore, Download, Upload, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { fmtJMD, fmtUSD, InventoryRow, costPerUnitJmd, inventoryValueJmd, profitPerUnitJmd, projectedProfitJmd, totalCostJmd, totalCostUsd } from '@/lib/partsCalc';
 import InventoryFormDialog from './InventoryFormDialog';
+import RestockDialog from './RestockDialog';
+import { toCsv, downloadCsv, parseCsv } from '@/lib/partsCsv';
 
 const InventoryTab = () => {
   const [items, setItems] = useState<InventoryRow[]>([]);
   const [editing, setEditing] = useState<InventoryRow | null>(null);
   const [open, setOpen] = useState(false);
+  const [restocking, setRestocking] = useState<InventoryRow | null>(null);
+  const [restockOpen, setRestockOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const { rate } = useExchangeRateSetting();
   const { toast } = useToast();
 
@@ -31,6 +36,37 @@ const InventoryTab = () => {
 
   const toggleArchive = async (item: InventoryRow) => {
     await supabase.from('parts_inventory').update({ archived: !item.archived }).eq('id', item.id);
+  };
+
+  const exportCsv = () => {
+    const csv = toCsv(items);
+    downloadCsv(`parts-inventory-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+  };
+
+  const importCsv = async (file: File) => {
+    try {
+      const text = await file.text();
+      const rows = parseCsv(text);
+      if (rows.length === 0) { toast({ title: 'CSV is empty', variant: 'destructive' }); return; }
+      const toUpdate = rows.filter(r => r.id);
+      const toInsert = rows.filter(r => !r.id).map(r => { const { id, ...rest } = r as any; return rest; });
+      let ok = 0, fail = 0;
+      for (const r of toUpdate) {
+        const { id, ...rest } = r as any;
+        const { error } = await supabase.from('parts_inventory').update(rest).eq('id', id);
+        if (error) fail++; else ok++;
+      }
+      if (toInsert.length) {
+        const { error, data } = await supabase.from('parts_inventory').insert(toInsert).select('id');
+        if (error) fail += toInsert.length; else ok += data?.length || 0;
+      }
+      toast({ title: 'Import complete', description: `${ok} saved${fail ? `, ${fail} failed` : ''}` });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Import failed', description: e.message, variant: 'destructive' });
+    } finally {
+      if (fileRef.current) fileRef.current.value = '';
+    }
   };
 
   const totals = items.filter(i => !i.archived).reduce((acc, i) => {
@@ -53,7 +89,12 @@ const InventoryTab = () => {
 
       <div className="flex justify-between items-center">
         <div className="text-sm text-muted-foreground">Rate: 1 USD = {rate} JMD</div>
-        <Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="h-4 w-4 mr-1" />Add Item</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Export CSV</Button>
+          <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" />Import CSV</Button>
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) importCsv(f); }} />
+          <Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="h-4 w-4 mr-1" />Add Item</Button>
+        </div>
       </div>
 
       <Card>
@@ -80,6 +121,7 @@ const InventoryTab = () => {
                   <TableCell className="text-right">{fmtJMD(i.selling_price_jmd)}</TableCell>
                   <TableCell className="text-right">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
                   <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" title="Restock" onClick={() => { setRestocking(i); setRestockOpen(true); }}><PackagePlus className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => toggleArchive(i)}>{i.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>
                   </TableCell>
@@ -92,6 +134,7 @@ const InventoryTab = () => {
       </Card>
 
       <InventoryFormDialog open={open} onOpenChange={setOpen} item={editing} onSaved={load} rate={rate} />
+      <RestockDialog open={restockOpen} onOpenChange={setRestockOpen} item={restocking} onSaved={load} />
     </div>
   );
 };
