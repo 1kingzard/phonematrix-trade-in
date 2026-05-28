@@ -15,12 +15,13 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { fmtJMD } from '@/lib/partsCalc';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
+import { LogOut, Wrench } from 'lucide-react';
 
 const PartsGuest = () => {
   const { role, loading, user } = usePartsRole();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user: authUser } = useAuth();
+  const { user: authUser, logout } = useAuth();
   const { rate } = useExchangeRateSetting();
 
   const [inv, setInv] = useState<any[]>([]);
@@ -76,6 +77,11 @@ const PartsGuest = () => {
     return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
+
   const invMap: Record<string, any> = {}; inv.forEach(i => invMap[i.id] = i);
   const collectedBySale = cols.reduce<Record<string, number>>((a, c) => { a[c.sale_id] = (a[c.sale_id] || 0) + Number(c.amount_jmd); return a; }, {});
   const outstanding = sales.reduce((a, s) => a + Math.max(0, Number(s.total_jmd) - (collectedBySale[s.id] || 0)), 0);
@@ -124,7 +130,19 @@ const PartsGuest = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Parts — Guest Portal</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Wrench className="h-7 w-7 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Parts — Guest Portal</h1>
+              <p className="text-sm text-muted-foreground">Private inventory & sales portal</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </Button>
+        </div>
         <Tabs defaultValue="inventory" className="space-y-4">
           <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
