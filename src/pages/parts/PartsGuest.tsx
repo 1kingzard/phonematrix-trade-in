@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { fmtJMD } from '@/lib/partsCalc';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
+import { LogOut, Wrench } from 'lucide-react';
 
 const PartsGuest = () => {
   const { role, loading, user } = usePartsRole();
