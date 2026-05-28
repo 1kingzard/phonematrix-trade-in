@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { usePartsRole } from '@/hooks/usePartsRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3 } from 'lucide-react';
+import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3, LogOut } from 'lucide-react';
 import InventoryTab from '@/components/parts/InventoryTab';
 import SalesTab from '@/components/parts/SalesTab';
 import CollectionsTab from '@/components/parts/CollectionsTab';
@@ -14,6 +16,7 @@ import ReportsTab from '@/components/parts/ReportsTab';
 
 const PartsAdmin = () => {
   const { role, loading, user } = usePartsRole();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,15 +29,26 @@ const PartsAdmin = () => {
     return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center gap-3">
-          <Wrench className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Auto Parts — Admin</h1>
-            <p className="text-sm text-muted-foreground">Private inventory & sales control panel</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Wrench className="h-7 w-7 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Auto Parts — Admin</h1>
+              <p className="text-sm text-muted-foreground">Private inventory & sales control panel</p>
+            </div>
           </div>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </Button>
         </div>
 
         <Tabs defaultValue="inventory" className="space-y-4">
