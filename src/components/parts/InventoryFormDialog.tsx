@@ -43,8 +43,14 @@ const InventoryFormDialog = ({ open, onOpenChange, item, onSaved, rate }: Props)
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
-  const previewTotalUsd = totalCostUsd(form);
-  const previewRate = lockRate ? (form.locked_rate || rate) : rate;
+  const numericForm = {
+    product_cost_usd: Number(form.product_cost_usd) || 0,
+    shipping_usd: Number(form.shipping_usd) || 0,
+    discount_value: Number(form.discount_value) || 0,
+    discount_is_percent: !!form.discount_is_percent,
+  };
+  const previewTotalUsd = totalCostUsd(numericForm);
+  const previewRate = lockRate ? (Number(form.locked_rate) || rate) : rate;
 
   const save = async () => {
     setSaving(true);
