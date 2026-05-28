@@ -21,7 +21,7 @@ const PartsGuest = () => {
   const { role, loading, user } = usePartsRole();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user: authUser } = useAuth();
+  const { user: authUser, logout } = useAuth();
   const { rate } = useExchangeRateSetting();
 
   const [inv, setInv] = useState<any[]>([]);
