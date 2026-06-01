@@ -207,6 +207,17 @@ const PartsGuest = () => {
                 <TableRow key={s.id}><TableCell>{invMap[s.inventory_id]?.item_name || '—'}</TableCell><TableCell className="text-right">{fmtJMD(Number(s.total_jmd))}</TableCell><TableCell className="text-right">{fmtJMD(got)}</TableCell><TableCell className="text-right font-medium">{fmtJMD(Math.max(0, Number(s.total_jmd) - got))}</TableCell></TableRow>
               ); })}</TableBody>
             </Table></CardContent></Card>
+
+            <Card className="mt-4"><CardHeader><CardTitle className="text-base">My Collections</CardTitle></CardHeader>
+              <CardContent className="p-0 overflow-x-auto"><Table>
+                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Sale</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Admin Status</TableHead></TableRow></TableHeader>
+                <TableBody>{[...cols].sort((a,b) => +new Date(b.collected_at) - +new Date(a.collected_at)).map(c => {
+                  const sale = sales.find(s => s.id === c.sale_id);
+                  const st = c.status || 'pending';
+                  return (<TableRow key={c.id}><TableCell>{new Date(c.collected_at).toLocaleDateString()}</TableCell><TableCell>{sale ? (invMap[sale.inventory_id]?.item_name || '—') : '—'}</TableCell><TableCell className="text-right">{fmtJMD(Number(c.amount_jmd))}</TableCell><TableCell><Badge variant={st === 'confirmed' ? 'default' : st === 'rejected' ? 'destructive' : 'secondary'}>{st}</Badge></TableCell></TableRow>);
+                })}{cols.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No collections yet</TableCell></TableRow>}</TableBody>
+              </Table></CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="deposits">

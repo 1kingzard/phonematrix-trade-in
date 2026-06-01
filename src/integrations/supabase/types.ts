@@ -141,23 +141,32 @@ export type Database = {
         Row: {
           amount_jmd: number
           collected_at: string
+          confirmed_at: string | null
+          confirmed_by: string | null
           id: string
           recorded_by: string | null
           sale_id: string
+          status: string
         }
         Insert: {
           amount_jmd: number
           collected_at?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           id?: string
           recorded_by?: string | null
           sale_id: string
+          status?: string
         }
         Update: {
           amount_jmd?: number
           collected_at?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           id?: string
           recorded_by?: string | null
           sale_id?: string
+          status?: string
         }
         Relationships: [
           {
