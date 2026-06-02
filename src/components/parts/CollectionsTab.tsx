@@ -4,27 +4,37 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fmtJMD } from '@/lib/partsCalc';
 
 interface Sale { id: string; inventory_id: string; total_jmd: number; created_at: string; }
 interface Coll { id: string; sale_id: string; amount_jmd: number; collected_at: string; status: string; confirmed_at: string | null; recorded_by: string | null; }
+interface AuditEntry { id: string; actor: string | null; action: string; entity_id: string | null; created_at: string; payload: any; }
 
 const CollectionsTab = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [cols, setCols] = useState<Coll[]>([]);
   const [items, setItems] = useState<Record<string, string>>({});
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [pending, setPending] = useState<{ id: string; status: 'confirmed' | 'rejected' | 'pending' } | null>(null);
+  const [note, setNote] = useState('');
+  const [historyFor, setHistoryFor] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const load = async () => {
-    const [s, c, i] = await Promise.all([
+    const [s, c, i, a] = await Promise.all([
       supabase.from('parts_sales').select('id,inventory_id,total_jmd,created_at'),
       supabase.from('parts_collections').select('*'),
       supabase.from('parts_inventory').select('id,item_name'),
+      supabase.from('parts_audit_log').select('*').eq('entity', 'parts_collections').order('created_at', { ascending: false }),
     ]);
     setSales((s.data || []) as any); setCols((c.data || []) as any);
+    setAudit((a.data || []) as any);
     const m: Record<string, string> = {};
     (i.data || []).forEach((it: any) => m[it.id] = it.item_name);
     setItems(m);
@@ -35,6 +45,7 @@ const CollectionsTab = () => {
     const ch = supabase.channel('coll')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'parts_collections' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'parts_sales' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'parts_audit_log' }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -46,14 +57,32 @@ const CollectionsTab = () => {
   const totalConfirmed = cols.filter(c => c.status === 'confirmed').reduce((s, c) => s + Number(c.amount_jmd), 0);
   const totalPending = cols.filter(c => c.status === 'pending' || !c.status).reduce((s, c) => s + Number(c.amount_jmd), 0);
 
-  const setStatus = async (id: string, status: 'confirmed' | 'rejected' | 'pending') => {
+  const applyStatus = async (id: string, status: 'confirmed' | 'rejected' | 'pending', noteText: string) => {
     const patch: any = { status };
     if (status === 'confirmed') { patch.confirmed_by = user?.id; patch.confirmed_at = new Date().toISOString(); }
     else { patch.confirmed_by = null; patch.confirmed_at = null; }
     const { error } = await supabase.from('parts_collections').update(patch).eq('id', id);
-    if (error) toast({ title: 'Failed', description: error.message, variant: 'destructive' });
-    else toast({ title: status === 'confirmed' ? 'Collection confirmed' : status === 'rejected' ? 'Collection rejected' : 'Marked pending' });
+    if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    const action = status === 'confirmed' ? 'confirm' : status === 'rejected' ? 'reject' : 'reset';
+    await supabase.from('parts_audit_log').insert({
+      actor: user?.id, action, entity: 'parts_collections', entity_id: id,
+      payload: { status, note: noteText || null },
+    });
+    toast({ title: status === 'confirmed' ? 'Collection confirmed' : status === 'rejected' ? 'Collection rejected' : 'Marked pending' });
   };
+
+  const openAction = (id: string, status: 'confirmed' | 'rejected' | 'pending') => {
+    setPending({ id, status }); setNote('');
+  };
+
+  const confirmAction = async () => {
+    if (!pending) return;
+    const p = pending; const n = note;
+    setPending(null); setNote('');
+    await applyStatus(p.id, p.status, n);
+  };
+
+  const auditFor = (collId: string) => audit.filter(a => a.entity_id === collId);
 
   return (
     <div className="space-y-4">
@@ -83,11 +112,15 @@ const CollectionsTab = () => {
                     <TableCell>{new Date(c.collected_at).toLocaleDateString()}</TableCell>
                     <TableCell>{sale ? (items[sale.inventory_id] || '—') : '—'}</TableCell>
                     <TableCell className="text-right">{fmtJMD(Number(c.amount_jmd))}</TableCell>
-                    <TableCell><Badge variant={status === 'confirmed' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary'}>{status}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={status === 'confirmed' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary'}>{status}</Badge>
+                      {c.confirmed_at && <div className="text-xs text-muted-foreground mt-1">{new Date(c.confirmed_at).toLocaleString()}</div>}
+                    </TableCell>
                     <TableCell className="text-right space-x-2">
-                      {status !== 'confirmed' && <Button size="sm" onClick={() => setStatus(c.id, 'confirmed')}>Confirm</Button>}
-                      {status !== 'rejected' && <Button size="sm" variant="destructive" onClick={() => setStatus(c.id, 'rejected')}>Reject</Button>}
-                      {status !== 'pending' && <Button size="sm" variant="outline" onClick={() => setStatus(c.id, 'pending')}>Reset</Button>}
+                      {status !== 'confirmed' && <Button size="sm" onClick={() => openAction(c.id, 'confirmed')}>Confirm</Button>}
+                      {status !== 'rejected' && <Button size="sm" variant="destructive" onClick={() => openAction(c.id, 'rejected')}>Reject</Button>}
+                      {status !== 'pending' && <Button size="sm" variant="outline" onClick={() => openAction(c.id, 'pending')}>Reset</Button>}
+                      <Button size="sm" variant="ghost" onClick={() => setHistoryFor(c.id)}>History ({auditFor(c.id).length})</Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -123,6 +156,44 @@ const CollectionsTab = () => {
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <Dialog open={!!pending} onOpenChange={(o) => { if (!o) { setPending(null); setNote(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pending?.status === 'confirmed' ? 'Confirm Collection' : pending?.status === 'rejected' ? 'Reject Collection' : 'Reset to Pending'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="audit-note">Note (optional)</Label>
+            <Textarea id="audit-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason or reference..." />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPending(null); setNote(''); }}>Cancel</Button>
+            <Button onClick={confirmAction}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!historyFor} onOpenChange={(o) => { if (!o) setHistoryFor(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Audit History</DialogTitle></DialogHeader>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {historyFor && auditFor(historyFor).length === 0 && (
+              <p className="text-sm text-muted-foreground">No audit entries yet.</p>
+            )}
+            {historyFor && auditFor(historyFor).map(e => (
+              <div key={e.id} className="border rounded p-2 text-sm">
+                <div className="flex justify-between">
+                  <Badge variant="outline" className="capitalize">{e.action}</Badge>
+                  <span className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString()}</span>
+                </div>
+                {e.payload?.note && <div className="mt-1 text-muted-foreground">{e.payload.note}</div>}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
