@@ -142,7 +142,22 @@ const InventoryTab = () => {
                   <TableCell className="text-right">{i.qty_available} / {i.qty_ordered}</TableCell>
                   <TableCell className="text-right">{fmtUSD(totalCostUsd(i))}</TableCell>
                   <TableCell className="text-right">{fmtJMD(totalCostJmd(i, rate))}</TableCell>
-                  <TableCell className="text-right">{fmtJMD(i.selling_price_jmd)}</TableCell>
+                  <TableCell className="text-right" onDoubleClick={() => startPriceEdit(i)}>
+                    {priceEditId === i.id ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        className="w-32 ml-auto h-8 text-right"
+                        autoFocus
+                        value={priceEditValue}
+                        onChange={e => setPriceEditValue(e.target.value)}
+                        onBlur={() => commitPriceEdit(i)}
+                        onKeyDown={e => { if (e.key === 'Enter') commitPriceEdit(i); if (e.key === 'Escape') setPriceEditId(null); }}
+                      />
+                    ) : (
+                      <span className="cursor-pointer select-none" title="Double-click to edit">{fmtJMD(i.selling_price_jmd)}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" title="Restock" onClick={() => { setRestocking(i); setRestockOpen(true); }}><PackagePlus className="h-4 w-4" /></Button>
