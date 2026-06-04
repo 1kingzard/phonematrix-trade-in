@@ -20,8 +20,13 @@ const MiscOrdersTab = () => {
   const [pays, setPays] = useState<Pay[]>([]);
   const [desc, setDesc] = useState(''); const [cost, setCost] = useState(''); const [cur, setCur] = useState<'USD'|'JMD'>('USD');
   const { rate } = useExchangeRateSetting();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
+
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState('');
+  const [editCost, setEditCost] = useState('');
+  const [editCur, setEditCur] = useState<'USD'|'JMD'>('USD');
 
   const load = async () => {
     const [m, p] = await Promise.all([
