@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface Misc { id: string; description: string; cost_input: number; cost_currency: 'USD'|'JMD'; cost_jmd: number; rate_used: number; date_added: string; }
+type EditField = 'description' | 'cost' | null;
 interface Pay { id: string; misc_order_id: string; amount_jmd: number; paid_at: string; }
 
 const MiscOrdersTab = () => {
@@ -19,8 +20,13 @@ const MiscOrdersTab = () => {
   const [pays, setPays] = useState<Pay[]>([]);
   const [desc, setDesc] = useState(''); const [cost, setCost] = useState(''); const [cur, setCur] = useState<'USD'|'JMD'>('USD');
   const { rate } = useExchangeRateSetting();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
+
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState('');
+  const [editCost, setEditCost] = useState('');
+  const [editCur, setEditCur] = useState<'USD'|'JMD'>('USD');
 
   const load = async () => {
     const [m, p] = await Promise.all([
@@ -46,6 +52,31 @@ const MiscOrdersTab = () => {
     const { error } = await supabase.from('parts_misc_orders').insert({ description: desc, cost_input: n, cost_currency: cur, cost_jmd, rate_used: rate, created_by: user?.id });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
     setDesc(''); setCost('');
+  };
+
+  const startEdit = (m: Misc) => {
+    if (!isAdmin) return;
+    setEditId(m.id);
+    setEditDesc(m.description);
+    setEditCost(String(m.cost_input));
+    setEditCur(m.cost_currency as 'USD'|'JMD');
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setEditDesc('');
+    setEditCost('');
+    setEditCur('USD');
+  };
+
+  const commitEdit = async (m: Misc) => {
+    if (!isAdmin) return;
+    const n = Number(editCost);
+    if (!editDesc || !n || !Number.isFinite(n)) { toast({ title: 'Invalid input', variant: 'destructive' }); return; }
+    const newCostJmd = editCur === 'USD' ? n * rate : n;
+    const { error } = await supabase.from('parts_misc_orders').update({ description: editDesc, cost_input: n, cost_currency: editCur, cost_jmd: newCostJmd }).eq('id', m.id);
+    if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    cancelEdit();
   };
 
   const paidBy = pays.reduce<Record<string, number>>((a, p) => { a[p.misc_order_id] = (a[p.misc_order_id] || 0) + Number(p.amount_jmd); return a; }, {});
@@ -78,14 +109,43 @@ const MiscOrdersTab = () => {
           <TableBody>
             {misc.map(m => {
               const paid = paidBy[m.id] || 0;
+              const isEditing = editId === m.id;
               return (
                 <TableRow key={m.id}>
                   <TableCell>{m.date_added}</TableCell>
-                  <TableCell>{m.description}</TableCell>
-                  <TableCell className="text-right">{m.cost_currency === 'USD' ? fmtUSD(Number(m.cost_input)) : fmtJMD(Number(m.cost_input))}</TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} autoFocus className="h-8" />
+                    ) : (
+                      <span onDoubleClick={() => startEdit(m)} className={isAdmin ? 'cursor-pointer' : ''} title={isAdmin ? 'Double-click to edit' : ''}>{m.description}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {isEditing ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <Input type="number" step="0.01" value={editCost} onChange={e => setEditCost(e.target.value)} className="h-8 w-28 text-right" />
+                        <Select value={editCur} onValueChange={v => setEditCur(v as 'USD'|'JMD')}>
+                          <SelectTrigger className="h-8 w-20"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="USD">USD</SelectItem><SelectItem value="JMD">JMD</SelectItem></SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <span onDoubleClick={() => startEdit(m)} className={isAdmin ? 'cursor-pointer' : ''} title={isAdmin ? 'Double-click to edit' : ''}>
+                        {m.cost_currency === 'USD' ? fmtUSD(Number(m.cost_input)) : fmtJMD(Number(m.cost_input))}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">{fmtJMD(Number(m.cost_jmd))}</TableCell>
                   <TableCell className="text-right">{fmtJMD(paid)}</TableCell>
-                  <TableCell className="text-right font-medium">{fmtJMD(Math.max(0, Number(m.cost_jmd) - paid))}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {fmtJMD(Math.max(0, Number(m.cost_jmd) - paid))}
+                    {isEditing && (
+                      <div className="flex justify-end gap-2 mt-1">
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
+                        <Button size="sm" className="h-7 px-2 text-xs" onClick={() => commitEdit(m)}>Save</Button>
+                      </div>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}
