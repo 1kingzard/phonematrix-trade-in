@@ -19,6 +19,8 @@ const InventoryTab = () => {
   const [open, setOpen] = useState(false);
   const [restocking, setRestocking] = useState<InventoryRow | null>(null);
   const [restockOpen, setRestockOpen] = useState(false);
+  const [priceEditId, setPriceEditId] = useState<string | null>(null);
+  const [priceEditValue, setPriceEditValue] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const { rate } = useExchangeRateSetting();
   const { toast } = useToast();
