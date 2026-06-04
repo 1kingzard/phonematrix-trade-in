@@ -54,6 +54,31 @@ const MiscOrdersTab = () => {
     setDesc(''); setCost('');
   };
 
+  const startEdit = (m: Misc) => {
+    if (!isAdmin) return;
+    setEditId(m.id);
+    setEditDesc(m.description);
+    setEditCost(String(m.cost_input));
+    setEditCur(m.cost_currency as 'USD'|'JMD');
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setEditDesc('');
+    setEditCost('');
+    setEditCur('USD');
+  };
+
+  const commitEdit = async (m: Misc) => {
+    if (!isAdmin) return;
+    const n = Number(editCost);
+    if (!editDesc || !n || !Number.isFinite(n)) { toast({ title: 'Invalid input', variant: 'destructive' }); return; }
+    const newCostJmd = editCur === 'USD' ? n * rate : n;
+    const { error } = await supabase.from('parts_misc_orders').update({ description: editDesc, cost_input: n, cost_currency: editCur, cost_jmd: newCostJmd }).eq('id', m.id);
+    if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    cancelEdit();
+  };
+
   const paidBy = pays.reduce<Record<string, number>>((a, p) => { a[p.misc_order_id] = (a[p.misc_order_id] || 0) + Number(p.amount_jmd); return a; }, {});
 
   return (
