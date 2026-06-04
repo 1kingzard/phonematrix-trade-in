@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface Misc { id: string; description: string; cost_input: number; cost_currency: 'USD'|'JMD'; cost_jmd: number; rate_used: number; date_added: string; }
+type EditField = 'description' | 'cost' | null;
 interface Pay { id: string; misc_order_id: string; amount_jmd: number; paid_at: string; }
 
 const MiscOrdersTab = () => {
