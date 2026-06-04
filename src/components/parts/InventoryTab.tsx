@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Plus, Pencil, Archive, ArchiveRestore, Download, Upload, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
@@ -18,6 +19,8 @@ const InventoryTab = () => {
   const [open, setOpen] = useState(false);
   const [restocking, setRestocking] = useState<InventoryRow | null>(null);
   const [restockOpen, setRestockOpen] = useState(false);
+  const [priceEditId, setPriceEditId] = useState<string | null>(null);
+  const [priceEditValue, setPriceEditValue] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const { rate } = useExchangeRateSetting();
   const { toast } = useToast();
@@ -69,6 +72,27 @@ const InventoryTab = () => {
     }
   };
 
+  const startPriceEdit = (item: InventoryRow) => {
+    setPriceEditId(item.id);
+    setPriceEditValue(String(item.selling_price_jmd ?? ''));
+  };
+
+  const commitPriceEdit = async (item: InventoryRow) => {
+    const val = Number(priceEditValue);
+    if (Number.isNaN(val) || val < 0) {
+      toast({ title: 'Invalid price', variant: 'destructive' });
+      setPriceEditId(null);
+      return;
+    }
+    const { error } = await supabase.from('parts_inventory').update({ selling_price_jmd: val }).eq('id', item.id);
+    if (error) {
+      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Price updated' });
+    }
+    setPriceEditId(null);
+  };
+
   const totals = items.filter(i => !i.archived).reduce((acc, i) => {
     acc.costUsd += totalCostUsd(i);
     acc.valueJmd += inventoryValueJmd(i, rate);
@@ -118,7 +142,22 @@ const InventoryTab = () => {
                   <TableCell className="text-right">{i.qty_available} / {i.qty_ordered}</TableCell>
                   <TableCell className="text-right">{fmtUSD(totalCostUsd(i))}</TableCell>
                   <TableCell className="text-right">{fmtJMD(totalCostJmd(i, rate))}</TableCell>
-                  <TableCell className="text-right">{fmtJMD(i.selling_price_jmd)}</TableCell>
+                  <TableCell className="text-right" onDoubleClick={() => startPriceEdit(i)}>
+                    {priceEditId === i.id ? (
+                      <Input
+                        type="number"
+                        step="0.01"
+                        className="w-32 ml-auto h-8 text-right"
+                        autoFocus
+                        value={priceEditValue}
+                        onChange={e => setPriceEditValue(e.target.value)}
+                        onBlur={() => commitPriceEdit(i)}
+                        onKeyDown={e => { if (e.key === 'Enter') commitPriceEdit(i); if (e.key === 'Escape') setPriceEditId(null); }}
+                      />
+                    ) : (
+                      <span className="cursor-pointer select-none" title="Double-click to edit">{fmtJMD(i.selling_price_jmd)}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" title="Restock" onClick={() => { setRestocking(i); setRestockOpen(true); }}><PackagePlus className="h-4 w-4" /></Button>
