@@ -72,6 +72,27 @@ const InventoryTab = () => {
     }
   };
 
+  const startPriceEdit = (item: InventoryRow) => {
+    setPriceEditId(item.id);
+    setPriceEditValue(String(item.selling_price_jmd ?? ''));
+  };
+
+  const commitPriceEdit = async (item: InventoryRow) => {
+    const val = Number(priceEditValue);
+    if (Number.isNaN(val) || val < 0) {
+      toast({ title: 'Invalid price', variant: 'destructive' });
+      setPriceEditId(null);
+      return;
+    }
+    const { error } = await supabase.from('parts_inventory').update({ selling_price_jmd: val }).eq('id', item.id);
+    if (error) {
+      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Price updated' });
+    }
+    setPriceEditId(null);
+  };
+
   const totals = items.filter(i => !i.archived).reduce((acc, i) => {
     acc.costUsd += totalCostUsd(i);
     acc.valueJmd += inventoryValueJmd(i, rate);
