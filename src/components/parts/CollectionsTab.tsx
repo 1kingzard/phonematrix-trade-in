@@ -23,6 +23,8 @@ const CollectionsTab = () => {
   const [pending, setPending] = useState<{ id: string; status: 'confirmed' | 'rejected' | 'pending' } | null>(null);
   const [note, setNote] = useState('');
   const [historyFor, setHistoryFor] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -84,6 +86,23 @@ const CollectionsTab = () => {
 
   const auditFor = (collId: string) => audit.filter(a => a.entity_id === collId);
 
+  const startEdit = (c: Coll) => { setEditId(c.id); setEditValue(String(c.amount_jmd)); };
+  const cancelEdit = () => { setEditId(null); setEditValue(''); };
+  const commitEdit = async (c: Coll) => {
+    const newAmt = Number(editValue);
+    if (!Number.isFinite(newAmt) || newAmt < 0) { cancelEdit(); return; }
+    if (newAmt === Number(c.amount_jmd)) { cancelEdit(); return; }
+    const prev = Number(c.amount_jmd);
+    const { error } = await supabase.from('parts_collections').update({ amount_jmd: newAmt }).eq('id', c.id);
+    if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); cancelEdit(); return; }
+    await supabase.from('parts_audit_log').insert({
+      actor: user?.id, action: 'edit_amount', entity: 'parts_collections', entity_id: c.id,
+      payload: { from: prev, to: newAmt },
+    });
+    toast({ title: 'Amount updated', description: `${fmtJMD(prev)} → ${fmtJMD(newAmt)}` });
+    cancelEdit();
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -111,7 +130,24 @@ const CollectionsTab = () => {
                   <TableRow key={c.id}>
                     <TableCell>{new Date(c.collected_at).toLocaleDateString()}</TableCell>
                     <TableCell>{sale ? (items[sale.inventory_id] || '—') : '—'}</TableCell>
-                    <TableCell className="text-right">{fmtJMD(Number(c.amount_jmd))}</TableCell>
+                    <TableCell className="text-right" onDoubleClick={() => startEdit(c)}>
+                      {editId === c.id ? (
+                        <input
+                          autoFocus
+                          type="number"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={() => commitEdit(c)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitEdit(c);
+                            else if (e.key === 'Escape') cancelEdit();
+                          }}
+                          className="w-28 text-right border rounded px-2 py-1 bg-background"
+                        />
+                      ) : (
+                        <span title="Double-click to edit" className="cursor-pointer">{fmtJMD(Number(c.amount_jmd))}</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={status === 'confirmed' ? 'default' : status === 'rejected' ? 'destructive' : 'secondary'}>{status}</Badge>
                       {c.confirmed_at && <div className="text-xs text-muted-foreground mt-1">{new Date(c.confirmed_at).toLocaleString()}</div>}
@@ -189,6 +225,9 @@ const CollectionsTab = () => {
                   <span className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString()}</span>
                 </div>
                 {e.payload?.note && <div className="mt-1 text-muted-foreground">{e.payload.note}</div>}
+                {e.payload?.from !== undefined && e.payload?.to !== undefined && (
+                  <div className="mt-1 text-muted-foreground">{fmtJMD(Number(e.payload.from))} → {fmtJMD(Number(e.payload.to))}</div>
+                )}
               </div>
             ))}
           </div>
