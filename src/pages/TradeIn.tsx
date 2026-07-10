@@ -11,6 +11,7 @@ import { useDeviceData, useExchangeRate, DeviceData, formatCurrency } from '@/se
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Pencil, Plus, X } from 'lucide-react';
 import DeviceImage from '@/components/DeviceImage';
 
 const WHATSAPP_NUMBER = '18765472061';
@@ -57,6 +58,14 @@ const TradeIn: React.FC = () => {
     brokenCamera: false, faceIdWorks: true, speakersWork: true, unlocked: '',
   });
   const [n, setN] = useState<NewDev>({ brand: '', model: '', storage: '', condition: '', color: '' });
+  const [compareList, setCompareList] = useState<NewDev[]>([]);
+  const [showAddCompare, setShowAddCompare] = useState(false);
+  const [c, setC] = useState<NewDev>({ brand: '', model: '', storage: '', condition: '', color: '' });
+
+  const cModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand).map(d => d.Model))).sort(), [devices, c.brand]);
+  const cStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model).map(d => d.Storage))).sort(), [devices, c.brand, c.model]);
+  const cConditions = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model && d.Storage === c.storage).map(d => d.Condition))), [devices, c.brand, c.model, c.storage]);
+  const cColors = useMemo(() => devices.find(d => d.Brand === c.brand && d.Model === c.model && d.Storage === c.storage)?.Colors || [], [devices, c.brand, c.model, c.storage]);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
 
@@ -123,6 +132,17 @@ const TradeIn: React.FC = () => {
       jamaicaTotalJMD: (estimateUSD * exchangeRate) + (newPrice * SHIPPING_PCT * exchangeRate),
     };
   }, [t, n, devices, exchangeRate]);
+
+  // Compute estimate for any given new device against the same trade-in value
+  const compareEstimates = useMemo(() => {
+    return compareList.map(cd => {
+      const row = devices.find(d => d.Brand === cd.brand && d.Model === cd.model && d.Storage === cd.storage && d.Condition === cd.condition);
+      const newPrice = row?.Price || 0;
+      const usa = Math.max(0, newPrice - estimate.tradeValue);
+      const jmd = usa * exchangeRate + newPrice * SHIPPING_PCT * exchangeRate;
+      return { device: cd, newPrice, usaTotalUSD: usa, jamaicaTotalJMD: jmd };
+    });
+  }, [compareList, devices, exchangeRate, estimate.tradeValue]);
 
   const canNext = (): boolean => {
     switch (step) {
