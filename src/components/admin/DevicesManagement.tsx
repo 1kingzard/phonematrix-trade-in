@@ -70,11 +70,27 @@ const DevicesManagement: React.FC = () => {
     if (!editCell) return;
     const n = parseFloat(editVal);
     if (!isFinite(n) || n < 0) { setEditCell(null); return; }
-    const { error } = await supabase.from('devices').update({ [editCell.field]: n } as any).eq('id', editCell.id);
+    const target = rows.find(r => r.id === editCell.id);
+    if (!target) { setEditCell(null); return; }
+    // Repair costs apply per-model (all storages/conditions). Price stays per-row.
+    const isRepairField = editCell.field !== 'price';
+    let query = supabase.from('devices').update({ [editCell.field]: n } as any);
+    if (isRepairField) {
+      query = query.eq('brand', target.brand).eq('model', target.model);
+    } else {
+      query = query.eq('id', editCell.id);
+    }
+    const { error } = await query;
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
     else {
-      setRows(prev => prev.map(r => r.id === editCell.id ? { ...r, [editCell.field]: n } : r));
-      toast({ title: 'Saved' });
+      setRows(prev => prev.map(r => {
+        if (isRepairField) {
+          return (r.brand === target.brand && r.model === target.model)
+            ? { ...r, [editCell.field]: n } : r;
+        }
+        return r.id === editCell.id ? { ...r, [editCell.field]: n } : r;
+      }));
+      toast({ title: isRepairField ? 'Saved for all ' + target.model : 'Saved' });
     }
     setEditCell(null);
   };
