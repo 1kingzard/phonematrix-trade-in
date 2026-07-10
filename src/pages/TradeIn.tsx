@@ -391,7 +391,11 @@ Phone: ${phone}`;
                 <p className="text-sm text-muted-foreground">Live exchange rate: 1 USD = {exchangeRate.toFixed(2)} JMD</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="p-4 bg-muted/30">
+                <Card className="p-4 bg-muted/30 relative">
+                  <Button size="sm" variant="ghost" onClick={() => { setDirection('back'); setStep(1); }}
+                    className="absolute top-2 right-2 h-7 px-2 text-xs">
+                    <Pencil className="h-3 w-3 mr-1" />Change
+                  </Button>
                   <div className="w-24 mb-3 rounded-md overflow-hidden bg-background">
                     <DeviceImage brand={t.brand} model={t.model} aspectClass="aspect-[3/4]" />
                   </div>
@@ -400,7 +404,11 @@ Phone: ${phone}`;
                   <p className="text-sm text-muted-foreground">{t.storage} • {t.color}</p>
                   <Badge variant="outline" className="mt-2">Assessed: {estimate.condition}</Badge>
                 </Card>
-                <Card className="p-4 bg-primary/5 border-primary/30">
+                <Card className="p-4 bg-primary/5 border-primary/30 relative">
+                  <Button size="sm" variant="ghost" onClick={() => { setDirection('back'); setStep(5); }}
+                    className="absolute top-2 right-2 h-7 px-2 text-xs">
+                    <Pencil className="h-3 w-3 mr-1" />Change
+                  </Button>
                   <div className="w-24 mb-3 rounded-md overflow-hidden bg-background">
                     <DeviceImage brand={n.brand} model={n.model} aspectClass="aspect-[3/4]" />
                   </div>
@@ -451,6 +459,87 @@ Phone: ${phone}`;
                   <p className="text-xs text-muted-foreground mt-1">Includes shipping to Jamaica</p>
                 </div>
               </div>
+
+              {/* Compare additional devices against the same trade-in */}
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-semibold">Compare other devices</p>
+                    <p className="text-xs text-muted-foreground">See what your {t.brand} {t.model} trade-in gets you toward other options.</p>
+                  </div>
+                  {!showAddCompare && (
+                    <Button size="sm" variant="outline" onClick={() => setShowAddCompare(true)}>
+                      <Plus className="h-4 w-4 mr-1" />Add device
+                    </Button>
+                  )}
+                </div>
+
+                {compareEstimates.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {compareEstimates.map((ce, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                        <div className="w-12 shrink-0 rounded-md overflow-hidden bg-background">
+                          <DeviceImage brand={ce.device.brand} model={ce.device.model} aspectClass="aspect-[3/4]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{ce.device.brand} {ce.device.model}</p>
+                          <p className="text-xs text-muted-foreground truncate">{ce.device.storage} • {ce.device.condition} • {ce.device.color}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold">{formatCurrency(ce.usaTotalUSD, 'USD')}</p>
+                          <p className="text-xs text-muted-foreground">{formatCurrency(ce.jamaicaTotalJMD, 'JMD')} JM</p>
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => setCompareList(list => list.filter((_, idx) => idx !== i))}
+                          className="h-8 w-8 p-0">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showAddCompare && (
+                  <div className="rounded-lg border border-border p-3 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Select value={c.brand} onValueChange={v => setC({ brand: v, model: '', storage: '', condition: '', color: '' })}>
+                        <SelectTrigger><SelectValue placeholder="Brand" /></SelectTrigger>
+                        <SelectContent>{tradeBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <Select value={c.model} onValueChange={v => setC({ ...c, model: v, storage: '', condition: '', color: '' })} disabled={!c.brand}>
+                        <SelectTrigger><SelectValue placeholder="Model" /></SelectTrigger>
+                        <SelectContent>{cModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <Select value={c.storage} onValueChange={v => setC({ ...c, storage: v, condition: '', color: '' })} disabled={!c.model}>
+                        <SelectTrigger><SelectValue placeholder="Storage" /></SelectTrigger>
+                        <SelectContent>{cStorages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <Select value={c.condition} onValueChange={v => setC({ ...c, condition: v })} disabled={!c.storage}>
+                        <SelectTrigger><SelectValue placeholder="Condition" /></SelectTrigger>
+                        <SelectContent>{cConditions.map(cn => <SelectItem key={cn} value={cn}>{cn}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <Select value={c.color} onValueChange={v => setC({ ...c, color: v })} disabled={!c.storage || cColors.length === 0}>
+                        <SelectTrigger><SelectValue placeholder="Color" /></SelectTrigger>
+                        <SelectContent>{cColors.map(cl => <SelectItem key={cl} value={cl}>{cl}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => { setShowAddCompare(false); setC({ brand: '', model: '', storage: '', condition: '', color: '' }); }}>
+                        Cancel
+                      </Button>
+                      <Button size="sm"
+                        disabled={!(c.brand && c.model && c.storage && c.condition && c.color)}
+                        onClick={() => {
+                          setCompareList(list => [...list, c]);
+                          setC({ brand: '', model: '', storage: '', condition: '', color: '' });
+                          setShowAddCompare(false);
+                        }}>
+                        Add to comparison
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+
               <div className="space-y-3 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2"><Label htmlFor="name">Your Name</Label>
