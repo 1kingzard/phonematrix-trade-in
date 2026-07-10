@@ -3,6 +3,7 @@ import React from 'react';
 import { DeviceData } from '../services/deviceDataService';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
+import { calcTotalJMD } from '@/hooks/useExchangeRate';
 
 interface FeaturedDevicesProps {
   devices: DeviceData[];
@@ -17,14 +18,14 @@ const FeaturedDevices: React.FC<FeaturedDevicesProps> = ({
   currency,
   exchangeRate 
 }) => {
-  // Format currency
+  // Format currency (JMD includes shipping)
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(currency === 'USD' ? value : value * exchangeRate);
+    }).format(currency === 'USD' ? value : calcTotalJMD(value, exchangeRate));
   };
 
   if (devices.length === 0) {
