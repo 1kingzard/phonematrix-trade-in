@@ -82,19 +82,27 @@ const TradeIn: React.FC = () => {
       devices.find(d => d.Brand === t.brand && d.Model === t.model && d.Storage === t.storage && d.Condition === cond) ||
       devices.find(d => d.Brand === t.brand && d.Model === t.model && d.Storage === t.storage);
 
+    // Repair costs are per-model; pull max across all rows of same brand+model
+    const modelRows = devices.filter(d => d.Brand === t.brand && d.Model === t.model);
+    const modelMax = (key: keyof DeviceData) =>
+      modelRows.reduce((m, r) => Math.max(m, Number((r as any)[key]) || 0), 0);
+    const batteryCost = modelMax('BatteryReplacement');
+    const screenCost = modelMax('ScreenReplacement');
+    const rearGlassCost = modelMax('RearGlassReplacement');
+
     let repairs = 0;
     const repairBreakdown: { label: string; amount: number }[] = [];
-    if (t.batteryPct <= 82 && tradeRow?.BatteryReplacement) {
-      repairs += tradeRow.BatteryReplacement;
-      repairBreakdown.push({ label: 'Battery replacement', amount: tradeRow.BatteryReplacement });
+    if (t.batteryPct <= 82 && batteryCost) {
+      repairs += batteryCost;
+      repairBreakdown.push({ label: 'Battery replacement', amount: batteryCost });
     }
-    if (t.brokenScreen && tradeRow?.ScreenReplacement) {
-      repairs += tradeRow.ScreenReplacement;
-      repairBreakdown.push({ label: 'Screen replacement', amount: tradeRow.ScreenReplacement });
+    if (t.brokenScreen && screenCost) {
+      repairs += screenCost;
+      repairBreakdown.push({ label: 'Screen replacement', amount: screenCost });
     }
-    if (t.brokenBackGlass && tradeRow?.RearGlassReplacement) {
-      repairs += tradeRow.RearGlassReplacement;
-      repairBreakdown.push({ label: 'Rear glass replacement', amount: tradeRow.RearGlassReplacement });
+    if (t.brokenBackGlass && rearGlassCost) {
+      repairs += rearGlassCost;
+      repairBreakdown.push({ label: 'Rear glass replacement', amount: rearGlassCost });
     }
 
     const tradePrice = tradeRow?.Price || 0;
@@ -108,9 +116,9 @@ const TradeIn: React.FC = () => {
       estimateUSD, estimateJMD: estimateUSD * exchangeRate,
       shippingJMD: newPrice * SHIPPING_PCT * exchangeRate,
       repairs, repairBreakdown,
-      batteryCost: tradeRow?.BatteryReplacement || 0,
-      screenCost: tradeRow?.ScreenReplacement || 0,
-      backGlassCost: tradeRow?.RearGlassReplacement || 0,
+      batteryCost,
+      screenCost,
+      backGlassCost: rearGlassCost,
       usaTotalUSD: estimateUSD,
       jamaicaTotalJMD: (estimateUSD * exchangeRate) + (newPrice * SHIPPING_PCT * exchangeRate),
     };
