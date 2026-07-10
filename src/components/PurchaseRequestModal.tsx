@@ -56,10 +56,10 @@ Storage: ${device.Storage}
 Color: ${color}
 
 💰 Price Breakdown:
+- Estimated Total (JMD): ${formatJMD(breakdown.totalJmd)}
 - Device Price (USD): ${formatUSD(breakdown.priceUsd)}
 - Device Price (JMD): ${formatJMD(breakdown.deviceJmd)}
 - Estimated Shipping (JMD): ${formatJMD(breakdown.shippingJmd)}
-- Estimated Total (JMD): ${formatJMD(breakdown.totalJmd)}
 
 👤 Customer Info:
 Name: ${name}
