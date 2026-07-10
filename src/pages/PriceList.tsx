@@ -230,23 +230,23 @@ const PriceList: React.FC = () => {
                       (() => {
                         const b = calcBreakdown(d.Price, rate);
                         return (
-                          <div className="mt-auto pt-2 space-y-2">
-                            <div>
-                              <p className="text-xs text-muted-foreground">Device Price</p>
-                              <p className="text-2xl font-bold text-foreground">{formatJMD(b.deviceJmd)}</p>
-                            </div>
-                            <div className="border-t border-border/60 pt-2 space-y-1 text-xs">
-                              <div className="flex justify-between text-muted-foreground">
-                                <span>Shipping to Jamaica</span>
-                                <span>{formatJMD(b.shippingJmd)}</span>
-                              </div>
-                              <div className="flex justify-between font-semibold">
-                                <span>Total with Shipping</span>
-                                <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">{formatJMD(b.totalJmd)}</span>
-                              </div>
-                            </div>
-                            <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop w-full">Request</Button>
+                      <div className="mt-auto pt-2 space-y-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Total Price (incl. shipping)</p>
+                          <p className="text-2xl font-bold text-foreground">{formatJMD(b.totalJmd)}</p>
+                        </div>
+                        <div className="border-t border-border/60 pt-2 space-y-1 text-xs">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Device Price</span>
+                            <span>{formatJMD(b.deviceJmd)}</span>
                           </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Shipping to Jamaica</span>
+                            <span>{formatJMD(b.shippingJmd)}</span>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop w-full">Request</Button>
+                      </div>
                         );
                       })()
                     )}
