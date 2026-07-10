@@ -15,6 +15,7 @@ import AdminTools from '@/components/admin/AdminTools';
 import CsvManagement from '@/components/admin/CsvManagement';
 import MediaManagement from '@/components/admin/MediaManagement';
 import DevicesManagement from '@/components/admin/DevicesManagement';
+import PriceScraper from '@/components/admin/PriceScraper';
 
 interface ReferralCode {
   id: string;
@@ -187,6 +188,7 @@ const AdminDashboard = () => {
           <TabsList>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="devices">Devices</TabsTrigger>
+            <TabsTrigger value="scraper">Scraper</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="csv">CSV</TabsTrigger>
@@ -200,6 +202,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="devices" className="space-y-4">
             <DevicesManagement />
+          </TabsContent>
+
+          <TabsContent value="scraper" className="space-y-4">
+            <PriceScraper />
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-4">
