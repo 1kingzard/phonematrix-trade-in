@@ -625,6 +625,101 @@ export type Database = {
         }
         Relationships: []
       }
+      scraped_prices: {
+        Row: {
+          brand: string | null
+          condition: string | null
+          created_at: string
+          id: string
+          market_price_usd: number
+          matched_device_id: string | null
+          model: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scraped_at: string
+          source: string
+          source_url: string
+          status: string
+          storage: string | null
+          suggested_price_usd: number
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          market_price_usd: number
+          matched_device_id?: string | null
+          model: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scraped_at?: string
+          source?: string
+          source_url: string
+          status?: string
+          storage?: string | null
+          suggested_price_usd: number
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          market_price_usd?: number
+          matched_device_id?: string | null
+          model?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scraped_at?: string
+          source?: string
+          source_url?: string
+          status?: string
+          storage?: string | null
+          suggested_price_usd?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraped_prices_matched_device_id_fkey"
+            columns: ["matched_device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scraper_settings: {
+        Row: {
+          created_at: string
+          default_source_url: string
+          id: string
+          markup_percent: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_source_url?: string
+          id?: string
+          markup_percent?: number
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_source_url?: string
+          id?: string
+          markup_percent?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_media: {
         Row: {
           asset_key: string
