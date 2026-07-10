@@ -50,6 +50,57 @@ export type Database = {
         }
         Relationships: []
       }
+      devices: {
+        Row: {
+          active: boolean
+          battery_replacement: number
+          brand: string
+          colors: string[]
+          condition: string
+          created_at: string
+          id: string
+          model: string
+          os: string
+          price: number
+          rear_glass_replacement: number
+          screen_replacement: number
+          storage: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          battery_replacement?: number
+          brand: string
+          colors?: string[]
+          condition: string
+          created_at?: string
+          id?: string
+          model: string
+          os?: string
+          price?: number
+          rear_glass_replacement?: number
+          screen_replacement?: number
+          storage?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          battery_replacement?: number
+          brand?: string
+          colors?: string[]
+          condition?: string
+          created_at?: string
+          id?: string
+          model?: string
+          os?: string
+          price?: number
+          rear_glass_replacement?: number
+          screen_replacement?: number
+          storage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           cost_price: number | null
