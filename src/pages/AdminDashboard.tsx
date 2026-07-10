@@ -14,6 +14,7 @@ import ReferralCodeManagement from '@/components/admin/ReferralCodeManagement';
 import AdminTools from '@/components/admin/AdminTools';
 import CsvManagement from '@/components/admin/CsvManagement';
 import MediaManagement from '@/components/admin/MediaManagement';
+import DevicesManagement from '@/components/admin/DevicesManagement';
 
 interface ReferralCode {
   id: string;
@@ -185,6 +186,7 @@ const AdminDashboard = () => {
         <Tabs defaultValue="orders" className="space-y-4">
           <TabsList>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="devices">Devices</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="csv">CSV</TabsTrigger>
@@ -194,6 +196,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="orders" className="space-y-4">
             <OrderManagement orders={orders} onRefresh={fetchAdminData} user={user} />
+          </TabsContent>
+
+          <TabsContent value="devices" className="space-y-4">
+            <DevicesManagement />
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-4">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Updated CSV with new columns: Color 1-6, Screen Replacement, Battery Replacement, Rear Glass replacement
 const DEFAULT_CSV_URL =
@@ -133,13 +134,27 @@ export const useDeviceData = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const url = getCsvUrl();
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch CSV');
-        const text = await res.text();
-        const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length) setHeaders(parseCSVLine(lines[0]));
-        const data = parseCSV(text, getColumnMapping());
+        const { data: rows, error: err } = await supabase
+          .from('devices')
+          .select('*')
+          .eq('active', true)
+          .order('brand', { ascending: true })
+          .order('model', { ascending: true });
+        if (err) throw err;
+        const data: DeviceData[] = (rows || []).map((r: any) => ({
+          OS: r.os || '',
+          Brand: r.brand || '',
+          Model: r.model || '',
+          Condition: r.condition || '',
+          Price: Number(r.price) || 0,
+          Storage: r.storage || '',
+          Colors: Array.isArray(r.colors) ? r.colors : [],
+          Color: (Array.isArray(r.colors) ? r.colors : []).join(' '),
+          ScreenReplacement: Number(r.screen_replacement) || 0,
+          BatteryReplacement: Number(r.battery_replacement) || 0,
+          RearGlassReplacement: Number(r.rear_glass_replacement) || 0,
+        }));
+        if (!cancelled) setHeaders(CANONICAL_FIELDS as unknown as string[]);
         if (!cancelled) {
           setDevices(data);
           setError(null);
@@ -152,8 +167,16 @@ export const useDeviceData = () => {
     };
     load();
     const handler = () => load();
-    window.addEventListener('pm-csv-config-changed', handler);
-    return () => { cancelled = true; window.removeEventListener('pm-csv-config-changed', handler); };
+    window.addEventListener('pm-devices-changed', handler);
+    const channel = supabase
+      .channel('devices-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'devices' }, () => load())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.removeEventListener('pm-devices-changed', handler);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return { devices, loading, error, headers };
