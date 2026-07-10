@@ -3,6 +3,7 @@ import React from 'react';
 import { DeviceData } from '../services/deviceDataService';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import { calcTotalJMD } from '@/hooks/useExchangeRate';
 
 interface DeviceCardProps {
   device: DeviceData;
@@ -19,13 +20,14 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   onClick, 
   selected = false
 }) => {
-  // Format the price according to the selected currency
+  // Format the price according to the selected currency (JMD includes shipping)
+  const priceValue = currency === 'USD' ? device.Price : calcTotalJMD(device.Price, exchangeRate);
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(currency === 'USD' ? device.Price : device.Price * exchangeRate);
+  }).format(priceValue);
 
   return (
     <div 

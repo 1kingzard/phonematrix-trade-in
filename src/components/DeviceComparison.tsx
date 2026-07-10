@@ -3,6 +3,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { DeviceData } from '../services/deviceDataService';
 import { Button } from '@/components/ui/button';
+import { calcTotalJMD } from '@/hooks/useExchangeRate';
 
 interface DeviceComparisonProps {
   devices: DeviceData[];
@@ -17,14 +18,14 @@ const DeviceComparison: React.FC<DeviceComparisonProps> = ({
   currency,
   exchangeRate 
 }) => {
-  // Format currency
+  // Format currency (JMD includes shipping)
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(currency === 'USD' ? value : value * exchangeRate);
+    }).format(currency === 'USD' ? value : calcTotalJMD(value, exchangeRate));
   };
 
   if (devices.length === 0) {

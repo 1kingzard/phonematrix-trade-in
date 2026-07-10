@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Trash2 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useExchangeRate } from '../services/deviceDataService';
+import { calcTotalJMD } from '@/hooks/useExchangeRate';
 
 interface CartSheetProps {
   currency: 'USD' | 'JMD';
@@ -16,7 +17,7 @@ const CartSheet: React.FC<CartSheetProps> = ({ currency }) => {
   const { exchangeRate } = useExchangeRate();
 
   const formatPrice = (price: number) => {
-    const priceInCurrency = currency === 'USD' ? price : price * exchangeRate;
+    const priceInCurrency = currency === 'USD' ? price : calcTotalJMD(price, exchangeRate);
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,

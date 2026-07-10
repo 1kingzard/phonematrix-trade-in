@@ -56,10 +56,10 @@ Storage: ${device.Storage}
 Color: ${color}
 
 💰 Price Breakdown:
+- Estimated Total (JMD): ${formatJMD(breakdown.totalJmd)}
 - Device Price (USD): ${formatUSD(breakdown.priceUsd)}
 - Device Price (JMD): ${formatJMD(breakdown.deviceJmd)}
 - Estimated Shipping (JMD): ${formatJMD(breakdown.shippingJmd)}
-- Estimated Total (JMD): ${formatJMD(breakdown.totalJmd)}
 
 👤 Customer Info:
 Name: ${name}
@@ -96,10 +96,10 @@ Notes: ${notes || 'N/A'}`;
 
           <div className="rounded-lg border border-border/60 p-3 space-y-1.5 text-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Cost Summary</p>
-            <div className="flex justify-between"><span className="text-muted-foreground">Device Price (USD)</span><span className="font-medium">{formatUSD(breakdown.priceUsd)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold">Estimated Total (JMD)</span><span className="font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">{formatJMD(breakdown.totalJmd)}</span></div>
+            <div className="flex justify-between pt-1.5 border-t border-border/60"><span className="text-muted-foreground">Device Price (USD)</span><span className="font-medium">{formatUSD(breakdown.priceUsd)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Device Price (JMD)</span><span className="font-medium">{formatJMD(breakdown.deviceJmd)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Est. Shipping (JMD)</span><span className="font-medium">{formatJMD(breakdown.shippingJmd)}</span></div>
-            <div className="flex justify-between pt-1.5 border-t border-border/60"><span className="font-semibold">Estimated Total (JMD)</span><span className="font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">{formatJMD(breakdown.totalJmd)}</span></div>
             <p className="text-[11px] text-muted-foreground pt-1">Shipping is an estimate. Final cost may vary based on weight and carrier.</p>
           </div>
 

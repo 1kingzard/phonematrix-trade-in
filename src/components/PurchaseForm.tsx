@@ -58,6 +58,9 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
   // Device price (directly from spreadsheet)
   const devicePrice = selectedDevice ? selectedDevice.Price : 0;
   
+  // Display price includes shipping for JMD
+  const displayPrice = selectedDevice ? (currency === 'JMD' ? devicePrice + shippingCost : devicePrice) : 0;
+  
   // Calculate subtotal before discount
   const subtotal = selectedDevice ? devicePrice + shippingCost : 0;
   
@@ -187,7 +190,7 @@ ${notes || "None provided"}
               {selectedDevice.Brand} {selectedDevice.Model} ({selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition})
             </p>
             <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-1">
-              Price: {formatCurrency(selectedDevice.Price)}
+              Price: {formatCurrency(displayPrice)}
             </p>
           </div>
         </div>
