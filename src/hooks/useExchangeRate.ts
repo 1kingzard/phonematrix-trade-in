@@ -68,3 +68,8 @@ export const calcBreakdown = (priceUsd: number, rate: number) => {
   const totalJmd = deviceJmd + shippingJmd;
   return { priceUsd, shippingUsd, deviceJmd, shippingJmd, totalJmd };
 };
+
+export const calcTotalJMD = (priceUsd: number, rate: number): number => {
+  const shippingUsd = priceUsd * SHIPPING_RATE;
+  return (priceUsd + shippingUsd) * rate;
+};
