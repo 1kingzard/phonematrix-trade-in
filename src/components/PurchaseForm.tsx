@@ -190,7 +190,7 @@ ${notes || "None provided"}
               {selectedDevice.Brand} {selectedDevice.Model} ({selectedDevice.Storage}, {selectedDevice.Color}, {selectedDevice.Condition})
             </p>
             <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mt-1">
-              Price: {formatCurrency(selectedDevice.Price)}
+              Price: {formatCurrency(displayPrice)}
             </p>
           </div>
         </div>
