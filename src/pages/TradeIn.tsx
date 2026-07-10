@@ -108,6 +108,11 @@ const TradeIn: React.FC = () => {
       estimateUSD, estimateJMD: estimateUSD * exchangeRate,
       shippingJMD: newPrice * SHIPPING_PCT * exchangeRate,
       repairs, repairBreakdown,
+      batteryCost: tradeRow?.BatteryReplacement || 0,
+      screenCost: tradeRow?.ScreenReplacement || 0,
+      backGlassCost: tradeRow?.RearGlassReplacement || 0,
+      usaTotalUSD: estimateUSD,
+      jamaicaTotalJMD: (estimateUSD * exchangeRate) + (newPrice * SHIPPING_PCT * exchangeRate),
     };
   }, [t, n, devices, exchangeRate]);
 
@@ -150,9 +155,8 @@ Condition: ${n.condition}
 Color: ${n.color}
 
 — ESTIMATE —
-Estimated Cost: ${formatCurrency(estimate.estimateUSD, 'USD')}
-Estimated Cost (JMD): ${formatCurrency(estimate.estimateJMD, 'JMD')}
-Shipping to Jamaica (JMD): ${formatCurrency(estimate.shippingJMD, 'JMD')}
+Price for USA customers: ${formatCurrency(estimate.usaTotalUSD, 'USD')}
+Price for Jamaica customers (incl. shipping): ${formatCurrency(estimate.jamaicaTotalJMD, 'JMD')}
 
 — CUSTOMER —
 Name: ${name}
@@ -377,26 +381,46 @@ Phone: ${phone}`;
                   <p className="text-sm text-muted-foreground">{n.storage} • {n.condition} • {n.color}</p>
                 </Card>
               </div>
-              {estimate.repairBreakdown.length > 0 && (
-                <Card className="p-4 bg-amber-500/5 border-amber-500/30">
-                  <p className="text-sm font-semibold mb-2">Repairs applied</p>
-                  <ul className="text-sm space-y-1">
-                    {estimate.repairBreakdown.map(r => <li key={r.label} className="text-muted-foreground">• {r.label}</li>)}
-                  </ul>
-                </Card>
-              )}
+              <Card className="p-4 bg-muted/30">
+                <p className="text-sm font-semibold mb-3">Repair Costs</p>
+                <ul className="text-sm space-y-2">
+                  {[
+                    { label: 'Battery replacement', cost: estimate.batteryCost, applied: t.batteryPct <= 82 },
+                    { label: 'Front screen replacement', cost: estimate.screenCost, applied: t.brokenScreen },
+                    { label: 'Back glass replacement', cost: estimate.backGlassCost, applied: t.brokenBackGlass },
+                  ].map(r => (
+                    <li key={r.label} className="flex justify-between items-center">
+                      <span className="flex items-center gap-2">
+                        {r.label}
+                        {r.applied && <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">Applied</Badge>}
+                      </span>
+                      <span className={r.applied ? 'font-semibold text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}>
+                        {r.cost > 0 ? formatCurrency(r.cost, 'USD') : '—'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {estimate.repairs > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border/40 flex justify-between text-sm font-semibold">
+                    <span>Total repairs deducted</span>
+                    <span className="text-amber-600 dark:text-amber-400">{formatCurrency(estimate.repairs, 'USD')}</span>
+                  </div>
+                )}
+              </Card>
               <div className="rounded-xl bg-gradient-to-br from-primary/10 to-pink-500/10 border border-primary/30 p-6 space-y-3">
-                <div className="flex justify-between items-end">
-                  <span className="text-sm text-muted-foreground">You pay (USD)</span>
-                  <span className="text-3xl md:text-4xl font-bold">{formatCurrency(estimate.estimateUSD, 'USD')}</span>
+                <div>
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm text-muted-foreground">Price for customers in USA</span>
+                    <span className="text-3xl md:text-4xl font-bold">{formatCurrency(estimate.usaTotalUSD, 'USD')}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">No shipping required</p>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-border/40">
-                  <span className="text-sm text-muted-foreground">You pay (JMD)</span>
-                  <span className="text-xl font-semibold">{formatCurrency(estimate.estimateJMD, 'JMD')}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Shipping to Jamaica (JMD)</span>
-                  <span className="text-base font-medium">{formatCurrency(estimate.shippingJMD, 'JMD')}</span>
+                <div className="pt-3 border-t border-border/40">
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm text-muted-foreground">Price for customers in Jamaica</span>
+                    <span className="text-3xl md:text-4xl font-bold">{formatCurrency(estimate.jamaicaTotalJMD, 'JMD')}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Includes shipping to Jamaica</p>
                 </div>
               </div>
               <div className="space-y-3 pt-2">
