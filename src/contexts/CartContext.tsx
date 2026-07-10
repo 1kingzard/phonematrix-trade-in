@@ -63,7 +63,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getTotalValue = (currency: 'USD' | 'JMD', exchangeRate: number) => {
     return items.reduce((total, item) => {
-      const price = currency === 'USD' ? item.device.Price : item.device.Price * exchangeRate;
+      const price = currency === 'USD' ? item.device.Price : calcTotalJMD(item.device.Price, exchangeRate);
       return total + price;
     }, 0);
   };
