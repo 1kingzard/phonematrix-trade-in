@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DeviceData } from '../services/deviceDataService';
+import { calcTotalJMD } from '../hooks/useExchangeRate';
 
 interface CartItem {
   device: DeviceData;
