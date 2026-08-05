@@ -12,6 +12,7 @@ import { fmtJMD, fmtUSD, InventoryRow, costPerUnitJmd, inventoryValueJmd, profit
 import InventoryFormDialog from './InventoryFormDialog';
 import RestockDialog from './RestockDialog';
 import { toCsv, downloadCsv, parseCsv } from '@/lib/partsCsv';
+import { logPartsAudit } from '@/lib/partsAudit';
 
 const InventoryTab = () => {
   const [items, setItems] = useState<InventoryRow[]>([]);
@@ -39,6 +40,12 @@ const InventoryTab = () => {
 
   const toggleArchive = async (item: InventoryRow) => {
     await supabase.from('parts_inventory').update({ archived: !item.archived }).eq('id', item.id);
+    await logPartsAudit({
+      action: item.archived ? 'unarchive' : 'archive',
+      entity: 'parts_inventory',
+      entityId: item.id,
+      payload: { item: item.item_name },
+    });
   };
 
   const exportCsv = () => {
@@ -64,6 +71,11 @@ const InventoryTab = () => {
         if (error) fail += toInsert.length; else ok += data?.length || 0;
       }
       toast({ title: 'Import complete', description: `${ok} saved${fail ? `, ${fail} failed` : ''}` });
+      await logPartsAudit({
+        action: 'csv_import',
+        entity: 'parts_inventory',
+        payload: { saved: ok, failed: fail, updated: toUpdate.length, inserted: toInsert.length },
+      });
       load();
     } catch (e: any) {
       toast({ title: 'Import failed', description: e.message, variant: 'destructive' });
@@ -89,6 +101,12 @@ const InventoryTab = () => {
       toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Price updated' });
+      await logPartsAudit({
+        action: 'update_price',
+        entity: 'parts_inventory',
+        entityId: item.id,
+        payload: { item: item.item_name, from_jmd: Number(item.selling_price_jmd), to_jmd: val },
+      });
     }
     setPriceEditId(null);
   };
