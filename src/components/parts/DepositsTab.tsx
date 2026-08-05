@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, X } from 'lucide-react';
 import { fmtJMD } from '@/lib/partsCalc';
+import { logPartsAudit } from '@/lib/partsAudit';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Deposit { id: string; amount_jmd: number; reference: string | null; status: string; deposited_at: string; verified_at: string | null; }
@@ -26,7 +27,14 @@ const DepositsTab = () => {
   }, []);
 
   const setStatus = async (id: string, status: 'verified' | 'rejected') => {
+    const dep = deps.find(d => d.id === id);
     await supabase.from('parts_deposits').update({ status, verified_by: user?.id, verified_at: new Date().toISOString() }).eq('id', id);
+    await logPartsAudit({
+      action: status === 'verified' ? 'verify_deposit' : 'reject_deposit',
+      entity: 'parts_deposits',
+      entityId: id,
+      payload: { amount_jmd: dep ? Number(dep.amount_jmd) : null, reference: dep?.reference || null },
+    });
   };
 
   const totals = deps.reduce((a, d) => {

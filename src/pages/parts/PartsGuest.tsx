@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logPartsAudit } from '@/lib/partsAudit';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,6 +101,7 @@ const PartsGuest = () => {
       total_jmd: total, rate_at_sale: rate, customer_note: saleNote || null, sold_by: authUser?.id,
     });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'record_sale', entity: 'parts_sales', rateUsed: rate, payload: { item: item.item_name, units: qty, total_jmd: total, note: saleNote || null } });
     toast({ title: 'Sale recorded' }); setSaleItem(''); setSaleQty(''); setSaleNote('');
   };
 
@@ -108,6 +110,7 @@ const PartsGuest = () => {
     if (!colSale || !amt) return;
     const { error } = await supabase.from('parts_collections').insert({ sale_id: colSale, amount_jmd: amt, recorded_by: authUser?.id });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'record_collection', entity: 'parts_collections', entityId: colSale, payload: { amount_jmd: amt } });
     setColAmt(''); setColSale('');
   };
 
@@ -116,6 +119,7 @@ const PartsGuest = () => {
     if (!amt) return;
     const { error } = await supabase.from('parts_deposits').insert({ amount_jmd: amt, reference: depRef || null, recorded_by: authUser?.id });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'record_deposit', entity: 'parts_deposits', payload: { amount_jmd: amt, reference: depRef || null } });
     setDepAmt(''); setDepRef('');
   };
 
@@ -124,6 +128,7 @@ const PartsGuest = () => {
     if (!miscId || !amt) return;
     const { error } = await supabase.from('parts_misc_payments').insert({ misc_order_id: miscId, amount_jmd: amt, recorded_by: authUser?.id });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'record_misc_payment', entity: 'parts_misc_payments', entityId: miscId, payload: { amount_jmd: amt } });
     setMiscAmt(''); setMiscId('');
   };
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { usePartsRole } from '@/hooks/usePartsRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3, LogOut } from 'lucide-react';
+import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3, LogOut, History } from 'lucide-react';
 import InventoryTab from '@/components/parts/InventoryTab';
 import SalesTab from '@/components/parts/SalesTab';
 import CollectionsTab from '@/components/parts/CollectionsTab';
@@ -13,6 +13,7 @@ import DepositsTab from '@/components/parts/DepositsTab';
 import MiscOrdersTab from '@/components/parts/MiscOrdersTab';
 import SettingsTab from '@/components/parts/SettingsTab';
 import ReportsTab from '@/components/parts/ReportsTab';
+import ActivityTab from '@/components/parts/ActivityTab';
 
 const PartsAdmin = () => {
   const { role, loading, user } = usePartsRole();
@@ -59,6 +60,7 @@ const PartsAdmin = () => {
             <TabsTrigger value="deposits"><Banknote className="h-4 w-4 mr-1" />Deposits</TabsTrigger>
             <TabsTrigger value="misc"><Boxes className="h-4 w-4 mr-1" />Misc Orders</TabsTrigger>
             <TabsTrigger value="reports"><BarChart3 className="h-4 w-4 mr-1" />Reports</TabsTrigger>
+            <TabsTrigger value="activity"><History className="h-4 w-4 mr-1" />Activity</TabsTrigger>
             <TabsTrigger value="settings"><Settings className="h-4 w-4 mr-1" />Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="inventory"><InventoryTab /></TabsContent>
@@ -67,6 +69,7 @@ const PartsAdmin = () => {
           <TabsContent value="deposits"><DepositsTab /></TabsContent>
           <TabsContent value="misc"><MiscOrdersTab /></TabsContent>
           <TabsContent value="reports"><ReportsTab /></TabsContent>
+          <TabsContent value="activity"><ActivityTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
         </Tabs>
       </div>

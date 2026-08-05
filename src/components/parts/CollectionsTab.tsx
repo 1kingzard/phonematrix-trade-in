@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logPartsAudit } from '@/lib/partsAudit';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -66,10 +67,7 @@ const CollectionsTab = () => {
     const { error } = await supabase.from('parts_collections').update(patch).eq('id', id);
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
     const action = status === 'confirmed' ? 'confirm' : status === 'rejected' ? 'reject' : 'reset';
-    await supabase.from('parts_audit_log').insert({
-      actor: user?.id, action, entity: 'parts_collections', entity_id: id,
-      payload: { status, note: noteText || null },
-    });
+    await logPartsAudit({ action, entity: 'parts_collections', entityId: id, payload: { status, note: noteText || null } });
     toast({ title: status === 'confirmed' ? 'Collection confirmed' : status === 'rejected' ? 'Collection rejected' : 'Marked pending' });
   };
 
@@ -95,10 +93,7 @@ const CollectionsTab = () => {
     const prev = Number(c.amount_jmd);
     const { error } = await supabase.from('parts_collections').update({ amount_jmd: newAmt }).eq('id', c.id);
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); cancelEdit(); return; }
-    await supabase.from('parts_audit_log').insert({
-      actor: user?.id, action: 'edit_amount', entity: 'parts_collections', entity_id: c.id,
-      payload: { from: prev, to: newAmt },
-    });
+    await logPartsAudit({ action: 'edit_amount', entity: 'parts_collections', entityId: c.id, payload: { from: prev, to: newAmt } });
     toast({ title: 'Amount updated', description: `${fmtJMD(prev)} → ${fmtJMD(newAmt)}` });
     cancelEdit();
   };
