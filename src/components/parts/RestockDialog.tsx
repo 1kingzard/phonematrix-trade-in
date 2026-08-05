@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { InventoryRow, fmtUSD } from '@/lib/partsCalc';
+import { logPartsAudit } from '@/lib/partsAudit';
 
 interface Props {
   open: boolean;
@@ -49,6 +50,12 @@ const RestockDialog = ({ open, onOpenChange, item, onSaved }: Props) => {
     }).eq('id', item.id);
     setSaving(false);
     if (error) { toast({ title: 'Restock failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({
+      action: 'restock',
+      entity: 'parts_inventory',
+      entityId: item.id,
+      payload: { item: item.item_name, added_qty: addQty, added_product_usd: addProd, added_shipping_usd: addShip, new_qty_available: newQtyAvailable },
+    });
     toast({ title: 'Restocked', description: `${item.item_name}: +${addQty}` });
     onOpenChange(false);
     onSaved();
