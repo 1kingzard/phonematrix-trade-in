@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logPartsAudit } from '@/lib/partsAudit';
 
 const SettingsTab = () => {
   const { rate } = useExchangeRateSetting();
@@ -34,6 +35,7 @@ const SettingsTab = () => {
       if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
     }
     await supabase.from('parts_exchange_rate_history').insert({ rate: n, set_by: user?.id });
+    await logPartsAudit({ action: 'update_exchange_rate', entity: 'parts_settings', rateUsed: n, payload: { from_rate: rate, to_rate: n } });
     toast({ title: 'Exchange rate updated' });
     loadHist();
   };
@@ -42,6 +44,7 @@ const SettingsTab = () => {
     if (!email) return;
     const { data, error } = await supabase.rpc('assign_parts_guest', { user_email: email });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    if (data) await logPartsAudit({ action: 'grant_parts_guest', entity: 'parts_access', payload: { user_email: email } });
     toast({ title: data ? 'Guest assigned' : 'No user with that email' });
     setEmail('');
   };
