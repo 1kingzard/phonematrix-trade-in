@@ -86,6 +86,20 @@ const PartsGuest = () => {
   };
 
   const invMap: Record<string, any> = {}; inv.forEach(i => invMap[i.id] = i);
+  const visibleInv = (() => {
+    const q = invQuery.trim().toLowerCase();
+    const list = inv.filter(i => !q || (i.item_name || '').toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q));
+    const cmp: Record<string, (a: any, b: any) => number> = {
+      'name-asc': (a, b) => String(a.item_name).localeCompare(String(b.item_name)),
+      'name-desc': (a, b) => String(b.item_name).localeCompare(String(a.item_name)),
+      'category-asc': (a, b) => String(a.category || '').localeCompare(String(b.category || '')),
+      'qty-desc': (a, b) => Number(b.qty_available) - Number(a.qty_available),
+      'qty-asc': (a, b) => Number(a.qty_available) - Number(b.qty_available),
+      'price-desc': (a, b) => Number(b.selling_price_jmd) - Number(a.selling_price_jmd),
+      'price-asc': (a, b) => Number(a.selling_price_jmd) - Number(b.selling_price_jmd),
+    };
+    return [...list].sort(cmp[invSort] || cmp['name-asc']);
+  })();
   const collectedBySale = cols.reduce<Record<string, number>>((a, c) => { a[c.sale_id] = (a[c.sale_id] || 0) + Number(c.amount_jmd); return a; }, {});
   const outstanding = sales.reduce((a, s) => a + Math.max(0, Number(s.total_jmd) - (collectedBySale[s.id] || 0)), 0);
   const collectedTotal = cols.reduce((a, c) => a + Number(c.amount_jmd), 0);
@@ -160,11 +174,26 @@ const PartsGuest = () => {
           </TabsList>
 
           <TabsContent value="inventory">
+            <div className="mb-3 flex flex-wrap gap-2">
+              <Input placeholder="Search items…" value={invQuery} onChange={e => setInvQuery(e.target.value)} className="w-52 h-9" />
+              <Select value={invSort} onValueChange={setInvSort}>
+                <SelectTrigger className="w-52 h-9"><SelectValue placeholder="Sort by" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name-asc">Name (A–Z)</SelectItem>
+                  <SelectItem value="name-desc">Name (Z–A)</SelectItem>
+                  <SelectItem value="category-asc">Category (A–Z)</SelectItem>
+                  <SelectItem value="qty-desc">Available (high → low)</SelectItem>
+                  <SelectItem value="qty-asc">Available (low → high)</SelectItem>
+                  <SelectItem value="price-desc">Price (high → low)</SelectItem>
+                  <SelectItem value="price-asc">Price (low → high)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Card><CardContent className="p-0 overflow-x-auto"><Table>
               <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Available</TableHead><TableHead className="text-right">Price (JMD)</TableHead></TableRow></TableHeader>
               <TableBody>
-                {inv.map(i => (<TableRow key={i.id}><TableCell>{i.item_name}</TableCell><TableCell>{i.category || '—'}</TableCell><TableCell className="text-right">{i.qty_available}</TableCell><TableCell className="text-right">{fmtJMD(Number(i.selling_price_jmd))}</TableCell></TableRow>))}
-                {inv.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No items available</TableCell></TableRow>}
+                {visibleInv.map(i => (<TableRow key={i.id}><TableCell>{i.item_name}</TableCell><TableCell>{i.category || '—'}</TableCell><TableCell className="text-right">{i.qty_available}</TableCell><TableCell className="text-right">{fmtJMD(Number(i.selling_price_jmd))}</TableCell></TableRow>))}
+                {visibleInv.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No items match</TableCell></TableRow>}
               </TableBody>
             </Table></CardContent></Card>
           </TabsContent>
