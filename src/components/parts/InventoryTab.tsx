@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Archive, ArchiveRestore, Download, Upload, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
@@ -16,6 +17,8 @@ import { logPartsAudit } from '@/lib/partsAudit';
 
 const InventoryTab = () => {
   const [items, setItems] = useState<InventoryRow[]>([]);
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState('created-desc');
   const [editing, setEditing] = useState<InventoryRow | null>(null);
   const [open, setOpen] = useState(false);
   const [restocking, setRestocking] = useState<InventoryRow | null>(null);
@@ -118,6 +121,27 @@ const InventoryTab = () => {
     return acc;
   }, { costUsd: 0, valueJmd: 0, projProfit: 0 });
 
+  const visibleItems = (() => {
+    const q = query.trim().toLowerCase();
+    const list = items.filter(i =>
+      !q || i.item_name?.toLowerCase().includes(q) || (i.category || '').toLowerCase().includes(q)
+    );
+    const cmp: Record<string, (a: InventoryRow, b: InventoryRow) => number> = {
+      'name-asc': (a, b) => a.item_name.localeCompare(b.item_name),
+      'name-desc': (a, b) => b.item_name.localeCompare(a.item_name),
+      'category-asc': (a, b) => (a.category || '').localeCompare(b.category || ''),
+      'qty-asc': (a, b) => a.qty_available - b.qty_available,
+      'qty-desc': (a, b) => b.qty_available - a.qty_available,
+      'price-asc': (a, b) => Number(a.selling_price_jmd) - Number(b.selling_price_jmd),
+      'price-desc': (a, b) => Number(b.selling_price_jmd) - Number(a.selling_price_jmd),
+      'profit-desc': (a, b) => profitPerUnitJmd(b, rate) - profitPerUnitJmd(a, rate),
+      'profit-asc': (a, b) => profitPerUnitJmd(a, rate) - profitPerUnitJmd(b, rate),
+      'created-desc': (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      'created-asc': (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    };
+    return [...list].sort(cmp[sortBy] || cmp['created-desc']);
+  })();
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -129,8 +153,32 @@ const InventoryTab = () => {
           <CardContent><div className="text-xl font-bold">{fmtJMD(totals.projProfit)}</div></CardContent></Card>
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">Rate: 1 USD = {rate} JMD</div>
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Search items…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className="w-52 h-9"
+          />
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-52 h-9"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created-desc">Newest first</SelectItem>
+              <SelectItem value="created-asc">Oldest first</SelectItem>
+              <SelectItem value="name-asc">Name (A–Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z–A)</SelectItem>
+              <SelectItem value="category-asc">Category (A–Z)</SelectItem>
+              <SelectItem value="qty-desc">Qty (high → low)</SelectItem>
+              <SelectItem value="qty-asc">Qty (low → high)</SelectItem>
+              <SelectItem value="price-desc">Price (high → low)</SelectItem>
+              <SelectItem value="price-asc">Price (low → high)</SelectItem>
+              <SelectItem value="profit-desc">Profit/unit (high → low)</SelectItem>
+              <SelectItem value="profit-asc">Profit/unit (low → high)</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground">Rate: 1 USD = {rate} JMD</span>
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Export CSV</Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" />Import CSV</Button>
@@ -153,7 +201,7 @@ const InventoryTab = () => {
               <TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {items.map(i => (
+              {visibleItems.map(i => (
                 <TableRow key={i.id} className={i.archived ? 'opacity-50' : ''}>
                   <TableCell className="font-medium">{i.item_name}{i.locked_rate ? <Badge variant="outline" className="ml-2">locked @{i.locked_rate}</Badge> : null}</TableCell>
                   <TableCell>{i.category || '—'}</TableCell>
@@ -184,7 +232,7 @@ const InventoryTab = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {items.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No inventory yet</TableCell></TableRow>}
+              {visibleItems.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">{items.length === 0 ? 'No inventory yet' : 'No items match your search'}</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
