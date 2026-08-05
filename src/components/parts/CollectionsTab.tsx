@@ -221,6 +221,7 @@ const CollectionsTab = () => {
             <TableHead className="text-right">Sale</TableHead>
             <TableHead className="text-right">Collected</TableHead>
             <TableHead className="text-right">Balance</TableHead>
+            <TableHead className="text-right">Action</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {sales.map(s => {
