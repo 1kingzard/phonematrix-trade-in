@@ -11,6 +11,7 @@ import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { logPartsAudit } from '@/lib/partsAudit';
+import { Pencil, Trash2, Check, X } from 'lucide-react';
 
 interface Misc { id: string; description: string; cost_input: number; cost_currency: 'USD'|'JMD'; cost_jmd: number; rate_used: number; date_added: string; }
 type EditField = 'description' | 'cost' | null;
@@ -57,7 +58,6 @@ const MiscOrdersTab = () => {
   };
 
   const startEdit = (m: Misc) => {
-    if (!isAdmin) return;
     setEditId(m.id);
     setEditDesc(m.description);
     setEditCost(String(m.cost_input));
@@ -72,7 +72,6 @@ const MiscOrdersTab = () => {
   };
 
   const commitEdit = async (m: Misc) => {
-    if (!isAdmin) return;
     const n = Number(editCost);
     if (!editDesc || !n || !Number.isFinite(n)) { toast({ title: 'Invalid input', variant: 'destructive' }); return; }
     const newCostJmd = editCur === 'USD' ? n * rate : n;
@@ -86,6 +85,16 @@ const MiscOrdersTab = () => {
       payload: { from_description: m.description, to_description: editDesc, from_cost_jmd: Number(m.cost_jmd), to_cost_jmd: newCostJmd },
     });
     cancelEdit();
+  };
+
+  const remove = async (m: Misc) => {
+    if ((paidBy[m.id] || 0) > 0) { toast({ title: 'Cannot delete', description: 'This order has payments recorded.', variant: 'destructive' }); return; }
+    if (!window.confirm(`Delete misc order "${m.description}"?`)) return;
+    const { error } = await supabase.from('parts_misc_orders').delete().eq('id', m.id);
+    if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'delete_misc_order', entity: 'parts_misc_orders', entityId: m.id, payload: { description: m.description, cost_jmd: Number(m.cost_jmd) } });
+    toast({ title: 'Misc order deleted' });
+    load();
   };
 
   const paidBy = pays.reduce<Record<string, number>>((a, p) => { a[p.misc_order_id] = (a[p.misc_order_id] || 0) + Number(p.amount_jmd); return a; }, {});
@@ -114,6 +123,7 @@ const MiscOrdersTab = () => {
             <TableHead className="text-right">Cost (JMD)</TableHead>
             <TableHead className="text-right">Paid</TableHead>
             <TableHead className="text-right">Balance</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {misc.map(m => {
@@ -126,7 +136,7 @@ const MiscOrdersTab = () => {
                     {isEditing ? (
                       <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} autoFocus className="h-8" />
                     ) : (
-                      <span onDoubleClick={() => startEdit(m)} className={isAdmin ? 'cursor-pointer' : ''} title={isAdmin ? 'Double-click to edit' : ''}>{m.description}</span>
+                      <span onDoubleClick={() => startEdit(m)} className="cursor-pointer" title="Double-click to edit">{m.description}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -139,26 +149,31 @@ const MiscOrdersTab = () => {
                         </Select>
                       </div>
                     ) : (
-                      <span onDoubleClick={() => startEdit(m)} className={isAdmin ? 'cursor-pointer' : ''} title={isAdmin ? 'Double-click to edit' : ''}>
+                      <span onDoubleClick={() => startEdit(m)} className="cursor-pointer" title="Double-click to edit">
                         {m.cost_currency === 'USD' ? fmtUSD(Number(m.cost_input)) : fmtJMD(Number(m.cost_input))}
                       </span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">{fmtJMD(Number(m.cost_jmd))}</TableCell>
                   <TableCell className="text-right">{fmtJMD(paid)}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {fmtJMD(Math.max(0, Number(m.cost_jmd) - paid))}
-                    {isEditing && (
-                      <div className="flex justify-end gap-2 mt-1">
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
-                        <Button size="sm" className="h-7 px-2 text-xs" onClick={() => commitEdit(m)}>Save</Button>
+                  <TableCell className="text-right font-medium">{fmtJMD(Math.max(0, Number(m.cost_jmd) - paid))}</TableCell>
+                  <TableCell className="text-right">
+                    {isEditing ? (
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => commitEdit(m)}><Check className="h-3 w-3" />Save</Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1" onClick={cancelEdit}><X className="h-3 w-3" />Cancel</Button>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => startEdit(m)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" onClick={() => remove(m)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     )}
                   </TableCell>
                 </TableRow>
               );
             })}
-            {misc.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">None</TableCell></TableRow>}
+            {misc.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">None</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
