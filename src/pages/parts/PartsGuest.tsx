@@ -31,6 +31,8 @@ const PartsGuest = () => {
   const [deps, setDeps] = useState<any[]>([]);
   const [misc, setMisc] = useState<any[]>([]);
   const [pays, setPays] = useState<any[]>([]);
+  const [invQuery, setInvQuery] = useState('');
+  const [invSort, setInvSort] = useState('name-asc');
 
   // sale form
   const [saleItem, setSaleItem] = useState(''); const [saleQty, setSaleQty] = useState(''); const [saleNote, setSaleNote] = useState('');
