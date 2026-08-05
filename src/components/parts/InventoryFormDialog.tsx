@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { InventoryRow, totalCostUsd, fmtUSD, fmtJMD } from '@/lib/partsCalc';
 import { useAuth } from '@/contexts/AuthContext';
+import { logPartsAudit } from '@/lib/partsAudit';
 
 interface Props {
   open: boolean;
@@ -74,6 +75,18 @@ const InventoryFormDialog = ({ open, onOpenChange, item, onSaved, rate }: Props)
       : await supabase.from('parts_inventory').insert(payload);
     setSaving(false);
     if (res.error) { toast({ title: 'Save failed', description: res.error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({
+      action: item ? 'update_item' : 'create_item',
+      entity: 'parts_inventory',
+      entityId: item?.id,
+      rateUsed: previewRate,
+      payload: {
+        item: payload.item_name,
+        qty_available: payload.qty_available,
+        cost_usd: previewTotalUsd,
+        selling_price_jmd: payload.selling_price_jmd,
+      },
+    });
     toast({ title: item ? 'Updated' : 'Added' });
     onOpenChange(false);
     onSaved();
