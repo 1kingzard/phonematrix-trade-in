@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -121,6 +123,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error signing out:', error);
     }
   };
+
+  // Auto sign-out after 30 minutes of inactivity
+  useIdleTimeout(!!user, async () => {
+    await logout();
+    toast({
+      title: 'Signed out',
+      description: 'You were signed out after 30 minutes of inactivity.',
+    });
+  }, 30 * 60 * 1000);
 
   return (
     <AuthContext.Provider value={{ user, session, login, register, logout, isLoading, isAdmin }}>
