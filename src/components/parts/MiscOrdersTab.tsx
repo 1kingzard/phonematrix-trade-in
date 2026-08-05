@@ -10,6 +10,7 @@ import { fmtJMD, fmtUSD } from '@/lib/partsCalc';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logPartsAudit } from '@/lib/partsAudit';
 
 interface Misc { id: string; description: string; cost_input: number; cost_currency: 'USD'|'JMD'; cost_jmd: number; rate_used: number; date_added: string; }
 type EditField = 'description' | 'cost' | null;
@@ -51,6 +52,7 @@ const MiscOrdersTab = () => {
     const cost_jmd = cur === 'USD' ? n * rate : n;
     const { error } = await supabase.from('parts_misc_orders').insert({ description: desc, cost_input: n, cost_currency: cur, cost_jmd, rate_used: rate, created_by: user?.id });
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'create_misc_order', entity: 'parts_misc_orders', rateUsed: rate, payload: { description: desc, cost_input: n, currency: cur, cost_jmd } });
     setDesc(''); setCost('');
   };
 
@@ -76,6 +78,13 @@ const MiscOrdersTab = () => {
     const newCostJmd = editCur === 'USD' ? n * rate : n;
     const { error } = await supabase.from('parts_misc_orders').update({ description: editDesc, cost_input: n, cost_currency: editCur, cost_jmd: newCostJmd }).eq('id', m.id);
     if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({
+      action: 'update_misc_order',
+      entity: 'parts_misc_orders',
+      entityId: m.id,
+      rateUsed: rate,
+      payload: { from_description: m.description, to_description: editDesc, from_cost_jmd: Number(m.cost_jmd), to_cost_jmd: newCostJmd },
+    });
     cancelEdit();
   };
 
