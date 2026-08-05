@@ -1,0 +1,1 @@
+ALTER TABLE public.parts_inventory ADD COLUMN IF NOT EXISTS archive_note text;
