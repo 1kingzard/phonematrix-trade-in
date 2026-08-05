@@ -288,6 +288,7 @@ export type Database = {
       }
       parts_inventory: {
         Row: {
+          archive_note: string | null
           archived: boolean
           category: string | null
           cost_per_unit_usd: number
@@ -307,6 +308,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archive_note?: string | null
           archived?: boolean
           category?: string | null
           cost_per_unit_usd?: number
@@ -326,6 +328,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archive_note?: string | null
           archived?: boolean
           category?: string | null
           cost_per_unit_usd?: number

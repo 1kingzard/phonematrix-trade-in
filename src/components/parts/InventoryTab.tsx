@@ -6,6 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Plus, Pencil, Archive, ArchiveRestore, Download, Upload, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
@@ -25,6 +28,8 @@ const InventoryTab = () => {
   const [restockOpen, setRestockOpen] = useState(false);
   const [priceEditId, setPriceEditId] = useState<string | null>(null);
   const [priceEditValue, setPriceEditValue] = useState('');
+  const [archiveTarget, setArchiveTarget] = useState<InventoryRow | null>(null);
+  const [archiveNote, setArchiveNote] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const { rate } = useExchangeRateSetting();
   const { toast } = useToast();
@@ -42,13 +47,33 @@ const InventoryTab = () => {
   }, []);
 
   const toggleArchive = async (item: InventoryRow) => {
-    await supabase.from('parts_inventory').update({ archived: !item.archived }).eq('id', item.id);
+    if (!item.archived) { setArchiveTarget(item); setArchiveNote(''); return; }
+    await supabase.from('parts_inventory').update({ archived: false, archive_note: null } as any).eq('id', item.id);
     await logPartsAudit({
-      action: item.archived ? 'unarchive' : 'archive',
+      action: 'unarchive',
       entity: 'parts_inventory',
       entityId: item.id,
       payload: { item: item.item_name },
     });
+    load();
+  };
+
+  const confirmArchive = async () => {
+    if (!archiveTarget) return;
+    const note = archiveNote.trim();
+    if (!note) { toast({ title: 'Please add a reason', variant: 'destructive' }); return; }
+    const { error } = await supabase.from('parts_inventory').update({ archived: true, archive_note: note } as any).eq('id', archiveTarget.id);
+    if (error) { toast({ title: 'Archive failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({
+      action: 'archive',
+      entity: 'parts_inventory',
+      entityId: archiveTarget.id,
+      payload: { item: archiveTarget.item_name, note },
+    });
+    toast({ title: 'Item archived' });
+    setArchiveTarget(null);
+    setArchiveNote('');
+    load();
   };
 
   const exportCsv = () => {
@@ -203,7 +228,12 @@ const InventoryTab = () => {
             <TableBody>
               {visibleItems.map(i => (
                 <TableRow key={i.id} className={i.archived ? 'opacity-50' : ''}>
-                  <TableCell className="font-medium">{i.item_name}{i.locked_rate ? <Badge variant="outline" className="ml-2">locked @{i.locked_rate}</Badge> : null}</TableCell>
+                  <TableCell className="font-medium">
+                    {i.item_name}{i.locked_rate ? <Badge variant="outline" className="ml-2">locked @{i.locked_rate}</Badge> : null}
+                    {i.archived && (i as any).archive_note ? (
+                      <div className="text-xs text-muted-foreground mt-1 max-w-[240px]">Archived: {(i as any).archive_note}</div>
+                    ) : null}
+                  </TableCell>
                   <TableCell>{i.category || '—'}</TableCell>
                   <TableCell className="text-right">{i.qty_available} / {i.qty_ordered}</TableCell>
                   <TableCell className="text-right">{fmtUSD(totalCostUsd(i))}</TableCell>
@@ -240,6 +270,23 @@ const InventoryTab = () => {
 
       <InventoryFormDialog open={open} onOpenChange={setOpen} item={editing} onSaved={load} rate={rate} />
       <RestockDialog open={restockOpen} onOpenChange={setRestockOpen} item={restocking} onSaved={load} />
+
+      <Dialog open={!!archiveTarget} onOpenChange={o => { if (!o) { setArchiveTarget(null); setArchiveNote(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive item</DialogTitle>
+            <DialogDescription>Record why "{archiveTarget?.item_name}" is being archived.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="archive-note">Reason</Label>
+            <Textarea id="archive-note" value={archiveNote} onChange={e => setArchiveNote(e.target.value)} placeholder="e.g. Discontinued by supplier, damaged stock, duplicate entry" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveTarget(null)}>Cancel</Button>
+            <Button onClick={confirmArchive}>Archive</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
