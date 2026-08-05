@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fmtJMD } from '@/lib/partsCalc';
@@ -26,6 +28,9 @@ const CollectionsTab = () => {
   const [historyFor, setHistoryFor] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [newSale, setNewSale] = useState('');
+  const [newAmt, setNewAmt] = useState('');
+  const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -84,6 +89,29 @@ const CollectionsTab = () => {
 
   const auditFor = (collId: string) => audit.filter(a => a.entity_id === collId);
 
+  const balanceFor = (saleId: string) => {
+    const s = sales.find(x => x.id === saleId);
+    return s ? Math.max(0, Number(s.total_jmd) - (collectedBySale[saleId] || 0)) : 0;
+  };
+
+  const pickSale = (id: string) => { setNewSale(id); setNewAmt(String(balanceFor(id))); };
+
+  const recordCollection = async () => {
+    const amt = Number(newAmt);
+    if (!newSale || !amt || amt <= 0) { toast({ title: 'Select a sale and amount', variant: 'destructive' }); return; }
+    setSaving(true);
+    const { data, error } = await supabase.from('parts_collections').insert({
+      sale_id: newSale, amount_jmd: amt, recorded_by: user?.id,
+      status: 'confirmed', confirmed_by: user?.id, confirmed_at: new Date().toISOString(),
+    }).select('id').single();
+    setSaving(false);
+    if (error) { toast({ title: 'Failed', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({ action: 'record_collection', entity: 'parts_collections', entityId: data?.id, payload: { amount_jmd: amt, by: 'admin', status: 'confirmed' } });
+    toast({ title: 'Payment collected', description: fmtJMD(amt) });
+    setNewSale(''); setNewAmt('');
+    load();
+  };
+
   const startEdit = (c: Coll) => { setEditId(c.id); setEditValue(String(c.amount_jmd)); };
   const cancelEdit = () => { setEditId(null); setEditValue(''); };
   const commitEdit = async (c: Coll) => {
@@ -106,6 +134,30 @@ const CollectionsTab = () => {
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Pending Confirmation</CardTitle></CardHeader><CardContent><div className="text-xl font-bold text-amber-600">{fmtJMD(totalPending)}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Outstanding</CardTitle></CardHeader><CardContent><div className="text-xl font-bold text-destructive">{fmtJMD(totalOutstanding)}</div></CardContent></Card>
       </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Collect Payment</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-4 items-end">
+          <div className="sm:col-span-2">
+            <Label>Sale</Label>
+            <Select value={newSale} onValueChange={pickSale}>
+              <SelectTrigger><SelectValue placeholder="Select a sale" /></SelectTrigger>
+              <SelectContent>
+                {[...sales].sort((a,b) => +new Date(b.created_at) - +new Date(a.created_at)).map(s => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {(items[s.inventory_id] || 'Item')} — bal {fmtJMD(Math.max(0, Number(s.total_jmd) - (collectedBySale[s.id] || 0)))}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Amount (JMD)</Label>
+            <Input type="number" value={newAmt} onChange={e => setNewAmt(e.target.value)} />
+          </div>
+          <div><Button onClick={recordCollection} disabled={saving}>Record Payment</Button></div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Guest Collections — Confirm Receipt</CardTitle></CardHeader>
@@ -169,6 +221,7 @@ const CollectionsTab = () => {
             <TableHead className="text-right">Sale</TableHead>
             <TableHead className="text-right">Collected</TableHead>
             <TableHead className="text-right">Balance</TableHead>
+            <TableHead className="text-right">Action</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {sales.map(s => {
@@ -180,10 +233,15 @@ const CollectionsTab = () => {
                   <TableCell className="text-right">{fmtJMD(Number(s.total_jmd))}</TableCell>
                   <TableCell className="text-right">{fmtJMD(got)}</TableCell>
                   <TableCell className="text-right font-medium">{fmtJMD(Math.max(0, Number(s.total_jmd) - got))}</TableCell>
+                  <TableCell className="text-right">
+                    {Number(s.total_jmd) - got > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => pickSale(s.id)}>Collect</Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}
-            {sales.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No sales yet</TableCell></TableRow>}
+            {sales.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No sales yet</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
