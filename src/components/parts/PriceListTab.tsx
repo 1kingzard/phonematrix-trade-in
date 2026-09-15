@@ -223,9 +223,14 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                     {isAdmin && (
                       <TableCell className="text-right">
                         {r.source === 'custom' && (
-                          <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => startEdit(r)}>
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                     )}
