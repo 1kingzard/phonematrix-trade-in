@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, Pencil, Archive, ArchiveRestore, Download, Upload, PackagePlus } from 'lucide-react';
+import { Plus, Pencil, Archive, ArchiveRestore, Download, Upload, PackagePlus, DollarSign, Package, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { fmtJMD, fmtUSD, InventoryRow, costPerUnitJmd, inventoryValueJmd, profitPerUnitJmd, projectedProfitJmd, totalCostJmd, totalCostUsd } from '@/lib/partsCalc';
@@ -169,13 +169,37 @@ const InventoryTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total Purchase Cost</CardTitle></CardHeader>
-          <CardContent><div className="text-xl font-bold">{fmtUSD(totals.costUsd)}</div><div className="text-xs text-muted-foreground">{fmtJMD(totals.costUsd * rate)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Inventory Value (JMD)</CardTitle></CardHeader>
-          <CardContent><div className="text-xl font-bold">{fmtJMD(totals.valueJmd)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Projected Profit (JMD)</CardTitle></CardHeader>
-          <CardContent><div className="text-xl font-bold">{fmtJMD(totals.projProfit)}</div></CardContent></Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-1 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Purchase Cost</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{fmtUSD(totals.costUsd)}</div>
+            <div className="text-xs text-muted-foreground tabular-nums mt-0.5">{fmtJMD(totals.costUsd * rate)}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-1 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Inventory Value</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{fmtJMD(totals.valueJmd)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">at current selling prices</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-1 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Projected Profit</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{fmtJMD(totals.projProfit)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">if all stock sells</div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-2">
@@ -212,32 +236,42 @@ const InventoryTab = () => {
         </div>
       </div>
 
-      <Card>
+      <Card className="border-border/60 shadow-sm overflow-hidden">
         <CardContent className="p-0 overflow-x-auto">
           <Table>
-            <TableHeader><TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-              <TableHead className="text-right">Total Cost (USD)</TableHead>
-              <TableHead className="text-right">Total Cost (JMD)</TableHead>
-              <TableHead className="text-right">Sell / unit (JMD)</TableHead>
-              <TableHead className="text-right">Profit / unit (JMD)</TableHead>
-              <TableHead></TableHead>
-            </TableRow></TableHeader>
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="bg-muted/80 backdrop-blur hover:bg-muted/80 border-b border-border/60">
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Item</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Category</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">In Stock</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Cost (USD)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Cost (JMD)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Sell / unit</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Profit / unit</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {visibleItems.map(i => (
-                <TableRow key={i.id} className={i.archived ? 'opacity-50' : ''}>
+                <TableRow key={i.id} className={i.archived ? 'opacity-50' : 'even:bg-muted/30 hover:bg-muted/50'}>
                   <TableCell className="font-medium">
                     {i.item_name}{i.locked_rate ? <Badge variant="outline" className="ml-2">locked @{i.locked_rate}</Badge> : null}
                     {i.archived && (i as any).archive_note ? (
                       <div className="text-xs text-muted-foreground mt-1 max-w-[240px]">Archived: {(i as any).archive_note}</div>
                     ) : null}
                   </TableCell>
-                  <TableCell>{i.category || '—'}</TableCell>
-                  <TableCell className="text-right">{i.qty_available} / {i.qty_ordered}</TableCell>
-                  <TableCell className="text-right">{fmtUSD(totalCostUsd(i))}</TableCell>
-                  <TableCell className="text-right">{fmtJMD(totalCostJmd(i, rate))}</TableCell>
+                  <TableCell className="text-muted-foreground">{i.category || '—'}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge
+                      variant={i.qty_available === 0 ? 'destructive' : i.qty_available <= 2 ? 'secondary' : 'outline'}
+                      className="tabular-nums"
+                      title={`${i.qty_ordered} ordered in total`}
+                    >
+                      {i.qty_available === 0 ? 'Out of stock' : `${i.qty_available} / ${i.qty_ordered}`}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtUSD(totalCostUsd(i))}</TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{fmtJMD(totalCostJmd(i, rate))}</TableCell>
                   <TableCell className="text-right" onDoubleClick={() => startPriceEdit(i)}>
                     {priceEditId === i.id ? (
                       <Input
@@ -254,15 +288,23 @@ const InventoryTab = () => {
                       <span className="cursor-pointer select-none" title="Double-click to edit">{fmtJMD(i.selling_price_jmd)}</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums font-medium">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
                     <Button variant="ghost" size="icon" title="Restock" onClick={() => { setRestocking(i); setRestockOpen(true); }}><PackagePlus className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => toggleArchive(i)}>{i.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>
+                    <Button variant="ghost" size="icon" title="Edit item" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" title={i.archived ? 'Unarchive' : 'Archive'} onClick={() => toggleArchive(i)}>{i.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {visibleItems.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">{items.length === 0 ? 'No inventory yet' : 'No items match your search'}</TableCell></TableRow>}
+              {visibleItems.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-12 text-center">
+                    <Package className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                    <div className="text-sm font-medium text-foreground">{items.length === 0 ? 'No inventory yet' : 'No items match your search'}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{items.length === 0 ? 'Add your first item to get started.' : 'Try a different search or sort.'}</div>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

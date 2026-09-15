@@ -36,32 +36,34 @@ const PartsAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Wrench className="h-7 w-7 text-primary" />
+    <div className="min-h-screen bg-muted/30">
+      <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-10">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Wrench className="h-6 w-6 text-primary" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Auto Parts — Admin</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Auto Parts</h1>
               <p className="text-sm text-muted-foreground">Private inventory & sales control panel</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2 rounded-full">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Sign Out</span>
           </Button>
         </div>
 
-        <Tabs defaultValue="inventory" className="space-y-4">
-          <TabsList className="flex flex-wrap h-auto">
-            <TabsTrigger value="inventory"><Package className="h-4 w-4 mr-1" />Inventory</TabsTrigger>
-            <TabsTrigger value="sales"><ShoppingCart className="h-4 w-4 mr-1" />Sales</TabsTrigger>
-            <TabsTrigger value="collections"><Wallet className="h-4 w-4 mr-1" />Collections</TabsTrigger>
-            <TabsTrigger value="deposits"><Banknote className="h-4 w-4 mr-1" />Deposits</TabsTrigger>
-            <TabsTrigger value="misc"><Boxes className="h-4 w-4 mr-1" />Misc Orders</TabsTrigger>
-            <TabsTrigger value="reports"><BarChart3 className="h-4 w-4 mr-1" />Reports</TabsTrigger>
-            <TabsTrigger value="activity"><History className="h-4 w-4 mr-1" />Activity</TabsTrigger>
-            <TabsTrigger value="settings"><Settings className="h-4 w-4 mr-1" />Settings</TabsTrigger>
+        <Tabs defaultValue="inventory" className="space-y-6">
+          <TabsList className="flex flex-wrap h-auto gap-1 rounded-xl bg-muted/70 backdrop-blur p-1.5 sticky top-3 z-20 border border-border/50 shadow-sm">
+            <TabsTrigger value="inventory" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Package className="h-4 w-4 mr-1.5" />Inventory</TabsTrigger>
+            <TabsTrigger value="sales" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><ShoppingCart className="h-4 w-4 mr-1.5" />Sales</TabsTrigger>
+            <TabsTrigger value="collections" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Wallet className="h-4 w-4 mr-1.5" />Collections</TabsTrigger>
+            <TabsTrigger value="deposits" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Banknote className="h-4 w-4 mr-1.5" />Deposits</TabsTrigger>
+            <TabsTrigger value="misc" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Boxes className="h-4 w-4 mr-1.5" />Misc Orders</TabsTrigger>
+            <TabsTrigger value="reports" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><BarChart3 className="h-4 w-4 mr-1.5" />Reports</TabsTrigger>
+            <TabsTrigger value="activity" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><History className="h-4 w-4 mr-1.5" />Activity</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Settings className="h-4 w-4 mr-1.5" />Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="inventory"><InventoryTab /></TabsContent>
           <TabsContent value="sales"><SalesTab /></TabsContent>
