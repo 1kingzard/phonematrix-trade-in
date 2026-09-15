@@ -81,6 +81,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: error.message };
       }
 
+      // Reset idle-timer activity so a stale timestamp doesn't sign the user out
+      try { localStorage.setItem('lastActivityAt', String(Date.now())); } catch { /* ignore */ }
       return { success: true };
     } catch (error) {
       return { success: false, error: 'An unexpected error occurred' };
@@ -116,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void> => {
     try {
       await supabase.auth.signOut();
+      try { localStorage.removeItem('lastActivityAt'); } catch { /* ignore */ }
       setUser(null);
       setSession(null);
       setIsAdmin(false);
