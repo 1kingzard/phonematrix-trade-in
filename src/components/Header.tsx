@@ -24,6 +24,8 @@ const navLinks = [
 const Header = () => {
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
+  const { role: partsRole } = usePartsRole();
+  const hasPartsAccess = user && partsRole !== 'none';
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const logoSrc = useSiteLogo();
@@ -66,6 +68,20 @@ const Header = () => {
               </Link>
             );
           })}
+          {hasPartsAccess && (
+            <Link
+              to="/parts"
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5',
+                location.pathname.startsWith('/parts')
+                  ? 'text-white bg-gradient-brand shadow-[0_4px_20px_-4px_hsl(var(--brand-pink)/0.6)]'
+                  : 'text-foreground/70 hover:text-foreground hover:bg-foreground/5'
+              )}
+            >
+              <Wrench className="h-3.5 w-3.5" />
+              Parts
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -128,6 +144,21 @@ const Header = () => {
                 {l.label}
               </Link>
             ))}
+            {hasPartsAccess && (
+              <Link
+                to="/parts"
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  'px-4 py-2 rounded-md text-sm font-medium inline-flex items-center gap-2',
+                  location.pathname.startsWith('/parts')
+                    ? 'text-white bg-gradient-brand'
+                    : 'text-foreground/80 hover:bg-foreground/5'
+                )}
+              >
+                <Wrench className="h-4 w-4" />
+                Parts
+              </Link>
+            )}
             {!user && (
               <Button asChild size="sm" className="mt-2 bg-gradient-brand text-white border-0">
                 <Link to="/login" onClick={() => setMobileOpen(false)}>Login</Link>
