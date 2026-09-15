@@ -32,6 +32,7 @@ const emptyForm = { item_name: '', category: '', cost_jmd: '', shipping_jmd: '',
 const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { rate } = useExchangeRateSetting();
   const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('name-asc');
@@ -39,6 +40,8 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [inlineId, setInlineId] = useState<string | null>(null);
+  const [inlineValue, setInlineValue] = useState('');
 
   const load = async () => {
     const { data } = await supabase.from('parts_price_catalog' as any).select('*');
