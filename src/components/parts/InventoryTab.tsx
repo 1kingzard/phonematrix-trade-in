@@ -288,15 +288,23 @@ const InventoryTab = () => {
                       <span className="cursor-pointer select-none" title="Double-click to edit">{fmtJMD(i.selling_price_jmd)}</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums font-medium">{fmtJMD(profitPerUnitJmd(i, rate))}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
                     <Button variant="ghost" size="icon" title="Restock" onClick={() => { setRestocking(i); setRestockOpen(true); }}><PackagePlus className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => toggleArchive(i)}>{i.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>
+                    <Button variant="ghost" size="icon" title="Edit item" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" title={i.archived ? 'Unarchive' : 'Archive'} onClick={() => toggleArchive(i)}>{i.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {visibleItems.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">{items.length === 0 ? 'No inventory yet' : 'No items match your search'}</TableCell></TableRow>}
+              {visibleItems.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-12 text-center">
+                    <Package className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                    <div className="text-sm font-medium text-foreground">{items.length === 0 ? 'No inventory yet' : 'No items match your search'}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{items.length === 0 ? 'Add your first item to get started.' : 'Try a different search or sort.'}</div>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
