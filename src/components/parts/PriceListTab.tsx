@@ -12,7 +12,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fmtJMD } from '@/lib/partsCalc';
 import { logPartsAudit } from '@/lib/partsAudit';
-import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { Plus, Trash2, Tag, TrendingUp, Coins, Pencil } from 'lucide-react';
 
 interface Row {
