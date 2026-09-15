@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fmtJMD } from '@/lib/partsCalc';
 import { logPartsAudit } from '@/lib/partsAudit';
-import { Plus, Trash2, Tag, TrendingUp, Coins } from 'lucide-react';
+import { Plus, Trash2, Tag, TrendingUp, Coins, Pencil } from 'lucide-react';
 
 interface Row {
   id: string;
@@ -37,6 +37,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from('parts_price_catalog' as any).select('*');
@@ -78,7 +79,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     profit: a.profit + (r.sell_jmd - r.cost_jmd - r.shipping_jmd),
   }), { cost: 0, sell: 0, profit: 0 });
 
-  const addItem = async () => {
+  const saveItem = async () => {
     if (!form.item_name.trim()) { toast({ title: 'Item name is required', variant: 'destructive' }); return; }
     setSaving(true);
     const payload = {
@@ -88,14 +89,36 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
       shipping_jmd: Number(form.shipping_jmd) || 0,
       sell_jmd: Number(form.sell_jmd) || 0,
       note: form.note.trim() || null,
-      created_by: user?.id,
     };
-    const { error } = await supabase.from('parts_price_list_items' as any).insert(payload as any);
+    let error;
+    if (editing) {
+      ({ error } = await supabase.from('parts_price_list_items' as any).update(payload as any).eq('id', editing.id));
+    } else {
+      ({ error } = await supabase.from('parts_price_list_items' as any).insert({ ...payload, created_by: user?.id } as any));
+    }
     setSaving(false);
-    if (error) { toast({ title: 'Could not add item', description: error.message, variant: 'destructive' }); return; }
-    await logPartsAudit({ action: 'add_price_list_item', entity: 'parts_price_list_items', payload });
-    toast({ title: 'Item added to price list' });
-    setForm(emptyForm); setOpen(false); load();
+    if (error) { toast({ title: editing ? 'Could not update item' : 'Could not add item', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({
+      action: editing ? 'edit_price_list_item' : 'add_price_list_item',
+      entity: 'parts_price_list_items',
+      entityId: editing?.id,
+      payload,
+    });
+    toast({ title: editing ? 'Item updated' : 'Item added to price list' });
+    setForm(emptyForm); setEditing(null); setOpen(false); load();
+  };
+
+  const startEdit = (row: Row) => {
+    setEditing(row);
+    setForm({
+      item_name: row.item_name,
+      category: row.category || '',
+      cost_jmd: String(row.cost_jmd || ''),
+      shipping_jmd: String(row.shipping_jmd || ''),
+      sell_jmd: String(row.sell_jmd || ''),
+      note: row.note || '',
+    });
+    setOpen(true);
   };
 
   const removeItem = async (row: Row) => {
@@ -141,12 +164,12 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
           </SelectContent>
         </Select>
         <div className="ml-auto">
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditing(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Add Item</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Add price list item</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editing ? 'Edit price list item' : 'Add price list item'}</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div><Label>Item</Label><Input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} /></div>
                 <div><Label>Category (optional)</Label><Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></div>
@@ -162,7 +185,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={addItem} disabled={saving}>{saving ? 'Saving…' : 'Add Item'}</Button>
+                <Button onClick={saveItem} disabled={saving}>{saving ? 'Saving…' : editing ? 'Save Changes' : 'Add Item'}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -200,9 +223,14 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                     {isAdmin && (
                       <TableCell className="text-right">
                         {r.source === 'custom' && (
-                          <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => startEdit(r)}>
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                     )}
