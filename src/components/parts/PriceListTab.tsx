@@ -31,7 +31,6 @@ const emptyForm = { item_name: '', category: '', cost_jmd: '', shipping_jmd: '',
 const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { rate } = useExchangeRateSetting();
   const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('name-asc');
