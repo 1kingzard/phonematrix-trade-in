@@ -17,6 +17,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { fmtJMD } from '@/lib/partsCalc';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { LogOut, Wrench } from 'lucide-react';
+import PriceListTab from '@/components/parts/PriceListTab';
 
 const PartsGuest = () => {
   const { role, loading, user } = usePartsRole();
@@ -167,6 +168,7 @@ const PartsGuest = () => {
         <Tabs defaultValue="inventory" className="space-y-4">
           <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="pricelist">Price List</TabsTrigger>
             <TabsTrigger value="sale">Record Sale</TabsTrigger>
             <TabsTrigger value="collections">Collections</TabsTrigger>
             <TabsTrigger value="deposits">Deposits</TabsTrigger>
@@ -197,6 +199,8 @@ const PartsGuest = () => {
               </TableBody>
             </Table></CardContent></Card>
           </TabsContent>
+
+          <TabsContent value="pricelist"><PriceListTab /></TabsContent>
 
           <TabsContent value="sale">
             <Card><CardHeader><CardTitle className="text-base">Record a Sale</CardTitle></CardHeader>
