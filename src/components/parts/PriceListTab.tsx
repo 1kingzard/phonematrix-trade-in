@@ -132,6 +132,43 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     load();
   };
 
+  const startInlineEdit = (row: Row) => {
+    setInlineId(`${row.source}-${row.id}`);
+    setInlineValue(String(row.sell_jmd || ''));
+  };
+
+  const commitInlineEdit = async (row: Row) => {
+    const val = Number(inlineValue);
+    setInlineId(null);
+    if (Number.isNaN(val) || val < 0) {
+      toast({ title: 'Invalid price', variant: 'destructive' });
+      return;
+    }
+    if (val === row.sell_jmd) return;
+
+    if (row.source === 'inventory') {
+      const { error } = await supabase.from('parts_inventory').update({ selling_price_jmd: val } as any).eq('id', row.id);
+      if (error) { toast({ title: 'Update failed', description: error.message, variant: 'destructive' }); return; }
+      await logPartsAudit({
+        action: 'update_price',
+        entity: 'parts_inventory',
+        entityId: row.id,
+        payload: { item: row.item_name, from_jmd: row.sell_jmd, to_jmd: val, source: 'price_list' },
+      });
+    } else {
+      const { error } = await supabase.from('parts_price_list_items' as any).update({ sell_jmd: val }).eq('id', row.id);
+      if (error) { toast({ title: 'Update failed', description: error.message, variant: 'destructive' }); return; }
+      await logPartsAudit({
+        action: 'edit_price_list_item',
+        entity: 'parts_price_list_items',
+        entityId: row.id,
+        payload: { item: row.item_name, from_jmd: row.sell_jmd, to_jmd: val, source: 'price_list' },
+      });
+    }
+    toast({ title: 'Price updated' });
+    load();
+  };
+
   const stat = (label: string, value: string, Icon: any, cls = '') => (
     <Card>
       <CardContent className="p-4 flex items-center gap-3">
