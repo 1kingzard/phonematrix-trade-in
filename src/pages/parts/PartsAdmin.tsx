@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { usePartsRole } from '@/hooks/usePartsRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3, LogOut, History } from 'lucide-react';
+import { Wrench, Package, ShoppingCart, Wallet, Banknote, Boxes, Settings, BarChart3, LogOut, History, Tag } from 'lucide-react';
+import PriceListTab from '@/components/parts/PriceListTab';
 import InventoryTab from '@/components/parts/InventoryTab';
 import SalesTab from '@/components/parts/SalesTab';
 import CollectionsTab from '@/components/parts/CollectionsTab';
@@ -57,6 +58,7 @@ const PartsAdmin = () => {
         <Tabs defaultValue="inventory" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 rounded-xl bg-muted/70 backdrop-blur p-1.5 sticky top-3 z-20 border border-border/50 shadow-sm">
             <TabsTrigger value="inventory" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Package className="h-4 w-4 mr-1.5" />Inventory</TabsTrigger>
+            <TabsTrigger value="pricelist" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Tag className="h-4 w-4 mr-1.5" />Price List</TabsTrigger>
             <TabsTrigger value="sales" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><ShoppingCart className="h-4 w-4 mr-1.5" />Sales</TabsTrigger>
             <TabsTrigger value="collections" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Wallet className="h-4 w-4 mr-1.5" />Collections</TabsTrigger>
             <TabsTrigger value="deposits" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Banknote className="h-4 w-4 mr-1.5" />Deposits</TabsTrigger>
@@ -66,6 +68,7 @@ const PartsAdmin = () => {
             <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm"><Settings className="h-4 w-4 mr-1.5" />Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="inventory"><InventoryTab /></TabsContent>
+          <TabsContent value="pricelist"><PriceListTab isAdmin /></TabsContent>
           <TabsContent value="sales"><SalesTab /></TabsContent>
           <TabsContent value="collections"><CollectionsTab /></TabsContent>
           <TabsContent value="deposits"><DepositsTab /></TabsContent>

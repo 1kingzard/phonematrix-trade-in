@@ -424,6 +424,45 @@ export type Database = {
           },
         ]
       }
+      parts_price_list_items: {
+        Row: {
+          category: string | null
+          cost_jmd: number
+          created_at: string
+          created_by: string | null
+          id: string
+          item_name: string
+          note: string | null
+          sell_jmd: number
+          shipping_jmd: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cost_jmd?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_name: string
+          note?: string | null
+          sell_jmd?: number
+          shipping_jmd?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cost_jmd?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_name?: string
+          note?: string | null
+          sell_jmd?: number
+          shipping_jmd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parts_sales: {
         Row: {
           created_at: string
@@ -824,6 +863,21 @@ export type Database = {
           date_added?: string | null
           description?: string | null
           id?: string | null
+        }
+        Relationships: []
+      }
+      parts_price_catalog: {
+        Row: {
+          category: string | null
+          cost_jmd: number | null
+          created_at: string | null
+          id: string | null
+          item_name: string | null
+          note: string | null
+          qty_available: number | null
+          sell_jmd: number | null
+          shipping_jmd: number | null
+          source: string | null
         }
         Relationships: []
       }
