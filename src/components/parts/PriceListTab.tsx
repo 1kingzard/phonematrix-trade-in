@@ -79,7 +79,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     profit: a.profit + (r.sell_jmd - r.cost_jmd - r.shipping_jmd),
   }), { cost: 0, sell: 0, profit: 0 });
 
-  const addItem = async () => {
+  const saveItem = async () => {
     if (!form.item_name.trim()) { toast({ title: 'Item name is required', variant: 'destructive' }); return; }
     setSaving(true);
     const payload = {
@@ -89,14 +89,36 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
       shipping_jmd: Number(form.shipping_jmd) || 0,
       sell_jmd: Number(form.sell_jmd) || 0,
       note: form.note.trim() || null,
-      created_by: user?.id,
     };
-    const { error } = await supabase.from('parts_price_list_items' as any).insert(payload as any);
+    let error;
+    if (editing) {
+      ({ error } = await supabase.from('parts_price_list_items' as any).update(payload as any).eq('id', editing.id));
+    } else {
+      ({ error } = await supabase.from('parts_price_list_items' as any).insert({ ...payload, created_by: user?.id } as any));
+    }
     setSaving(false);
-    if (error) { toast({ title: 'Could not add item', description: error.message, variant: 'destructive' }); return; }
-    await logPartsAudit({ action: 'add_price_list_item', entity: 'parts_price_list_items', payload });
-    toast({ title: 'Item added to price list' });
-    setForm(emptyForm); setOpen(false); load();
+    if (error) { toast({ title: editing ? 'Could not update item' : 'Could not add item', description: error.message, variant: 'destructive' }); return; }
+    await logPartsAudit({
+      action: editing ? 'edit_price_list_item' : 'add_price_list_item',
+      entity: 'parts_price_list_items',
+      entityId: editing?.id,
+      payload,
+    });
+    toast({ title: editing ? 'Item updated' : 'Item added to price list' });
+    setForm(emptyForm); setEditing(null); setOpen(false); load();
+  };
+
+  const startEdit = (row: Row) => {
+    setEditing(row);
+    setForm({
+      item_name: row.item_name,
+      category: row.category || '',
+      cost_jmd: String(row.cost_jmd || ''),
+      shipping_jmd: String(row.shipping_jmd || ''),
+      sell_jmd: String(row.sell_jmd || ''),
+      note: row.note || '',
+    });
+    setOpen(true);
   };
 
   const removeItem = async (row: Row) => {
