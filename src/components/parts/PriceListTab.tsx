@@ -250,8 +250,10 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
             <TableBody>
               {visible.map((r, idx) => {
                 const profit = r.sell_jmd - r.cost_jmd - r.shipping_jmd;
+                const inlineKey = `${r.source}-${r.id}`;
+                const isEditing = inlineId === inlineKey;
                 return (
-                  <TableRow key={`${r.source}-${r.id}`} className={idx % 2 ? 'bg-muted/20' : ''}>
+                  <TableRow key={inlineKey} className={idx % 2 ? 'bg-muted/20' : ''}>
                     <TableCell>
                       <div className="font-medium">{r.item_name}</div>
                       {(r.category || r.note) && <div className="text-xs text-muted-foreground">{r.category || r.note}</div>}
@@ -259,20 +261,48 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                     <TableCell><Badge variant={r.source === 'inventory' ? 'secondary' : 'outline'}>{r.source === 'inventory' ? 'Stock' : 'Added'}</Badge></TableCell>
                     <TableCell className="text-right tabular-nums">{fmtJMD(r.cost_jmd)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtJMD(r.shipping_jmd)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtJMD(r.sell_jmd)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {isAdmin && isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          autoFocus
+                          className="w-32 h-8 ml-auto text-right"
+                          value={inlineValue}
+                          onChange={e => setInlineValue(e.target.value)}
+                          onBlur={() => commitInlineEdit(r)}
+                          onKeyDown={e => { if (e.key === 'Enter') commitInlineEdit(r); if (e.key === 'Escape') setInlineId(null); }}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => isAdmin && startInlineEdit(r)}
+                          className={`${isAdmin ? 'hover:underline cursor-pointer' : 'cursor-default'}`}
+                          title={isAdmin ? 'Click to edit price' : ''}
+                        >
+                          {fmtJMD(r.sell_jmd)}
+                        </button>
+                      )}
+                    </TableCell>
                     <TableCell className={`text-right tabular-nums font-medium ${profit >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>{fmtJMD(profit)}</TableCell>
                     {isAdmin && (
                       <TableCell className="text-right">
-                        {r.source === 'custom' && (
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => startEdit(r)}>
+                        <div className="flex justify-end gap-1">
+                          {r.source === 'custom' && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => startEdit(r)}>
+                                <Pencil className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                          {r.source === 'inventory' && (
+                            <Button variant="ghost" size="icon" onClick={() => startInlineEdit(r)}>
                               <Pencil className="h-4 w-4 text-muted-foreground" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
