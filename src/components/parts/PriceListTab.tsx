@@ -164,12 +164,12 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
           </SelectContent>
         </Select>
         <div className="ml-auto">
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditing(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Add Item</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Add price list item</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editing ? 'Edit price list item' : 'Add price list item'}</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div><Label>Item</Label><Input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} /></div>
                 <div><Label>Category (optional)</Label><Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></div>
@@ -185,7 +185,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={addItem} disabled={saving}>{saving ? 'Saving…' : 'Add Item'}</Button>
+                <Button onClick={saveItem} disabled={saving}>{saving ? 'Saving…' : editing ? 'Save Changes' : 'Add Item'}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
