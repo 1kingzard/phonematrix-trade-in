@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fmtJMD } from '@/lib/partsCalc';
 import { logPartsAudit } from '@/lib/partsAudit';
-import { Plus, Trash2, Tag, TrendingUp, Coins } from 'lucide-react';
+import { Plus, Trash2, Tag, TrendingUp, Coins, Pencil } from 'lucide-react';
 
 interface Row {
   id: string;
@@ -37,6 +37,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from('parts_price_catalog' as any).select('*');
