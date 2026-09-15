@@ -236,32 +236,42 @@ const InventoryTab = () => {
         </div>
       </div>
 
-      <Card>
+      <Card className="border-border/60 shadow-sm overflow-hidden">
         <CardContent className="p-0 overflow-x-auto">
           <Table>
-            <TableHeader><TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-              <TableHead className="text-right">Total Cost (USD)</TableHead>
-              <TableHead className="text-right">Total Cost (JMD)</TableHead>
-              <TableHead className="text-right">Sell / unit (JMD)</TableHead>
-              <TableHead className="text-right">Profit / unit (JMD)</TableHead>
-              <TableHead></TableHead>
-            </TableRow></TableHeader>
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="bg-muted/80 backdrop-blur hover:bg-muted/80 border-b border-border/60">
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Item</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Category</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">In Stock</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Cost (USD)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Cost (JMD)</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Sell / unit</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Profit / unit</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-muted-foreground font-semibold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {visibleItems.map(i => (
-                <TableRow key={i.id} className={i.archived ? 'opacity-50' : ''}>
+                <TableRow key={i.id} className={i.archived ? 'opacity-50' : 'even:bg-muted/30 hover:bg-muted/50'}>
                   <TableCell className="font-medium">
                     {i.item_name}{i.locked_rate ? <Badge variant="outline" className="ml-2">locked @{i.locked_rate}</Badge> : null}
                     {i.archived && (i as any).archive_note ? (
                       <div className="text-xs text-muted-foreground mt-1 max-w-[240px]">Archived: {(i as any).archive_note}</div>
                     ) : null}
                   </TableCell>
-                  <TableCell>{i.category || '—'}</TableCell>
-                  <TableCell className="text-right">{i.qty_available} / {i.qty_ordered}</TableCell>
-                  <TableCell className="text-right">{fmtUSD(totalCostUsd(i))}</TableCell>
-                  <TableCell className="text-right">{fmtJMD(totalCostJmd(i, rate))}</TableCell>
+                  <TableCell className="text-muted-foreground">{i.category || '—'}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge
+                      variant={i.qty_available === 0 ? 'destructive' : i.qty_available <= 2 ? 'secondary' : 'outline'}
+                      className="tabular-nums"
+                      title={`${i.qty_ordered} ordered in total`}
+                    >
+                      {i.qty_available === 0 ? 'Out of stock' : `${i.qty_available} / ${i.qty_ordered}`}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtUSD(totalCostUsd(i))}</TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{fmtJMD(totalCostJmd(i, rate))}</TableCell>
                   <TableCell className="text-right" onDoubleClick={() => startPriceEdit(i)}>
                     {priceEditId === i.id ? (
                       <Input
