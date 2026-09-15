@@ -38,6 +38,8 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [inlineId, setInlineId] = useState<string | null>(null);
+  const [inlineValue, setInlineValue] = useState('');
 
   const load = async () => {
     const { data } = await supabase.from('parts_price_catalog' as any).select('*');
@@ -128,6 +130,43 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     load();
   };
 
+  const startInlineEdit = (row: Row) => {
+    setInlineId(`${row.source}-${row.id}`);
+    setInlineValue(String(row.sell_jmd || ''));
+  };
+
+  const commitInlineEdit = async (row: Row) => {
+    const val = Number(inlineValue);
+    setInlineId(null);
+    if (Number.isNaN(val) || val < 0) {
+      toast({ title: 'Invalid price', variant: 'destructive' });
+      return;
+    }
+    if (val === row.sell_jmd) return;
+
+    if (row.source === 'inventory') {
+      const { error } = await supabase.from('parts_inventory').update({ selling_price_jmd: val } as any).eq('id', row.id);
+      if (error) { toast({ title: 'Update failed', description: error.message, variant: 'destructive' }); return; }
+      await logPartsAudit({
+        action: 'update_price',
+        entity: 'parts_inventory',
+        entityId: row.id,
+        payload: { item: row.item_name, from_jmd: row.sell_jmd, to_jmd: val, source: 'price_list' },
+      });
+    } else {
+      const { error } = await supabase.from('parts_price_list_items' as any).update({ sell_jmd: val }).eq('id', row.id);
+      if (error) { toast({ title: 'Update failed', description: error.message, variant: 'destructive' }); return; }
+      await logPartsAudit({
+        action: 'edit_price_list_item',
+        entity: 'parts_price_list_items',
+        entityId: row.id,
+        payload: { item: row.item_name, from_jmd: row.sell_jmd, to_jmd: val, source: 'price_list' },
+      });
+    }
+    toast({ title: 'Price updated' });
+    load();
+  };
+
   const stat = (label: string, value: string, Icon: any, cls = '') => (
     <Card>
       <CardContent className="p-4 flex items-center gap-3">
@@ -209,8 +248,10 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
             <TableBody>
               {visible.map((r, idx) => {
                 const profit = r.sell_jmd - r.cost_jmd - r.shipping_jmd;
+                const inlineKey = `${r.source}-${r.id}`;
+                const isEditing = inlineId === inlineKey;
                 return (
-                  <TableRow key={`${r.source}-${r.id}`} className={idx % 2 ? 'bg-muted/20' : ''}>
+                  <TableRow key={inlineKey} className={idx % 2 ? 'bg-muted/20' : ''}>
                     <TableCell>
                       <div className="font-medium">{r.item_name}</div>
                       {(r.category || r.note) && <div className="text-xs text-muted-foreground">{r.category || r.note}</div>}
@@ -218,20 +259,48 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                     <TableCell><Badge variant={r.source === 'inventory' ? 'secondary' : 'outline'}>{r.source === 'inventory' ? 'Stock' : 'Added'}</Badge></TableCell>
                     <TableCell className="text-right tabular-nums">{fmtJMD(r.cost_jmd)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtJMD(r.shipping_jmd)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtJMD(r.sell_jmd)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {isAdmin && isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          autoFocus
+                          className="w-32 h-8 ml-auto text-right"
+                          value={inlineValue}
+                          onChange={e => setInlineValue(e.target.value)}
+                          onBlur={() => commitInlineEdit(r)}
+                          onKeyDown={e => { if (e.key === 'Enter') commitInlineEdit(r); if (e.key === 'Escape') setInlineId(null); }}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => isAdmin && startInlineEdit(r)}
+                          className={`${isAdmin ? 'hover:underline cursor-pointer' : 'cursor-default'}`}
+                          title={isAdmin ? 'Click to edit price' : ''}
+                        >
+                          {fmtJMD(r.sell_jmd)}
+                        </button>
+                      )}
+                    </TableCell>
                     <TableCell className={`text-right tabular-nums font-medium ${profit >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>{fmtJMD(profit)}</TableCell>
                     {isAdmin && (
                       <TableCell className="text-right">
-                        {r.source === 'custom' && (
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => startEdit(r)}>
+                        <div className="flex justify-end gap-1">
+                          {r.source === 'custom' && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => startEdit(r)}>
+                                <Pencil className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                          {r.source === 'inventory' && (
+                            <Button variant="ghost" size="icon" onClick={() => startInlineEdit(r)}>
                               <Pencil className="h-4 w-4 text-muted-foreground" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => removeItem(r)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
