@@ -169,13 +169,37 @@ const InventoryTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total Purchase Cost</CardTitle></CardHeader>
-          <CardContent><div className="text-xl font-bold">{fmtUSD(totals.costUsd)}</div><div className="text-xs text-muted-foreground">{fmtJMD(totals.costUsd * rate)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Inventory Value (JMD)</CardTitle></CardHeader>
-          <CardContent><div className="text-xl font-bold">{fmtJMD(totals.valueJmd)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Projected Profit (JMD)</CardTitle></CardHeader>
-          <CardContent><div className="text-xl font-bold">{fmtJMD(totals.projProfit)}</div></CardContent></Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-1 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Purchase Cost</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{fmtUSD(totals.costUsd)}</div>
+            <div className="text-xs text-muted-foreground tabular-nums mt-0.5">{fmtJMD(totals.costUsd * rate)}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-1 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Inventory Value</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{fmtJMD(totals.valueJmd)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">at current selling prices</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-1 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Projected Profit</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold tabular-nums">{fmtJMD(totals.projProfit)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">if all stock sells</div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-2">
