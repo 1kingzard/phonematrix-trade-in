@@ -9,10 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Shield, Menu, X } from 'lucide-react';
+import { User, LogOut, Settings, Shield, Menu, X, Wrench } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { cn } from '@/lib/utils';
 import { useSiteLogo } from '@/hooks/useSiteLogo';
+import { usePartsRole } from '@/hooks/usePartsRole';
 
 const navLinks = [
   { to: '/', label: 'Home' },
