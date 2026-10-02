@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { Pencil, Plus, X } from 'lucide-react';
 import DeviceImage from '@/components/DeviceImage';
-import TradeInTools from '@/components/TradeInTools';
 
 const WHATSAPP_NUMBER = '18765472061';
 const SERVICE_FEE_PCT = 0.30;
@@ -62,6 +61,8 @@ const TradeIn: React.FC = () => {
   const [compareList, setCompareList] = useState<NewDev[]>([]);
   const [showAddCompare, setShowAddCompare] = useState(false);
   const [c, setC] = useState<NewDev>({ brand: '', model: '', storage: '', condition: '', color: '' });
+  const [budget, setBudget] = useState('');
+  const [budgetCur, setBudgetCur] = useState<'USD' | 'JMD'>('USD');
 
   const cModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand).map(d => d.Model))).sort(), [devices, c.brand]);
   const cStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model).map(d => d.Storage))).sort(), [devices, c.brand, c.model]);
@@ -144,6 +145,23 @@ const TradeIn: React.FC = () => {
       return { device: cd, newPrice, usaTotalUSD: usa, jamaicaTotalJMD: jmd };
     });
   }, [compareList, devices, exchangeRate, estimate.tradeValue]);
+
+  // Budget finder: budget + trade-in value = total spending power
+  const budgetMatches = useMemo(() => {
+    const num = parseFloat(budget) || 0;
+    if (num <= 0) return [];
+    const budgetUSD = budgetCur === 'USD' ? num : num / exchangeRate;
+    const total = budgetUSD + estimate.tradeValue;
+    return devices
+      .filter(d => d.Price > 0 && d.Price <= total)
+      .sort((a, b) => b.Price - a.Price)
+      .slice(0, 8)
+      .map(d => {
+        const usa = Math.max(0, d.Price - estimate.tradeValue);
+        const jmd = usa * exchangeRate + d.Price * SHIPPING_PCT * exchangeRate;
+        return { d, usaTotalUSD: usa, jamaicaTotalJMD: jmd };
+      });
+  }, [budget, budgetCur, devices, exchangeRate, estimate.tradeValue]);
 
   const canNext = (): boolean => {
     switch (step) {
@@ -547,6 +565,56 @@ Phone: ${phone}`;
                 )}
               </Card>
 
+              {/* Budget finder: budget + trade-in value = what they can get */}
+              <Card className="p-4">
+                <p className="text-sm font-semibold">Have a budget? See what you can get</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Your trade-in is worth {formatCurrency(estimate.tradeValue, 'USD')} — we'll add it to your budget.
+                </p>
+                <div className="flex flex-wrap gap-2 items-end">
+                  <div className="flex-1 min-w-[140px] space-y-1">
+                    <Label htmlFor="budget">Your budget</Label>
+                    <Input id="budget" type="number" min="0" inputMode="decimal" value={budget}
+                      onChange={e => setBudget(e.target.value)}
+                      placeholder={budgetCur === 'USD' ? 'e.g. 400' : 'e.g. 60000'} />
+                  </div>
+                  <div className="flex rounded-full border border-border p-1">
+                    {(['USD', 'JMD'] as const).map(cur => (
+                      <Button key={cur} size="sm" variant={budgetCur === cur ? 'default' : 'ghost'}
+                        className="rounded-full" onClick={() => setBudgetCur(cur)}>{cur}</Button>
+                    ))}
+                  </div>
+                </div>
+                {(parseFloat(budget) || 0) > 0 && (
+                  budgetMatches.length === 0 ? (
+                    <p className="mt-3 text-sm text-muted-foreground">No devices fit that budget yet — try a higher amount.</p>
+                  ) : (
+                    <div className="space-y-2 mt-3">
+                      {budgetMatches.map((m, i) => (
+                        <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                          <div className="w-12 shrink-0 rounded-md overflow-hidden bg-background">
+                            <DeviceImage brand={m.d.Brand} model={m.d.Model} aspectClass="aspect-[3/4]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{m.d.Brand} {m.d.Model}</p>
+                            <p className="text-xs text-muted-foreground truncate">{m.d.Storage} • {m.d.Condition}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-bold">{formatCurrency(m.usaTotalUSD, 'USD')}</p>
+                            <p className="text-xs text-muted-foreground">{formatCurrency(m.jamaicaTotalJMD, 'JMD')} JM</p>
+                          </div>
+                          <Button size="sm" onClick={() => {
+                            const colors = devices.find(x => x.Brand === m.d.Brand && x.Model === m.d.Model && x.Storage === m.d.Storage)?.Colors || [];
+                            setN({ brand: m.d.Brand, model: m.d.Model, storage: m.d.Storage, condition: m.d.Condition, color: colors[0] || '' });
+                            toast({ title: 'Device selected', description: `${m.d.Brand} ${m.d.Model} will be in your request.` });
+                          }}>Choose</Button>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+              </Card>
+
               <div className="space-y-3 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2"><Label htmlFor="name">Your Name</Label>
@@ -575,7 +643,6 @@ Phone: ${phone}`;
           </div>
           </div>
         </Card>
-        <TradeInTools devices={devices} exchangeRate={exchangeRate} currentTradeValue={estimate.tradeValue} />
       </div>
     </div>
   );
