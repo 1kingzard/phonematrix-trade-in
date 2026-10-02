@@ -66,38 +66,6 @@ const TradeInTools: React.FC<Props> = ({ devices, exchangeRate, currentTradeValu
 
   return (
     <div className="space-y-6 mt-8">
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-1"><Scale className="h-5 w-5 text-primary" /><h2 className="text-xl font-bold">Compare trade-in devices</h2></div>
-        <p className="text-sm text-muted-foreground mb-4">Add several phones to see which one is worth the most as a trade-in.</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {sel(p.brand, v => setP({ ...empty, brand: v }), brands, 'Brand')}
-          {sel(p.model, v => setP({ ...p, model: v, storage: '', condition: '' }), models, 'Model', !p.brand)}
-          {sel(p.storage, v => setP({ ...p, storage: v, condition: '' }), storages, 'Storage', !p.model)}
-          {sel(p.condition, v => setP({ ...p, condition: v }), conds, 'Condition', !p.storage)}
-        </div>
-        <Button onClick={add} disabled={!p.condition} className="mt-3" size="sm"><Plus className="h-4 w-4 mr-1" />Add to comparison</Button>
-
-        {rows.length > 0 && (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-muted-foreground border-b border-border">
-                <th className="py-2">Device</th><th className="py-2 text-right">Value (USD)</th><th className="py-2 text-right">Value (JMD)</th><th />
-              </tr></thead>
-              <tbody>{rows.map((r, i) => (
-                <tr key={i} className="border-b border-border">
-                  <td className="py-2">
-                    <div className="font-medium">{r.brand} {r.model} {r.usd === best && <Badge className="ml-1">Best value</Badge>}</div>
-                    <div className="text-xs text-muted-foreground">{r.storage} • {r.condition}</div>
-                  </td>
-                  <td className="py-2 text-right tabular-nums">{formatUSD(r.usd)}</td>
-                  <td className="py-2 text-right tabular-nums">{formatJMD(r.jmd)}</td>
-                  <td className="py-2 text-right"><Button variant="ghost" size="sm" onClick={() => setList(l => l.filter((_, j) => j !== i))}><X className="h-4 w-4" /></Button></td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
-        )}
-      </Card>
 
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-1"><Wallet className="h-5 w-5 text-primary" /><h2 className="text-xl font-bold">What can I get for my budget?</h2></div>

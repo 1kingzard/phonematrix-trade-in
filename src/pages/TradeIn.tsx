@@ -465,10 +465,10 @@ Phone: ${phone}`;
               <Card className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-sm font-semibold">Compare other devices</p>
-                    <p className="text-xs text-muted-foreground">See what your {t.brand} {t.model} trade-in gets you toward other options.</p>
+                    <p className="text-sm font-semibold">Compare other devices (up to 4 total)</p>
+                    <p className="text-xs text-muted-foreground">Selected: {n.brand} {n.model} {n.storage}. Tap "Choose" on another to swap it in before sending.</p>
                   </div>
-                  {!showAddCompare && (
+                  {!showAddCompare && compareList.length < 3 && (
                     <Button size="sm" variant="outline" onClick={() => setShowAddCompare(true)}>
                       <Plus className="h-4 w-4 mr-1" />Add device
                     </Button>
@@ -490,6 +490,12 @@ Phone: ${phone}`;
                           <p className="text-sm font-bold">{formatCurrency(ce.usaTotalUSD, 'USD')}</p>
                           <p className="text-xs text-muted-foreground">{formatCurrency(ce.jamaicaTotalJMD, 'JMD')} JM</p>
                         </div>
+                        <Button size="sm" onClick={() => {
+                          const prev = n;
+                          setN(ce.device);
+                          setCompareList(list => list.map((x, idx) => idx === i ? prev : x));
+                          toast({ title: 'Device selected', description: `${ce.device.brand} ${ce.device.model} will be in your request.` });
+                        }}>Choose</Button>
                         <Button size="sm" variant="ghost" onClick={() => setCompareList(list => list.filter((_, idx) => idx !== i))}
                           className="h-8 w-8 p-0">
                           <X className="h-4 w-4" />
