@@ -77,7 +77,61 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
 
   const exportPdf = async () => {
     if (!lines.length) { toast({ title: 'Add at least one device or line first', variant: 'destructive' }); return; }
-    try { await buildPdf(); } catch (e: any) { console.error(e); toast({ title: 'Export failed', description: e?.message || 'Unknown error', variant: 'destructive' }); }
+    const win = window.open('', '_blank');
+    if (win) win.document.write('<p style="font-family:sans-serif;padding:20px">Generating receipt…</p>');
+    try {
+      const blob = await buildImage();
+      const url = URL.createObjectURL(blob);
+      if (win) win.location.href = url;
+      else { const a = document.createElement('a'); a.href = url; a.download = `receipt-${receiptNo}.png`; document.body.appendChild(a); a.click(); a.remove(); }
+      toast({ title: 'Receipt created', description: 'Opened in a new tab — long-press or right-click to save.' });
+    } catch (e: any) { win?.close(); console.error(e); toast({ title: 'Export failed', description: e?.message || 'Unknown error', variant: 'destructive' }); }
+  };
+
+  const buildImage = async (): Promise<Blob> => {
+    const W = 1200, S = 2, M = 70;
+    const measure = document.createElement('canvas').getContext('2d')!;
+    const wrap = (text: string, font: string, max: number) => {
+      measure.font = font; const out: string[] = [];
+      text.split('\n').forEach(par => { let cur = ''; par.split(' ').forEach(w => { const t = cur ? cur + ' ' + w : w; if (measure.measureText(t).width > max && cur) { out.push(cur); cur = w; } else cur = t; }); out.push(cur); });
+      return out;
+    };
+    const F = (sz: number, b = false) => `${b ? 'bold ' : ''}${sz}px Helvetica, Arial, sans-serif`;
+    const bizL = wrap([biz.address, biz.contact].filter(Boolean).join('\n'), F(20), 460);
+    const toL = wrap([name, address].filter(Boolean).join('\n'), F(20), 460);
+    const itemL = lines.map(l => wrap(l.description || '-', F(20), 560));
+    const noteL = notes ? wrap(notes, F(20), W - 2 * M) : [];
+    const H = 260 + Math.max(bizL.length, toL.length) * 28 + (tracking ? 40 : 0) + 60 + itemL.reduce((s, d) => s + d.length * 28 + 24, 0) + 100 + (noteL.length ? 40 + noteL.length * 28 : 0) + 100;
+    const cv = document.createElement('canvas'); cv.width = W * S; cv.height = H * S;
+    const c = cv.getContext('2d')!; c.scale(S, S);
+    c.fillStyle = '#fff'; c.fillRect(0, 0, W, H); c.fillStyle = '#111'; c.textBaseline = 'alphabetic';
+    let y = M;
+    const logo = logoUrl ? await Promise.race([loadImage(logoUrl), new Promise<null>(r => setTimeout(() => r(null), 4000))]) : null;
+    if (logo) {
+      const img = await new Promise<HTMLImageElement | null>(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = logo.data; });
+      if (img) { const h = 90; const w = Math.min(320, (logo.w / logo.h) * h); c.drawImage(img, M, y, w, h); }
+    }
+    c.textAlign = 'right'; c.font = F(44, true); c.fillText('RECEIPT', W - M, y + 40);
+    c.font = F(20); c.fillText(`No. ${receiptNo}`, W - M, y + 72); c.fillText(`Date: ${date}`, W - M, y + 100);
+    c.textAlign = 'left'; y += 150;
+    c.font = F(22, true); c.fillText(biz.name, M, y); c.fillText('BILL TO', W / 2 + 20, y);
+    c.font = F(20); bizL.forEach((l, i) => c.fillText(l, M, y + 30 + i * 28)); toL.forEach((l, i) => c.fillText(l, W / 2 + 20, y + 30 + i * 28));
+    y += 30 + Math.max(bizL.length, toL.length) * 28 + 10;
+    if (tracking) { c.font = F(20, true); c.fillText('Tracking #:', M, y); c.font = F(20); c.fillText(tracking, M + 125, y); y += 40; }
+    c.fillStyle = '#f0f0f0'; c.fillRect(M, y, W - 2 * M, 44); c.fillStyle = '#111'; c.font = F(20, true);
+    const cQ = W - M - 380, cP = W - M - 200, cA = W - M - 16;
+    c.fillText('Item', M + 16, y + 29); c.textAlign = 'right'; c.fillText('Qty', cQ, y + 29); c.fillText('Price', cP, y + 29); c.fillText('Amount', cA, y + 29); c.textAlign = 'left';
+    y += 44; c.font = F(20);
+    lines.forEach((l, k) => {
+      const d = itemL[k]; d.forEach((t, i) => c.fillText(t, M + 16, y + 32 + i * 28));
+      c.textAlign = 'right'; c.fillText(String(l.qty), cQ, y + 32); c.fillText(fmt(l.price), cP, y + 32); c.fillText(fmt(l.qty * l.price), cA, y + 32); c.textAlign = 'left';
+      y += d.length * 28 + 24; c.strokeStyle = '#e1e1e1'; c.beginPath(); c.moveTo(M, y); c.lineTo(W - M, y); c.stroke();
+    });
+    y += 50; c.font = F(26, true); c.fillText('Total', W - M - 300, y); c.textAlign = 'right'; c.fillText(fmt(total), cA, y); c.textAlign = 'left';
+    y += 50;
+    if (noteL.length) { c.font = F(20, true); c.fillText('Notes', M, y); c.font = F(20); noteL.forEach((t, i) => c.fillText(t, M, y + 30 + i * 28)); }
+    c.fillStyle = '#888'; c.font = F(18); c.textAlign = 'center'; c.fillText('Thank you for your business!', W / 2, H - 40);
+    return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('Could not create image')), 'image/png'));
   };
 
   const buildPdf = async () => {
@@ -185,7 +239,7 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
           <Button variant="outline" size="sm" onClick={() => setLines(l => [...l, { description: '', qty: 1, price: 0 }])}><Plus className="h-4 w-4 mr-1" />Add custom line</Button>
           <div className="text-right text-lg font-semibold">Total: {fmt(total)}</div>
           <div><Label>Notes</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Warranty, payment method, etc." /></div>
-          <Button onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Export PDF</Button>
+          <Button onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Create receipt image</Button>
         </CardContent>
       </Card>
     </div>
