@@ -36,7 +36,9 @@ const PriceScraper: React.FC = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [markup, setMarkup] = useState<string>('60');
-  const [scrapeUrl, setScrapeUrl] = useState('');
+  const [swappaUrl, setSwappaUrl] = useState('');
+  const [bmUrl, setBmUrl] = useState('');
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [scraping, setScraping] = useState(false);
   const [rows, setRows] = useState<ScrapedRow[]>([]);
   const [devices, setDevices] = useState<DeviceOpt[]>([]);
