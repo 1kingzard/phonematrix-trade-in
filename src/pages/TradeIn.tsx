@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { Pencil, Plus, X } from 'lucide-react';
 import DeviceImage from '@/components/DeviceImage';
-import TradeInTools from '@/components/TradeInTools';
 
 const WHATSAPP_NUMBER = '18765472061';
 const SERVICE_FEE_PCT = 0.30;
@@ -62,6 +61,8 @@ const TradeIn: React.FC = () => {
   const [compareList, setCompareList] = useState<NewDev[]>([]);
   const [showAddCompare, setShowAddCompare] = useState(false);
   const [c, setC] = useState<NewDev>({ brand: '', model: '', storage: '', condition: '', color: '' });
+  const [budget, setBudget] = useState('');
+  const [budgetCur, setBudgetCur] = useState<'USD' | 'JMD'>('USD');
 
   const cModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand).map(d => d.Model))).sort(), [devices, c.brand]);
   const cStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model).map(d => d.Storage))).sort(), [devices, c.brand, c.model]);
