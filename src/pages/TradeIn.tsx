@@ -146,6 +146,23 @@ const TradeIn: React.FC = () => {
     });
   }, [compareList, devices, exchangeRate, estimate.tradeValue]);
 
+  // Budget finder: budget + trade-in value = total spending power
+  const budgetMatches = useMemo(() => {
+    const num = parseFloat(budget) || 0;
+    if (num <= 0) return [];
+    const budgetUSD = budgetCur === 'USD' ? num : num / exchangeRate;
+    const total = budgetUSD + estimate.tradeValue;
+    return devices
+      .filter(d => d.Price > 0 && d.Price <= total)
+      .sort((a, b) => b.Price - a.Price)
+      .slice(0, 8)
+      .map(d => {
+        const usa = Math.max(0, d.Price - estimate.tradeValue);
+        const jmd = usa * exchangeRate + d.Price * SHIPPING_PCT * exchangeRate;
+        return { d, usaTotalUSD: usa, jamaicaTotalJMD: jmd };
+      });
+  }, [budget, budgetCur, devices, exchangeRate, estimate.tradeValue]);
+
   const canNext = (): boolean => {
     switch (step) {
       case 1: return !!(t.brand && t.model && t.storage && t.color);
@@ -576,7 +593,6 @@ Phone: ${phone}`;
           </div>
           </div>
         </Card>
-        <TradeInTools devices={devices} exchangeRate={exchangeRate} currentTradeValue={estimate.tradeValue} />
       </div>
     </div>
   );
