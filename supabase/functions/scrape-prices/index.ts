@@ -125,21 +125,6 @@ async function scrapeOne(supabase: any, firecrawlKey: string, url: string, sourc
     return rows.length;
 }
 
-/* end */
-function _unused() {
-  try {
-    return;
-  } catch (e: any) {
-    console.error(e);
-    return json({ error: e?.message ?? 'Server error' }, 500);
-  }
-}
-  } catch (e: any) {
-    console.error(e);
-    return json({ error: e?.message ?? 'Server error' }, 500);
-  }
-});
-
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
