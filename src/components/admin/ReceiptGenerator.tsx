@@ -76,9 +76,14 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
   const fmt = (v: number) => `${currency === 'JMD' ? 'J$' : '$'}${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const exportPdf = async () => {
+    if (!lines.length) { toast({ title: 'Add at least one device or line first', variant: 'destructive' }); return; }
+    try { await buildPdf(); } catch (e: any) { console.error(e); toast({ title: 'Export failed', description: e?.message || 'Unknown error', variant: 'destructive' }); }
+  };
+
+  const buildPdf = async () => {
     const doc = new jsPDF({ unit: 'pt', format: 'letter' });
     const W = doc.internal.pageSize.getWidth(); const M = 48; let y = M;
-    const logo = logoUrl ? await loadImage(logoUrl) : null;
+    const logo = logoUrl ? await Promise.race([loadImage(logoUrl), new Promise<null>(r => setTimeout(() => r(null), 4000))]) : null;
     if (logo) { const h = 50; const w = Math.min(160, (logo.w / logo.h) * h); try { doc.addImage(logo.data, M, y, w, h); } catch {} }
     doc.setFont('helvetica', 'bold').setFontSize(22).text('RECEIPT', W - M, y + 20, { align: 'right' });
     doc.setFont('helvetica', 'normal').setFontSize(10).text(`No. ${receiptNo}`, W - M, y + 36, { align: 'right' }).text(`Date: ${date}`, W - M, y + 50, { align: 'right' });
@@ -112,7 +117,14 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
       doc.setFont('helvetica', 'normal').text(doc.splitTextToSize(notes, W - 2 * M), M, y + 14);
     }
     doc.setFontSize(9).setTextColor(130).text('Thank you for your business!', W / 2, 760, { align: 'center' });
-    doc.save(`receipt-${receiptNo}.pdf`);
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `receipt-${receiptNo}.pdf`; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    // Fallback for mobile / embedded previews that block downloads
+    setTimeout(() => { if (/iPhone|iPad|Android/i.test(navigator.userAgent) || window.self !== window.top) window.open(url, '_blank'); }, 300);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
     toast({ title: 'Receipt exported' });
   };
 
@@ -173,7 +185,7 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
           <Button variant="outline" size="sm" onClick={() => setLines(l => [...l, { description: '', qty: 1, price: 0 }])}><Plus className="h-4 w-4 mr-1" />Add custom line</Button>
           <div className="text-right text-lg font-semibold">Total: {fmt(total)}</div>
           <div><Label>Notes</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Warranty, payment method, etc." /></div>
-          <Button onClick={exportPdf} disabled={!lines.length}><FileDown className="h-4 w-4 mr-2" />Export PDF</Button>
+          <Button onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Export PDF</Button>
         </CardContent>
       </Card>
     </div>
