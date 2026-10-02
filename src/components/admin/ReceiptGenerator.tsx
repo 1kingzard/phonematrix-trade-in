@@ -239,7 +239,7 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
           <Button variant="outline" size="sm" onClick={() => setLines(l => [...l, { description: '', qty: 1, price: 0 }])}><Plus className="h-4 w-4 mr-1" />Add custom line</Button>
           <div className="text-right text-lg font-semibold">Total: {fmt(total)}</div>
           <div><Label>Notes</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Warranty, payment method, etc." /></div>
-          <Button onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Export PDF</Button>
+          <Button onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Create receipt image</Button>
         </CardContent>
       </Card>
     </div>
