@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790985273368,
+      "tag": "0000_scraper_sources_and_schedule",
+      "breakpoints": true
+    }
+  ]
+}

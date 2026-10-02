@@ -9,33 +9,62 @@ Deno.serve(async (req) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
     );
-
-    // Verify caller is admin
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const { data: userData } = await userClient.auth.getUser();
-    if (!userData?.user) return json({ error: 'Unauthorized' }, 401);
-    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userData.user.id, _role: 'admin' });
-    if (!isAdmin) return json({ error: 'Forbidden' }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const url: string = body.url;
-    if (!url || typeof url !== 'string') return json({ error: 'Missing url' }, 400);
+    const cronToken = req.headers.get('x-cron-token');
+    const isCron = !!cronToken;
 
-    // Load markup
-    const { data: settings } = await supabase.from('scraper_settings').select('markup_percent').limit(1).maybeSingle();
+    const { data: settings } = await supabase.from('scraper_settings').select('*').limit(1).maybeSingle();
+
+    if (isCron) {
+      const { data: tok } = await supabase.from('scraper_cron_token').select('token').eq('id', 1).maybeSingle();
+      if (!tok || tok.token !== cronToken) return json({ error: 'Unauthorized' }, 401);
+      if (settings && settings.auto_refresh === false) return json({ ok: true, skipped: 'auto refresh off' });
+    } else {
+      const userClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'Unauthorized' }, 401);
+      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userData.user.id, _role: 'admin' });
+      if (!isAdmin) return json({ error: 'Forbidden' }, 403);
+    }
+
+    let urls: string[] = [];
+    if (typeof body.url === 'string' && body.url) urls = [body.url];
+    else urls = [settings?.swappa_url, settings?.backmarket_url].filter((u): u is string => !!u);
+    if (!urls.length) return json({ error: 'No source URLs configured' }, 400);
+
     const markup = Number(settings?.markup_percent ?? 60) / 100;
-
-    const source = url.includes('backmarket') ? 'backmarket' : 'swappa';
-
     const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!firecrawlKey) return json({ error: 'FIRECRAWL_API_KEY missing' }, 500);
 
+    const results: Record<string, number | string> = {};
+    let total = 0;
+    for (const url of urls) {
+      const source = url.includes('backmarket') ? 'backmarket' : 'swappa';
+      try {
+        total += await scrapeOne(supabase, firecrawlKey, url, source, markup);
+        results[source] = 'ok';
+      } catch (e: any) {
+        console.error('scrape failed', url, e?.message);
+        results[source] = e?.message ?? 'failed';
+      }
+    }
+
+    if (settings?.id) await supabase.from('scraper_settings').update({ last_run_at: new Date().toISOString() }).eq('id', settings.id);
+
+    return json({ ok: true, count: total, results, markup_percent: markup * 100 });
+  } catch (e: any) {
+    console.error(e);
+    return json({ error: e?.message ?? 'Server error' }, 500);
+  }
+});
+
+async function scrapeOne(supabase: any, firecrawlKey: string, url: string, source: string, markup: number): Promise<number> {
     const schema = {
       type: 'object',
       properties: {
@@ -67,15 +96,11 @@ Deno.serve(async (req) => {
       }),
     });
     const fcData = await fcRes.json();
-    if (!fcRes.ok) {
-      console.error('Firecrawl error', fcData);
-      return json({ error: 'Firecrawl request failed', details: fcData }, fcRes.status);
-    }
+    if (!fcRes.ok) throw new Error(`Firecrawl [${fcRes.status}]: ${JSON.stringify(fcData).slice(0, 300)}`);
 
     const extracted = fcData?.data?.json ?? fcData?.json ?? {};
     const listings: any[] = Array.isArray(extracted?.listings) ? extracted.listings : [];
 
-    // Insert into review queue
     const rows = listings
       .filter(l => l && l.model && Number(l.price_usd) > 0)
       .map(l => {
@@ -95,15 +120,10 @@ Deno.serve(async (req) => {
 
     if (rows.length) {
       const { error: insErr } = await supabase.from('scraped_prices').insert(rows);
-      if (insErr) return json({ error: insErr.message }, 500);
+      if (insErr) throw new Error(insErr.message);
     }
-
-    return json({ ok: true, count: rows.length, markup_percent: markup * 100 });
-  } catch (e: any) {
-    console.error(e);
-    return json({ error: e?.message ?? 'Server error' }, 500);
-  }
-});
+    return rows.length;
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
