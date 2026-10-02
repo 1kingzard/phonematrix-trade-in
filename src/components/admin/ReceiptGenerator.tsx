@@ -68,7 +68,7 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
   };
 
   const addDevice = (d: Device) => {
-    setLines(l => [...l, { description: `${d.brand} ${d.model} ${d.storage} (${d.condition})`, qty: 1, price: Number(d.price) }]);
+    setLines(l => [...l, { description: `${d.model.toLowerCase().startsWith(d.brand.toLowerCase()) ? d.model : `${d.brand} ${d.model}`} ${d.storage} (${d.condition})`, qty: 1, price: Number(d.price) }]);
     setDeviceSearch('');
   };
   const updateLine = (i: number, patch: Partial<Line>) => setLines(l => l.map((x, j) => j === i ? { ...x, ...patch } : x));
