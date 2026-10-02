@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { Pencil, Plus, X } from 'lucide-react';
 import DeviceImage from '@/components/DeviceImage';
+import TradeInTools from '@/components/TradeInTools';
 
 const WHATSAPP_NUMBER = '18765472061';
 const SERVICE_FEE_PCT = 0.30;
@@ -568,6 +569,7 @@ Phone: ${phone}`;
           </div>
           </div>
         </Card>
+        <TradeInTools devices={devices} exchangeRate={exchangeRate} currentTradeValue={estimate.tradeValue} />
       </div>
     </div>
   );
