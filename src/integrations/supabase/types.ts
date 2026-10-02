@@ -735,29 +735,56 @@ export type Database = {
           },
         ]
       }
+      scraper_cron_token: {
+        Row: {
+          id: number
+          token: string
+        }
+        Insert: {
+          id?: number
+          token?: string
+        }
+        Update: {
+          id?: number
+          token?: string
+        }
+        Relationships: []
+      }
       scraper_settings: {
         Row: {
+          auto_refresh: boolean
+          backmarket_url: string
           created_at: string
           default_source_url: string
           id: string
+          last_run_at: string | null
           markup_percent: number
           source: string
+          swappa_url: string
           updated_at: string
         }
         Insert: {
+          auto_refresh?: boolean
+          backmarket_url?: string
           created_at?: string
           default_source_url?: string
           id?: string
+          last_run_at?: string | null
           markup_percent?: number
           source?: string
+          swappa_url?: string
           updated_at?: string
         }
         Update: {
+          auto_refresh?: boolean
+          backmarket_url?: string
           created_at?: string
           default_source_url?: string
           id?: string
+          last_run_at?: string | null
           markup_percent?: number
           source?: string
+          swappa_url?: string
           updated_at?: string
         }
         Relationships: []
