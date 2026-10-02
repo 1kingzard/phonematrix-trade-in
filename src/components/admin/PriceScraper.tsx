@@ -51,7 +51,11 @@ const PriceScraper: React.FC = () => {
       supabase.from('scraped_prices').select('*').order('scraped_at', { ascending: false }).limit(500),
       supabase.from('devices').select('id,brand,model,storage,condition').order('brand').order('model'),
     ]);
-    if (s) { setSettings(s as any); setMarkup(String((s as any).markup_percent)); setScrapeUrl((s as any).default_source_url || ''); }
+    if (s) {
+      const x = s as any;
+      setSettings(x); setMarkup(String(x.markup_percent));
+      setSwappaUrl(x.swappa_url || ''); setBmUrl(x.backmarket_url || ''); setAutoRefresh(x.auto_refresh !== false);
+    }
     if (r) setRows(r as any);
     if (d) setDevices(d as any);
   }, []);
@@ -62,22 +66,22 @@ const PriceScraper: React.FC = () => {
     const pct = parseFloat(markup);
     if (!isFinite(pct) || pct <= 0 || pct > 100) return toast({ title: 'Invalid markup', variant: 'destructive' });
     if (!settings) return;
-    const { error } = await supabase.from('scraper_settings').update({ markup_percent: pct, default_source_url: scrapeUrl }).eq('id', settings.id);
+    const { error } = await supabase.from('scraper_settings').update({ markup_percent: pct, swappa_url: swappaUrl, backmarket_url: bmUrl, auto_refresh: autoRefresh } as any).eq('id', settings.id);
     if (error) return toast({ title: 'Error', description: error.message, variant: 'destructive' });
     toast({ title: 'Settings saved' });
     load();
   };
 
   const runScrape = async () => {
-    if (!scrapeUrl) return toast({ title: 'Enter a URL', variant: 'destructive' });
     setScraping(true);
     try {
-      const { data, error } = await supabase.functions.invoke('scrape-prices', { body: { url: scrapeUrl } });
+      const { data, error } = await supabase.functions.invoke('scrape-prices', { body: {} });
       if (error) throw error;
-      toast({ title: 'Scrape complete', description: `${data?.count ?? 0} listings added to review.` });
+      const failed = Object.entries(data?.results || {}).filter(([, v]) => v !== 'ok').map(([k]) => k);
+      toast({ title: 'Prices updated', description: `${data?.count ?? 0} listings added to review.${failed.length ? ` Failed: ${failed.join(', ')}` : ''}` });
       load();
     } catch (e: any) {
-      toast({ title: 'Scrape failed', description: e?.message || 'Check function logs', variant: 'destructive' });
+      toast({ title: 'Update failed', description: e?.message || 'Check function logs', variant: 'destructive' });
     } finally {
       setScraping(false);
     }
@@ -138,23 +142,34 @@ const PriceScraper: React.FC = () => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle>Scraper Settings</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <CardHeader><CardTitle>Price Sources (Swappa &amp; Back Market)</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+          <div>
+            <Label>Swappa page</Label>
+            <Input value={swappaUrl} onChange={e => setSwappaUrl(e.target.value)} placeholder="https://swappa.com/..." />
+          </div>
+          <div>
+            <Label>Back Market page</Label>
+            <Input value={bmUrl} onChange={e => setBmUrl(e.target.value)} placeholder="https://www.backmarket.com/..." />
+          </div>
           <div>
             <Label>Trade-in markup %</Label>
             <Input type="number" value={markup} onChange={e => setMarkup(e.target.value)} />
             <p className="text-xs text-muted-foreground mt-1">Suggested = market price × markup%</p>
           </div>
-          <div className="md:col-span-2">
-            <Label>Source URL</Label>
-            <Input value={scrapeUrl} onChange={e => setScrapeUrl(e.target.value)} placeholder="https://swappa.com/... or https://www.backmarket.com/..." />
+          <div className="flex items-center gap-2 pb-6">
+            <input id="auto" type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="h-4 w-4" />
+            <Label htmlFor="auto">Update automatically every 2 weeks (1st &amp; 15th)</Label>
           </div>
-          <div className="md:col-span-3 flex gap-2">
+          <div className="md:col-span-2 flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={saveSettings}>Save Settings</Button>
             <Button onClick={runScrape} disabled={scraping}>
               <RefreshCcw className={`h-4 w-4 mr-1 ${scraping ? 'animate-spin' : ''}`} />
-              {scraping ? 'Scraping...' : 'Scrape Now'}
+              {scraping ? 'Updating prices...' : 'Update Prices Now'}
             </Button>
+            <span className="text-xs text-muted-foreground">
+              Last updated: {(settings as any)?.last_run_at ? new Date((settings as any).last_run_at).toLocaleString() : 'never'}
+            </span>
           </div>
         </CardContent>
       </Card>
