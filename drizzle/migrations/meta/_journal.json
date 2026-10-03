@@ -15,6 +15,13 @@
       "when": 1790987010414,
       "tag": "0001_device_images_and_bm_markup",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790987152855,
+      "tag": "0002_trade_in_requests",
+      "breakpoints": true
     }
   ]
 }
