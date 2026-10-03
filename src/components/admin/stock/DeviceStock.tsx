@@ -20,7 +20,7 @@ const db = supabase as any;
 
 const emptyItem = {
   brand: 'Apple', model: '', storage: '', colour: '', condition: 'Very Good', photos: [] as string[],
-  imei: '', serial: '', battery_health: '', purchase_cost: 0, purchased_from: '', purchase_date: '', website_price: 0,
+  imei: '', serial: '', battery_health: '', purchase_cost: 0, shipping_cost: 0, purchased_from: '', purchase_date: '', website_price: 0,
   warranty_days: 30, status: 'in_stock', notes: '',
 };
 
@@ -69,8 +69,8 @@ const DeviceStock = () => {
   const filtered = items.filter(i => `${i.brand} ${i.model} ${i.imei} ${i.serial} ${i.colour}`.toLowerCase().includes(search.toLowerCase()));
   const stats = useMemo(() => ({
     inStock: items.filter(i => i.status === 'in_stock').length,
-    value: items.filter(i => i.status !== 'sold').reduce((a, i) => a + Number(i.purchase_cost) + repairCost(i), 0),
-    profit: items.filter(i => i.status === 'sold').reduce((a, i) => a + Number(saleFor(i.id)?.sold_for || 0) - Number(i.purchase_cost) - repairCost(i), 0),
+    value: items.filter(i => i.status !== 'sold').reduce((a, i) => a + Number(i.purchase_cost) + Number(i.shipping_cost || 0) + repairCost(i), 0),
+    profit: items.filter(i => i.status === 'sold').reduce((a, i) => a + Number(saleFor(i.id)?.sold_for || 0) - Number(i.purchase_cost) - Number(i.shipping_cost || 0) - repairCost(i), 0),
   }), [items, sales]);
 
   const openEdit = async (it: any | null) => {
@@ -96,7 +96,7 @@ const DeviceStock = () => {
 
   const save = async () => {
     const { id, device_repairs, created_at, updated_at, ...rest } = editing;
-    const payload = { ...rest, battery_health: rest.battery_health === '' || rest.battery_health == null ? null : Number(rest.battery_health), purchase_cost: Number(rest.purchase_cost) || 0, website_price: Number(rest.website_price) || 0, warranty_days: Number(rest.warranty_days) || 0, purchase_date: rest.purchase_date || null };
+    const payload = { ...rest, battery_health: rest.battery_health === '' || rest.battery_health == null ? null : Number(rest.battery_health), purchase_cost: Number(rest.purchase_cost) || 0, shipping_cost: Number(rest.shipping_cost) || 0, website_price: Number(rest.website_price) || 0, warranty_days: Number(rest.warranty_days) || 0, purchase_date: rest.purchase_date || null };
     const res = id ? await db.from('device_stock').update(payload).eq('id', id).select().single() : await db.from('device_stock').insert(payload).select().single();
     if (res.error) return toast({ title: 'Save failed', description: res.error.message, variant: 'destructive' });
     const pending = repairs.filter(r => !r.id).map(r => ({ ...r, stock_id: res.data.id }));
@@ -140,7 +140,7 @@ const DeviceStock = () => {
               <th className="py-2"></th><th>Device</th><th>Condition</th><th>IMEI / Serial</th><th className="text-right">Cost</th><th className="text-right">Website</th><th>Status</th><th className="text-right">Sold for</th><th></th></tr></thead>
             <tbody>
               {filtered.map(it => {
-                const sale = saleFor(it.id); const cost = Number(it.purchase_cost) + repairCost(it);
+                const sale = saleFor(it.id); const cost = Number(it.purchase_cost) + Number(it.shipping_cost || 0) + repairCost(it);
                 return (
                   <tr key={it.id} className="border-b last:border-0">
                     <td className="py-2">{it.photos?.[0] ? <img src={it.photos[0]} className="h-10 w-10 rounded object-cover" alt="" /> : <div className="h-10 w-10 rounded bg-muted" />}</td>
@@ -210,6 +210,8 @@ const DeviceStock = () => {
               <div><Label>Serial</Label><Input value={editing.serial || ''} onChange={e => set('serial', e.target.value)} /></div>
               <div><Label>Battery health (%)</Label><Input type="number" min={0} max={100} value={editing.battery_health ?? ''} onChange={e => set('battery_health', e.target.value)} placeholder="e.g. 87" /></div>
               <div><Label>Purchased for (USD)</Label><Input type="number" value={editing.purchase_cost} onChange={e => set('purchase_cost', e.target.value)} /></div>
+              <div><Label>Shipping cost (USD)</Label><Input type="number" value={editing.shipping_cost ?? 0} onChange={e => set('shipping_cost', e.target.value)} />
+                <p className="mt-1 text-xs text-muted-foreground">Edit anytime if the actual amount paid was less than quoted.</p></div>
               <div><Label>Purchased from</Label><Input value={editing.purchased_from || ''} onChange={e => set('purchased_from', e.target.value)} /></div>
               <div><Label>Purchase date</Label><Input type="date" value={editing.purchase_date || ''} onChange={e => set('purchase_date', e.target.value)} /></div>
               <div><Label>Website selling price (USD)</Label><Input type="number" value={editing.website_price} onChange={e => set('website_price', e.target.value)} /></div>
@@ -237,7 +239,7 @@ const DeviceStock = () => {
                 </div></div>
               <div className="col-span-2"><Label>Notes</Label><Textarea value={editing.notes || ''} onChange={e => set('notes', e.target.value)} /></div>
               <div className="col-span-2 bg-muted/50 rounded p-3 text-sm">
-                Total cost: <b>{usd(Number(editing.purchase_cost) + repairs.reduce((a, r) => a + Number(r.cost), 0))}</b> · Expected profit at website price: <b>{usd(Number(editing.website_price) - Number(editing.purchase_cost) - repairs.reduce((a, r) => a + Number(r.cost), 0))}</b>
+                Total cost (incl. shipping): <b>{usd(Number(editing.purchase_cost) + Number(editing.shipping_cost || 0) + repairs.reduce((a, r) => a + Number(r.cost), 0))}</b> · Expected profit at website price: <b>{usd(Number(editing.website_price) - Number(editing.purchase_cost) - Number(editing.shipping_cost || 0) - repairs.reduce((a, r) => a + Number(r.cost), 0))}</b>
               </div>
             </div>
           )}
@@ -420,8 +422,8 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
             ))}
           </div>}
           <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost))}</b> (before repairs)
-            {priceCur === 'JMD' && <p className="text-xs text-muted-foreground mt-1">Sold for JMD {Number(toJmd(soldFor)).toLocaleString()} · Profit JMD {Number(toJmd(soldFor - Number(item.purchase_cost))).toLocaleString()}</p>}
+          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost) - Number(item.shipping_cost || 0))}</b> (before repairs)
+            {priceCur === 'JMD' && <p className="text-xs text-muted-foreground mt-1">Sold for JMD {Number(toJmd(soldFor)).toLocaleString()} · Profit JMD {Number(toJmd(soldFor - Number(item.purchase_cost) - Number(item.shipping_cost || 0))).toLocaleString()}</p>}
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Record sale</Button></DialogFooter>

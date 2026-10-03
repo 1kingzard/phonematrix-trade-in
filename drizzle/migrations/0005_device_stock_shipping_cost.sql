@@ -1,0 +1,2 @@
+ALTER TABLE public.device_stock ADD COLUMN shipping_cost numeric NOT NULL DEFAULT 0;
+COMMENT ON COLUMN public.device_stock.shipping_cost IS 'Shipping cost paid for this device (USD); added to purchase cost + repairs for total cost and profit calculations. Editable if actual amount paid differs from quote.';

@@ -279,6 +279,7 @@ export type Database = {
           purchase_date: string | null
           purchased_from: string | null
           serial: string | null
+          shipping_cost: number
           sku: string | null
           status: string
           storage: string | null
@@ -301,6 +302,7 @@ export type Database = {
           purchase_date?: string | null
           purchased_from?: string | null
           serial?: string | null
+          shipping_cost?: number
           sku?: string | null
           status?: string
           storage?: string | null
@@ -323,6 +325,7 @@ export type Database = {
           purchase_date?: string | null
           purchased_from?: string | null
           serial?: string | null
+          shipping_cost?: number
           sku?: string | null
           status?: string
           storage?: string | null
