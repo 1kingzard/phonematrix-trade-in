@@ -467,6 +467,11 @@ Phone: ${phone}${link}`;
                   <p className="text-sm text-muted-foreground">{t.storage} • {t.color}</p>
                   <Badge variant="outline" className="mt-2">Assessed: {estimate.condition}</Badge>
                   {gradeInfo(estimate.condition) && <p className="text-xs text-muted-foreground mt-1">{gradeInfo(estimate.condition)!.short}</p>}
+                  <div className="mt-4 pt-3 border-t border-border/40">
+                    <p className="text-xs text-muted-foreground">Estimated trade-in value</p>
+                    <p className="text-xl font-bold tabular-nums">{formatCurrency(estimate.tradeValue, 'USD')}</p>
+                    <p className="text-sm text-muted-foreground tabular-nums">{formatCurrency(estimate.tradeValue * exchangeRate, 'JMD')}</p>
+                  </div>
                 </Card>
                 <Card className="p-4 bg-primary/5 border-primary/30 relative">
                   <Button size="sm" variant="ghost" onClick={() => { setDirection('back'); setStep(5); }}
@@ -521,6 +526,12 @@ Phone: ${phone}${link}`;
                     <span className="text-3xl md:text-4xl font-bold">{formatCurrency(estimate.jamaicaTotalJMD, 'JMD')}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Includes shipping to Jamaica</p>
+                  <div className="mt-4 pt-3 border-t border-border/40 space-y-2 text-sm tabular-nums">
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">New device</span><span>{formatCurrency(estimate.newPrice * exchangeRate, 'JMD')}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Trade-in credit applied</span><span>−{formatCurrency(Math.min(estimate.tradeValue, estimate.newPrice) * exchangeRate, 'JMD')}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Balance after trade-in</span><span>{formatCurrency(estimate.estimateJMD, 'JMD')}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Shipping to Jamaica</span><span>+{formatCurrency(estimate.shippingJMD, 'JMD')}</span></div>
+                  </div>
                 </div>
               </div>
 
