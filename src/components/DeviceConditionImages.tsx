@@ -29,10 +29,10 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
         
         <Card className="dark:bg-gray-700 dark:text-white">
           <CardContent className="p-4">
-            <h4 className="text-center font-medium mb-2">Good</h4>
+            <h4 className="text-center font-medium mb-2">Very Good</h4>
             <img 
               src="https://i.imgur.com/FQJJk9a.png" 
-              alt="Good Condition" 
+              alt="Very Good Condition" 
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -43,10 +43,10 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
         
         <Card className="dark:bg-gray-700 dark:text-white">
           <CardContent className="p-4">
-            <h4 className="text-center font-medium mb-2">Fair</h4>
+            <h4 className="text-center font-medium mb-2">Good</h4>
             <img 
               src="https://i.imgur.com/z2BbOwh.png" 
-              alt="Fair Condition" 
+              alt="Good Condition" 
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -57,10 +57,10 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
         
         <Card className="dark:bg-gray-700 dark:text-white">
           <CardContent className="p-4">
-            <h4 className="text-center font-medium mb-2">Poor</h4>
+            <h4 className="text-center font-medium mb-2">Fair</h4>
             <img 
               src="https://i.imgur.com/pLvbhzy.png" 
-              alt="Poor Condition" 
+              alt="Fair Condition" 
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
