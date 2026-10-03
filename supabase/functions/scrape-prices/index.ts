@@ -33,6 +33,15 @@ Deno.serve(async (req) => {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403);
     }
 
+    const firecrawlKeyEarly = Deno.env.get('FIRECRAWL_API_KEY');
+    if (body.mode === 'images') {
+      if (!firecrawlKeyEarly) return json({ error: 'FIRECRAWL_API_KEY missing' }, 500);
+      const url = (typeof body.url === 'string' && body.url) || settings?.backmarket_url;
+      if (!url) return json({ error: 'No Back Market URL configured' }, 400);
+      const count = await scrapeImages(supabase, firecrawlKeyEarly, url);
+      return json({ ok: true, count });
+    }
+
     let urls: string[] = [];
     if (typeof body.url === 'string' && body.url) urls = [body.url];
     else urls = [settings?.swappa_url, settings?.backmarket_url].filter((u): u is string => !!u);
@@ -47,7 +56,10 @@ Deno.serve(async (req) => {
     for (const url of urls) {
       const source = url.includes('backmarket') ? 'backmarket' : 'swappa';
       try {
-        total += await scrapeOne(supabase, firecrawlKey, url, source, markup);
+        const factor = source === 'backmarket'
+          ? 1 + Number(settings?.backmarket_markup_percent ?? 20) / 100
+          : markup;
+        total += await scrapeOne(supabase, firecrawlKey, url, source, factor);
         results[source] = 'ok';
       } catch (e: any) {
         console.error('scrape failed', url, e?.message);
@@ -111,7 +123,7 @@ async function scrapeOne(supabase: any, firecrawlKey: string, url: string, sourc
           brand: l.brand || null,
           model: String(l.model),
           storage: l.storage || null,
-          condition: l.condition || null,
+          condition: source === 'backmarket' ? mapBmCondition(l.condition) : (l.condition || null),
           market_price_usd: market,
           suggested_price_usd: Math.round(market * markup),
           status: 'pending',
@@ -123,6 +135,45 @@ async function scrapeOne(supabase: any, firecrawlKey: string, url: string, sourc
       if (insErr) throw new Error(insErr.message);
     }
     return rows.length;
+}
+
+function mapBmCondition(c: unknown): string | null {
+  const v = String(c ?? '').toLowerCase();
+  if (!v) return null;
+  if (v.includes('premium')) return 'Like New';
+  if (v.includes('excellent')) return 'Very Good';
+  if (v.includes('good')) return 'Good';
+  if (v.includes('fair')) return 'Fair';
+  return String(c);
+}
+
+async function scrapeImages(supabase: any, key: string, url: string): Promise<number> {
+  const schema = {
+    type: 'object',
+    properties: { devices: { type: 'array', items: { type: 'object', properties: {
+      brand: { type: 'string' }, model: { type: 'string' }, image_url: { type: 'string' },
+    }, required: ['model', 'image_url'] } } },
+    required: ['devices'],
+  };
+  const res = await fetch('https://api.firecrawl.dev/v2/scrape', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, onlyMainContent: true, formats: [{ type: 'json', schema,
+      prompt: 'For each phone listed, return brand (e.g. iPhone, Samsung), model name without storage/color (e.g. iPhone 13 Pro), and the absolute URL of its product photo.' }] }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Firecrawl [${res.status}]: ${JSON.stringify(data).slice(0, 300)}`);
+  const list: any[] = (data?.data?.json ?? data?.json ?? {})?.devices ?? [];
+  const seen = new Set<string>();
+  const rows = list.filter(d => d?.model && /^https?:\/\//.test(d.image_url || '')).map(d => ({
+    brand: String(d.brand || (String(d.model).toLowerCase().startsWith('iphone') ? 'iPhone' : '')).trim(),
+    model: String(d.model).trim(), image_url: d.image_url, source_url: url,
+  })).filter(r => { const k = `${r.brand}|${r.model}`.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  if (rows.length) {
+    const { error } = await supabase.from('device_images').upsert(rows, { onConflict: 'brand,model' });
+    if (error) throw new Error(error.message);
+  }
+  return rows.length;
 }
 
 function json(body: unknown, status = 200) {

@@ -224,7 +224,10 @@ const PriceList: React.FC = () => {
                           <p className="text-xs text-muted-foreground">Price</p>
                           <p className="text-2xl font-bold text-foreground">{formatUSD(d.Price)}</p>
                         </div>
-                        <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop shrink-0">Request</Button>
+                        <div className="flex flex-col gap-1.5 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => handleAddToCart(d)}><ShoppingCart className="h-4 w-4 mr-1" />Add to cart</Button>
+                          <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop">Request</Button>
+                        </div>
                       </div>
                     ) : (
                       (() => {
@@ -245,6 +248,7 @@ const PriceList: React.FC = () => {
                             <span>{formatJMD(b.shippingJmd)}</span>
                           </div>
                         </div>
+                        <Button size="sm" variant="outline" onClick={() => handleAddToCart(d)} className="w-full"><ShoppingCart className="h-4 w-4 mr-1" />Add to cart</Button>
                         <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop w-full">Request</Button>
                       </div>
                         );
