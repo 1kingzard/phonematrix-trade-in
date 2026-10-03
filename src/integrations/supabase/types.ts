@@ -852,6 +852,119 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_in_request_history: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          from_value: string | null
+          id: string
+          note: string | null
+          request_id: string
+          to_value: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          from_value?: string | null
+          id?: string
+          note?: string | null
+          request_id: string
+          to_value?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          from_value?: string | null
+          id?: string
+          note?: string | null
+          request_id?: string
+          to_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_in_request_history_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "trade_in_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_in_requests: {
+        Row: {
+          admin_notes: string | null
+          battery_pct: number | null
+          condition: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          desired_device: Json | null
+          estimate: Json
+          estimated_value_usd: number
+          expires_at: string | null
+          faults: Json
+          final_value_usd: number | null
+          id: string
+          invoice_id: string | null
+          public_token: string
+          request_code: string
+          status: string
+          trade_device: Json
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          battery_pct?: number | null
+          condition?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          desired_device?: Json | null
+          estimate?: Json
+          estimated_value_usd?: number
+          expires_at?: string | null
+          faults?: Json
+          final_value_usd?: number | null
+          id?: string
+          invoice_id?: string | null
+          public_token?: string
+          request_code?: string
+          status?: string
+          trade_device?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          battery_pct?: number | null
+          condition?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          desired_device?: Json | null
+          estimate?: Json
+          estimated_value_usd?: number
+          expires_at?: string | null
+          faults?: Json
+          final_value_usd?: number | null
+          id?: string
+          invoice_id?: string | null
+          public_token?: string
+          request_code?: string
+          status?: string
+          trade_device?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -944,6 +1057,8 @@ export type Database = {
     }
     Functions: {
       assign_parts_guest: { Args: { user_email: string }; Returns: boolean }
+      create_trade_in_request: { Args: { payload: Json }; Returns: Json }
+      get_trade_in_request: { Args: { token: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
