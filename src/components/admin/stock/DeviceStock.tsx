@@ -170,6 +170,14 @@ const DeviceStock = () => {
           <DialogHeader><DialogTitle>{editing?.id ? 'Edit phone' : 'Add phone'}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2"><Label>Pick from catalog</Label>
+                <Select value="" onValueChange={pickCatalogDevice}>
+                  <SelectTrigger><SelectValue placeholder="Choose a device to auto-fill, or enter details manually below…" /></SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    <SelectItem value="__manual">Enter manually</SelectItem>
+                    {catalogOptions.map(d => <SelectItem key={catalogKey(d)} value={catalogKey(d)}>{d.brand} {d.model}{d.storage ? ` ${d.storage}` : ''} — {usd(d.price)}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
               <div><Label>Brand</Label><Input value={editing.brand} onChange={e => set('brand', e.target.value)} /></div>
               <div><Label>Model</Label><Input value={editing.model} onChange={e => set('model', e.target.value)} placeholder="iPhone 15 Pro" /></div>
               <div><Label>Storage</Label><Input value={editing.storage || ''} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
