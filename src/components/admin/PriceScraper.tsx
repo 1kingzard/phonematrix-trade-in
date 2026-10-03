@@ -249,7 +249,8 @@ const PriceScraper: React.FC = () => {
                   <TableHead>Storage</TableHead>
                   <TableHead>Condition</TableHead>
                   <TableHead>Market $</TableHead>
-                  <TableHead>Trade-in $</TableHead>
+                  <TableHead>{priceColLabel}</TableHead>
+                  <TableHead>On site now</TableHead>
                   <TableHead>Match device</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead></TableHead>
@@ -259,6 +260,9 @@ const PriceScraper: React.FC = () => {
                 {filtered.map(r => {
                   const auto = findMatch(r);
                   const matchVal = matchEdit[r.id] ?? auto;
+                  const current = devices.find(d => d.id === matchVal);
+                  const suggested = Number(priceEdit[r.id] ?? r.suggested_price_usd);
+                  const delta = current && isFinite(suggested) ? suggested - current.price : null;
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
