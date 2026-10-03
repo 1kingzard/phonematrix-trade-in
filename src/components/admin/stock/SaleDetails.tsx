@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { SHIPMENT_STATUSES, usd, fmtDate, fmtDateTime, installmentOwed, isLate, warrantyEnd } from '@/lib/stock';
+import { SHIPMENT_STATUSES, usd, fmtDate, fmtDateTime, installmentOwed, isLate, warrantyEnd, saleMoney } from '@/lib/stock';
 
 const db = supabase as any;
 
@@ -49,16 +49,19 @@ const SaleDetails = ({ saleId, onOpenChange, onChanged }: Props) => {
   const delEvent = async (id: string) => { await db.from('shipment_events').delete().eq('id', id); load(); };
 
   const recordPayment = async (i: any) => {
-    const amt = Number(pay[i.id]); if (!amt) return;
+    const amt = toUsd(pay[i.id]); if (!amt) return;
     await db.from('sale_installments').update({ paid_amount: Number(i.paid_amount) + amt, paid_at: new Date().toISOString() }).eq('id', i.id);
     setPay({ ...pay, [i.id]: '' }); load(); onChanged?.();
   };
   const addFee = async (i: any) => {
-    const amt = Number(fee[i.id]); if (!amt) return;
+    const amt = toUsd(fee[i.id]); if (!amt) return;
     await db.from('sale_installments').update({ late_fee: Number(i.late_fee) + amt }).eq('id', i.id);
     setFee({ ...fee, [i.id]: '' }); load(); onChanged?.();
   };
 
+  const jm = sale?.sold_in === 'JM';
+  const rate = Number(sale?.rate_used) || 157;
+  const toUsd = (v: string) => { const n = Number(v) || 0; return jm ? Math.round((n / rate) * 100) / 100 : n; };
   const remaining = inst.reduce((a, i) => a + installmentOwed(i), 0);
   const d = sale?.device_stock;
 
@@ -71,27 +74,27 @@ const SaleDetails = ({ saleId, onOpenChange, onChanged }: Props) => {
             <div className="grid sm:grid-cols-2 gap-2">
               <div><span className="text-muted-foreground">Device:</span> {d?.brand} {d?.model} {d?.storage} {d?.colour}</div>
               <div><span className="text-muted-foreground">Buyer:</span> {sale.customers?.name || '—'} {sale.customers?.phone}</div>
-              <div><span className="text-muted-foreground">Sold for:</span> {usd(sale.sold_for)} ({sale.payment_method})</div>
+              <div><span className="text-muted-foreground">Sold for:</span> {saleMoney(sale.sold_for, sale)} ({sale.payment_method})</div>
               <div><span className="text-muted-foreground">Sold:</span> {fmtDateTime(sale.sold_at)}</div>
               <div><span className="text-muted-foreground">Warranty until:</span> {fmtDate(warrantyEnd(sale.sold_at, sale.warranty_days).toISOString())}</div>
-              {sale.loyalty_discount > 0 && <div><span className="text-muted-foreground">Loyalty discount:</span> −{usd(sale.loyalty_discount)}</div>}
-              {sale.sold_as_trade && <div><span className="text-muted-foreground">Trade credit:</span> {usd(sale.trade_credit)}</div>}
+              {sale.loyalty_discount > 0 && <div><span className="text-muted-foreground">Loyalty discount:</span> −{saleMoney(sale.loyalty_discount, sale)}</div>}
+              {sale.sold_as_trade && <div><span className="text-muted-foreground">Trade credit:</span> {saleMoney(sale.trade_credit, sale)}</div>}
             </div>
 
             {sale.is_payment_plan && (
               <section className="space-y-2">
-                <h3 className="font-semibold">Payment plan — agreed {usd(sale.plan_total)}, deposit {usd(sale.deposit)}, remaining <span className={remaining > 0 ? 'text-destructive' : ''}>{usd(remaining)}</span></h3>
+                <h3 className="font-semibold">Payment plan — agreed {saleMoney(sale.plan_total, sale)}, deposit {saleMoney(sale.deposit, sale)}, remaining <span className={remaining > 0 ? 'text-destructive' : ''}>{saleMoney(remaining, sale)}</span></h3>
                 <div className="border rounded-md divide-y">
                   {inst.map(i => (
                     <div key={i.id} className="p-2 flex flex-wrap items-center gap-2">
                       <div className="w-28">{fmtDate(i.due_date)}</div>
-                      <div className="w-40">{usd(i.paid_amount)} / {usd(Number(i.amount) + Number(i.late_fee))}{i.late_fee > 0 && <span className="text-xs text-muted-foreground"> (fee {usd(i.late_fee)})</span>}</div>
+                      <div className="w-40">{saleMoney(i.paid_amount, sale)} / {saleMoney(Number(i.amount) + Number(i.late_fee), sale)}{i.late_fee > 0 && <span className="text-xs text-muted-foreground"> (fee {saleMoney(i.late_fee, sale)})</span>}</div>
                       {installmentOwed(i) === 0 ? <Badge variant="secondary">Paid</Badge> : isLate(i) ? <Badge variant="destructive">Late</Badge> : <Badge variant="outline">Due</Badge>}
                       {installmentOwed(i) > 0 && (
                         <div className="flex gap-1 ml-auto">
-                          <Input className="w-24 h-8" type="number" placeholder="Pay" value={pay[i.id] || ''} onChange={e => setPay({ ...pay, [i.id]: e.target.value })} />
+                          <Input className="w-24 h-8" type="number" placeholder={jm ? "Pay (JMD)" : "Pay"} value={pay[i.id] || ''} onChange={e => setPay({ ...pay, [i.id]: e.target.value })} />
                           <Button size="sm" onClick={() => recordPayment(i)}>Record</Button>
-                          <Input className="w-24 h-8" type="number" placeholder="Late fee" value={fee[i.id] || ''} onChange={e => setFee({ ...fee, [i.id]: e.target.value })} />
+                          <Input className="w-24 h-8" type="number" placeholder={jm ? "Late fee (JMD)" : "Late fee"} value={fee[i.id] || ''} onChange={e => setFee({ ...fee, [i.id]: e.target.value })} />
                           <Button size="sm" variant="outline" onClick={() => addFee(i)}>Add fee</Button>
                         </div>
                       )}

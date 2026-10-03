@@ -80,3 +80,9 @@ export const bestLoyalty = (rules: LoyaltyRule[], purchases: number, referrals: 
   }
   return best;
 };
+
+/** Formats a stored USD amount in the sale's currency (JMD for Jamaica sales, using the rate saved with the sale). */
+export const saleMoney = (v: number, sale?: { sold_in?: string | null; rate_used?: number | null } | null) =>
+  sale?.sold_in === 'JM'
+    ? `J$${Math.round((Number(v) || 0) * (Number(sale.rate_used) || 157)).toLocaleString('en-US')}`
+    : usd(v);
