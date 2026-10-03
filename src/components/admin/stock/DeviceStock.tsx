@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_ORDER } from '@/lib/tradeInRequests';
 import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment } from '@/lib/stock';
+import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import SaleDetails from './SaleDetails';
 
 const db = supabase as any;
@@ -252,11 +253,15 @@ const DeviceStock = () => {
 
 const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () => void; onSold: (saleId: string) => void }) => {
   const { toast } = useToast();
+  const { rate: partsRate } = useExchangeRateSetting();
   const [customers, setCustomers] = useState<any[]>([]);
   const [rules, setRules] = useState<LoyaltyRule[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
   const [counts, setCounts] = useState({ purchases: 0, referrals: 0 });
   const [f, setF] = useState<any>({});
+  const [priceCur, setPriceCur] = useState<'USD' | 'JMD'>('USD');
+  const [jmdStr, setJmdStr] = useState('');
+  const [jmdRate, setJmdRate] = useState(() => Number(localStorage.getItem('pm_stock_jmd_rate')) || 0);
   const [schedule, setSchedule] = useState<Installment[]>([]);
   const [plan, setPlan] = useState({ count: 3, start: '', every: 'monthly' as 'weekly' | 'biweekly' | 'monthly' });
 
@@ -264,6 +269,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     if (!item) return;
     setF({ customer_id: 'new', name: '', phone: '', email: '', referred_by: 'none', actual_price: item.website_price, payment_method: 'Cash',
       sold_as_trade: false, trade_in_request_id: 'none', trade_credit: 0, is_payment_plan: false, deposit: 0, warranty_days: item.warranty_days, notes: '', apply_loyalty: true });
+    setPriceCur('USD'); setJmdStr('');
     setSchedule([]);
     Promise.all([
       db.from('customers').select('id, name, phone, email').order('name'),
@@ -282,6 +288,21 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
 
   if (!item) return null;
   const set = (k: string, v: any) => setF((x: any) => ({ ...x, [k]: v }));
+  const effRate = jmdRate || partsRate || 157;
+  const switchCur = (cur: 'USD' | 'JMD') => {
+    if (cur === priceCur) return;
+    if (cur === 'JMD') setJmdStr(f.actual_price ? String(Math.round(Number(f.actual_price) * effRate)) : '');
+    else if (jmdStr) set('actual_price', Math.round((Number(jmdStr) / effRate) * 100) / 100);
+    setPriceCur(cur);
+  };
+  const setJmdPrice = (v: string) => {
+    setJmdStr(v);
+    set('actual_price', Math.round(((Number(v) || 0) / effRate) * 100) / 100);
+  };
+  const changeRate = (v: string) => {
+    const r = Number(v) || 0;
+    setJmdRate(r); localStorage.setItem('pm_stock_jmd_rate', String(r));
+  };
   const loyalty = bestLoyalty(rules, counts.purchases, counts.referrals, Number(f.actual_price) || 0);
   const discount = f.apply_loyalty && loyalty ? loyalty.amount : 0;
   const soldFor = Math.max(0, (Number(f.actual_price) || 0) - discount);
@@ -338,7 +359,28 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
               </Select></div>
           </>}
           <div><Label>Website price</Label><Input disabled value={usd(item.website_price)} /></div>
-          <div><Label>Actual selling price (USD)</Label><Input type="number" value={f.actual_price} onChange={e => set('actual_price', e.target.value)} /></div>
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <Label>Actual selling price</Label>
+              <div className="flex rounded-md border overflow-hidden text-xs">
+                {(['USD', 'JMD'] as const).map(c => (
+                  <button key={c} type="button" onClick={() => switchCur(c)}
+                    className={`px-2 py-0.5 ${priceCur === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{c}</button>
+                ))}
+              </div>
+            </div>
+            {priceCur === 'USD'
+              ? <Input type="number" value={f.actual_price} onChange={e => set('actual_price', e.target.value)} />
+              : <Input type="number" value={jmdStr} onChange={e => setJmdPrice(e.target.value)} />}
+            {priceCur === 'JMD' && (
+              <div className="flex items-center justify-between gap-2 mt-1 text-xs text-muted-foreground">
+                <span>= {usd(Number(f.actual_price) || 0)} (USD)</span>
+                <span className="flex items-center gap-1">Rate
+                  <Input type="number" className="h-6 w-20 text-xs" value={jmdRate || ''} placeholder={String(partsRate)} onChange={e => changeRate(e.target.value)} />
+                  JMD/USD</span>
+              </div>
+            )}
+          </div>
           <div className="col-span-2 rounded border p-2">
             {loyalty ? (
               <div className="flex items-center gap-2"><Switch checked={f.apply_loyalty} onCheckedChange={v => set('apply_loyalty', v)} />
