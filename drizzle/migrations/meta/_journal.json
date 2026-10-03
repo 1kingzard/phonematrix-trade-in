@@ -8,6 +8,13 @@
       "when": 1790985273368,
       "tag": "0000_scraper_sources_and_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790987010414,
+      "tag": "0001_device_images_and_bm_markup",
+      "breakpoints": true
     }
   ]
 }
