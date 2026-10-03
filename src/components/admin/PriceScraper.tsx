@@ -30,7 +30,7 @@ interface ScrapedRow {
   scraped_at: string;
 }
 
-interface DeviceOpt { id: string; brand: string; model: string; storage: string; condition: string; }
+interface DeviceOpt { id: string; brand: string; model: string; storage: string; condition: string; price: number; }
 
 const PriceScraper: React.FC = () => {
   const { toast } = useToast();
@@ -54,7 +54,7 @@ const PriceScraper: React.FC = () => {
     const [{ data: s }, { data: r }, { data: d }] = await Promise.all([
       supabase.from('scraper_settings').select('*').limit(1).maybeSingle(),
       supabase.from('scraped_prices').select('*').order('scraped_at', { ascending: false }).limit(500),
-      supabase.from('devices').select('id,brand,model,storage,condition').order('brand').order('model'),
+      supabase.from('devices').select('id,brand,model,storage,condition,price').order('brand').order('model'),
     ]);
     if (s) {
       const x = s as any;
@@ -132,6 +132,18 @@ const PriceScraper: React.FC = () => {
       return [r.brand, r.model, r.storage, r.condition].some(v => (v || '').toLowerCase().includes(q));
     });
   }, [rows, search, statusFilter]);
+
+  // Column label depends on which source is in view: Swappa rows are trade-in
+  // offers, Back Market rows are our resale price.
+  const priceColLabel = useMemo(() => {
+    const hasSwappa = filtered.some(r => (r.source || '').toLowerCase().includes('swappa'));
+    const hasBm = filtered.some(r => (r.source || '').toLowerCase().includes('back'));
+    if (hasSwappa && hasBm) return 'Trade-in / Your price $';
+    if (hasBm) return 'Your sell price $';
+    return 'Trade-in $';
+  }, [filtered]);
+
+  const isBm = (r: ScrapedRow) => (r.source || '').toLowerCase().includes('back');
 
   const approve = async (r: ScrapedRow) => {
     const matchId = matchEdit[r.id] || findMatch(r);
@@ -237,7 +249,8 @@ const PriceScraper: React.FC = () => {
                   <TableHead>Storage</TableHead>
                   <TableHead>Condition</TableHead>
                   <TableHead>Market $</TableHead>
-                  <TableHead>Trade-in $</TableHead>
+                  <TableHead>{priceColLabel}</TableHead>
+                  <TableHead>On site now</TableHead>
                   <TableHead>Match device</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead></TableHead>
@@ -247,6 +260,9 @@ const PriceScraper: React.FC = () => {
                 {filtered.map(r => {
                   const auto = findMatch(r);
                   const matchVal = matchEdit[r.id] ?? auto;
+                  const current = devices.find(d => d.id === matchVal);
+                  const suggested = Number(priceEdit[r.id] ?? r.suggested_price_usd);
+                  const delta = current && isFinite(suggested) ? suggested - current.price : null;
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
@@ -258,9 +274,33 @@ const PriceScraper: React.FC = () => {
                       <TableCell>${r.market_price_usd}</TableCell>
                       <TableCell>
                         {r.status === 'pending' ? (
-                          <Input type="number" className="w-24" value={priceEdit[r.id] ?? r.suggested_price_usd}
-                            onChange={e => setPriceEdit({ ...priceEdit, [r.id]: e.target.value })} />
-                        ) : `$${r.suggested_price_usd}`}
+                          <div>
+                            <Input type="number" className="w-24" value={priceEdit[r.id] ?? r.suggested_price_usd}
+                              onChange={e => setPriceEdit({ ...priceEdit, [r.id]: e.target.value })} />
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {isBm(r) ? 'your sell price' : 'trade-in offer'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            ${r.suggested_price_usd}
+                            <div className="text-[10px] text-muted-foreground">
+                              {isBm(r) ? 'your sell price' : 'trade-in offer'}
+                            </div>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {current ? (
+                          <div>
+                            <div className="tabular-nums">${current.price}</div>
+                            {delta !== null && delta !== 0 && r.status === 'pending' && (
+                              <div className={`text-[10px] ${delta > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {delta > 0 ? '↑' : '↓'} ${Math.abs(delta).toFixed(2)} vs new
+                              </div>
+                            )}
+                          </div>
+                        ) : '—'}
                       </TableCell>
                       <TableCell>
                         {r.status === 'pending' ? (
@@ -291,7 +331,7 @@ const PriceScraper: React.FC = () => {
                   );
                 })}
                 {!filtered.length && (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No listings. Click "Scrape Now" above.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No listings. Click "Scrape Now" above.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
