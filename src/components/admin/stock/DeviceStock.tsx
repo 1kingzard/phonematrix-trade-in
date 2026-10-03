@@ -268,6 +268,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     if (!item) return;
     setF({ customer_id: 'new', name: '', phone: '', email: '', referred_by: 'none', actual_price: item.website_price, payment_method: 'Cash',
       sold_as_trade: false, trade_in_request_id: 'none', trade_credit: 0, is_payment_plan: false, deposit: 0, warranty_days: item.warranty_days, notes: '', apply_loyalty: true });
+    setPriceCur('USD'); setJmdStr('');
     setSchedule([]);
     Promise.all([
       db.from('customers').select('id, name, phone, email').order('name'),
