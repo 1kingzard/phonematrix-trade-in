@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, ChevronRight, Headphones, Search, ShieldCheck, Smartphone, Truck, Watch, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Search, ShieldCheck, Smartphone, Truck, X } from 'lucide-react';
 import Header from '@/components/Header';
 import DeviceImage from '@/components/DeviceImage';
 import CatalogCurrency, { useCatalogCurrency } from '@/components/CatalogCurrency';
@@ -30,7 +30,7 @@ const PriceList = () => {
   const models = useMemo(() => {
     const matches = group.filter(d => (grade === ALL || d.Condition === grade) && (storage === ALL || d.Storage === storage) && `${d.Brand} ${d.Model} ${d.Storage}`.toLowerCase().includes(search.toLowerCase()));
     const map = new Map<string, DeviceData>();
-    matches.forEach(d => { const key = `${d.Brand}|${d.Model}`; if (!map.has(key) || map.get(key)!.Price > d.Price) map.set(key, d); });
+    matches.forEach(d => { const key = `${d.Brand}|${d.Model}`; const current = map.get(key); if (!current || current.Price > d.Price) map.set(key, d); });
     const results = [...map.values()];
     if (sort === 'price-low') results.sort((a, b) => a.Price - b.Price);
     else if (sort === 'price-high') results.sort((a, b) => b.Price - a.Price);

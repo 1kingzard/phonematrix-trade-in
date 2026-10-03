@@ -1,95 +1,23 @@
-
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Trash2 } from 'lucide-react';
-import { useCart } from '../contexts/CartContext';
-import { useExchangeRate } from '../services/deviceDataService';
-import { calcTotalJMD } from '@/hooks/useExchangeRate';
+import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
+import { useCatalogCurrency } from '@/components/CatalogCurrency';
+import { calcBreakdown, formatJMD, formatUSD, useExchangeRate } from '@/hooks/useExchangeRate';
+import { productPath } from '@/lib/catalog';
 
-interface CartSheetProps {
-  currency: 'USD' | 'JMD';
-}
-
-const CartSheet: React.FC<CartSheetProps> = ({ currency }) => {
+export default function CartSheet() {
   const { items, removeFromCart, clearCart, itemCount, getTotalValue } = useCart();
-  const { exchangeRate } = useExchangeRate();
-
-  const formatPrice = (price: number) => {
-    const priceInCurrency = currency === 'USD' ? price : calcTotalJMD(price, exchangeRate);
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(priceInCurrency);
-  };
-
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="relative">
-          <ShoppingCart className="h-4 w-4" />
-          {itemCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-              {itemCount}
-            </Badge>
-          )}
-        </Button>
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Shopping Cart ({itemCount} items)</SheetTitle>
-        </SheetHeader>
-        
-        <div className="mt-6 space-y-4">
-          {items.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Your cart is empty</p>
-          ) : (
-            <>
-              {items.map((item) => (
-                <div key={item.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{item.device.Brand} {item.device.Model}</h3>
-                      <p className="text-sm text-gray-600">
-                        {item.device.Storage} • {item.device.Color} • {item.device.Condition}
-                      </p>
-                      <p className="font-bold text-[#d81570]">{formatPrice(item.device.Price)}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              
-              <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="font-bold text-lg">Total: {formatPrice(getTotalValue(currency, exchangeRate))}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <Button className="w-full bg-[#d81570] hover:bg-[#e83a8e]">
-                    Proceed to Checkout
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={clearCart}>
-                    Clear Cart
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-};
-
-export default CartSheet;
+  const [currency] = useCatalogCurrency();
+  const { rate } = useExchangeRate();
+  const money = (v: number) => currency === 'JMD' ? formatJMD(v) : formatUSD(v);
+  return <Sheet><SheetTrigger asChild><Button variant="ghost" size="icon" className="relative shrink-0" title="View cart" aria-label={`Cart, ${itemCount} items`}><ShoppingCart className="h-5 w-5" />{itemCount > 0 && <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center px-0.5">{itemCount}</span>}</Button></SheetTrigger>
+    <SheetContent className="flex flex-col w-full sm:max-w-md"><SheetHeader><SheetTitle>Your cart ({itemCount})</SheetTitle></SheetHeader>
+      <div className="flex-1 overflow-auto py-6 space-y-4">{!items.length ? <div className="text-center py-16"><ShoppingCart className="h-9 w-9 mx-auto text-muted-foreground mb-4" /><p>Your cart is empty</p><p className="text-sm text-muted-foreground mt-1">Browse devices to add one.</p></div> : items.map(item => {
+        const b = calcBreakdown(item.device.Price, rate);
+        return <div key={item.id} className="border-b border-border pb-4 flex justify-between gap-3"><div className="min-w-0"><Link to={productPath(item.device)} className="font-medium hover:underline">{item.device.Brand} {item.device.Model}</Link><p className="text-xs text-muted-foreground mt-1">{item.device.Storage} · {item.device.Condition} · {item.device.Color || 'Default'}</p><p className="font-semibold mt-2">{money(currency === 'JMD' ? b.totalJmd : item.device.Price)}</p>{currency === 'JMD' && <p className="text-xs text-muted-foreground">Device {formatJMD(b.deviceJmd)} + estimated shipping {formatJMD(b.shippingJmd)}</p>}</div><Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)} title="Remove from cart" aria-label={`Remove ${item.device.Model}`}><Trash2 className="h-4 w-4" /></Button></div>;
+      })}</div>
+      {items.length > 0 && <div className="border-t border-border pt-5 space-y-4"><div className="flex justify-between text-lg font-semibold"><span>{currency === 'JMD' ? 'Estimated total' : 'Device total'}</span><span>{money(getTotalValue(currency, rate))}</span></div>{currency === 'JMD' && <p className="text-xs text-muted-foreground">Includes estimated shipping to Jamaica. Final cost may vary.</p>}<p className="text-xs text-muted-foreground">Checkout is not available yet. Request a device from its product page.</p><div className="flex gap-2"><Button variant="outline" size="sm" onClick={clearCart}>Clear cart</Button><Button size="sm" asChild className="ml-auto"><Link to="/price-list">Browse devices <ArrowRight className="h-4 w-4 ml-1" /></Link></Button></div></div>}
+    </SheetContent></Sheet>;
+}

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings, Shield, Menu, X, Wrench } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import CartSheet from '@/components/CartSheet';
 import { cn } from '@/lib/utils';
 import { useSiteLogo } from '@/hooks/useSiteLogo';
 import { usePartsRole } from '@/hooks/usePartsRole';
@@ -18,7 +19,7 @@ import { usePartsRole } from '@/hooks/usePartsRole';
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/trade-in', label: 'Trade-In' },
-  { to: '/price-list', label: 'Price List' },
+  { to: '/price-list', label: 'Browse Devices' },
 ];
 
 const Header = () => {
@@ -52,7 +53,7 @@ const Header = () => {
 
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((l) => {
-            const active = location.pathname === l.to;
+            const active = location.pathname === l.to || (l.to === '/price-list' && location.pathname.startsWith('/devices/')); 
             return (
               <Link
                 key={l.to}
@@ -85,6 +86,7 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2">
+          <CartSheet />
           <ThemeToggle />
           {user ? (
             <DropdownMenu>
