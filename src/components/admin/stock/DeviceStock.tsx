@@ -260,7 +260,6 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
   const [counts, setCounts] = useState({ purchases: 0, referrals: 0 });
   const [f, setF] = useState<any>({});
   const [priceCur, setPriceCur] = useState<'USD' | 'JMD'>('USD');
-  const [jmdStr, setJmdStr] = useState('');
   const [jmdRate, setJmdRate] = useState(() => Number(localStorage.getItem('pm_stock_jmd_rate')) || 0);
   const [schedule, setSchedule] = useState<Installment[]>([]);
   const [plan, setPlan] = useState({ count: 3, start: '', every: 'monthly' as 'weekly' | 'biweekly' | 'monthly' });
@@ -269,7 +268,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     if (!item) return;
     setF({ customer_id: 'new', name: '', phone: '', email: '', referred_by: 'none', actual_price: item.website_price, payment_method: 'Cash',
       sold_as_trade: false, trade_in_request_id: 'none', trade_credit: 0, is_payment_plan: false, deposit: 0, warranty_days: item.warranty_days, notes: '', apply_loyalty: true });
-    setPriceCur('USD'); setJmdStr('');
+    setPriceCur('USD');
     setSchedule([]);
     Promise.all([
       db.from('customers').select('id, name, phone, email').order('name'),
@@ -289,20 +288,20 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
   if (!item) return null;
   const set = (k: string, v: any) => setF((x: any) => ({ ...x, [k]: v }));
   const effRate = jmdRate || partsRate || 157;
-  const switchCur = (cur: 'USD' | 'JMD') => {
-    if (cur === priceCur) return;
-    if (cur === 'JMD') setJmdStr(f.actual_price ? String(Math.round(Number(f.actual_price) * effRate)) : '');
-    else if (jmdStr) set('actual_price', Math.round((Number(jmdStr) / effRate) * 100) / 100);
-    setPriceCur(cur);
-  };
-  const setJmdPrice = (v: string) => {
-    setJmdStr(v);
-    set('actual_price', Math.round(((Number(v) || 0) / effRate) * 100) / 100);
-  };
+  const switchCur = (cur: 'USD' | 'JMD') => setPriceCur(cur);
+  const toJmd = (usdVal: any) => String(Math.round((Number(usdVal) || 0) * effRate));
+  const fromJmd = (v: string) => Math.round(((Number(v) || 0) / effRate) * 100) / 100;
   const changeRate = (v: string) => {
     const r = Number(v) || 0;
     setJmdRate(r); localStorage.setItem('pm_stock_jmd_rate', String(r));
   };
+  // Money input that shows JMD when the dialog is in JMD mode, storing USD internally
+  const moneyInput = (value: any, onUsd: (v: number) => void, key?: string) => (
+    priceCur === 'USD'
+      ? <Input key={key} type="number" value={value} onChange={e => onUsd(Number(e.target.value) || 0)} />
+      : <Input key={key} type="number" value={toJmd(value)} onChange={e => onUsd(fromJmd(e.target.value))} />
+  );
+  const curTag = priceCur === 'JMD' ? ' (JMD)' : ' (USD)';
   const loyalty = bestLoyalty(rules, counts.purchases, counts.referrals, Number(f.actual_price) || 0);
   const discount = f.apply_loyalty && loyalty ? loyalty.amount : 0;
   const soldFor = Math.max(0, (Number(f.actual_price) || 0) - discount);
@@ -342,6 +341,22 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     <Dialog open={!!item} onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Sell {item.brand} {item.model} {item.storage}</DialogTitle></DialogHeader>
+        <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Enter all amounts in</span>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md border overflow-hidden text-xs">
+              {(['USD', 'JMD'] as const).map(c => (
+                <button key={c} type="button" onClick={() => switchCur(c)}
+                  className={`px-3 py-1 ${priceCur === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{c}</button>
+              ))}
+            </div>
+            {priceCur === 'JMD' && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">Rate
+                <Input type="number" className="h-6 w-20 text-xs" value={jmdRate || ''} placeholder={String(partsRate)} onChange={e => changeRate(e.target.value)} />
+                JMD/USD</span>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="col-span-2"><Label>Buyer</Label>
             <Select value={f.customer_id} onValueChange={v => set('customer_id', v)}>
@@ -360,26 +375,9 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
           </>}
           <div><Label>Website price</Label><Input disabled value={usd(item.website_price)} /></div>
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <Label>Actual selling price</Label>
-              <div className="flex rounded-md border overflow-hidden text-xs">
-                {(['USD', 'JMD'] as const).map(c => (
-                  <button key={c} type="button" onClick={() => switchCur(c)}
-                    className={`px-2 py-0.5 ${priceCur === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{c}</button>
-                ))}
-              </div>
-            </div>
-            {priceCur === 'USD'
-              ? <Input type="number" value={f.actual_price} onChange={e => set('actual_price', e.target.value)} />
-              : <Input type="number" value={jmdStr} onChange={e => setJmdPrice(e.target.value)} />}
-            {priceCur === 'JMD' && (
-              <div className="flex items-center justify-between gap-2 mt-1 text-xs text-muted-foreground">
-                <span>= {usd(Number(f.actual_price) || 0)} (USD)</span>
-                <span className="flex items-center gap-1">Rate
-                  <Input type="number" className="h-6 w-20 text-xs" value={jmdRate || ''} placeholder={String(partsRate)} onChange={e => changeRate(e.target.value)} />
-                  JMD/USD</span>
-              </div>
-            )}
+            <Label>Actual selling price{curTag}</Label>
+            {moneyInput(f.actual_price, v => set('actual_price', v))}
+            {priceCur === 'JMD' && <p className="mt-1 text-xs text-muted-foreground">= {usd(Number(f.actual_price) || 0)} (USD)</p>}
           </div>
           <div className="col-span-2 rounded border p-2">
             {loyalty ? (
@@ -400,11 +398,11 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="none">None</SelectItem>{trades.map(t => <SelectItem key={t.id} value={t.id}>{t.request_code} · {t.customer_name}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><Label>Trade credit (USD)</Label><Input type="number" value={f.trade_credit} onChange={e => set('trade_credit', e.target.value)} /></div>
+            <div><Label>Trade credit{curTag}</Label>{moneyInput(f.trade_credit, v => set('trade_credit', v))}</div>
           </>}
           <div className="col-span-2 flex items-center gap-2"><Switch checked={f.is_payment_plan} onCheckedChange={v => set('is_payment_plan', v)} /><Label>Monthly / payment plan</Label></div>
           {f.is_payment_plan && <div className="col-span-2 grid grid-cols-4 gap-2 items-end border rounded p-2">
-            <div><Label>Deposit</Label><Input type="number" value={f.deposit} onChange={e => set('deposit', e.target.value)} /></div>
+            <div><Label>Deposit{curTag}</Label>{moneyInput(f.deposit, v => set('deposit', v))}</div>
             <div><Label>Payments</Label><Input type="number" value={plan.count} onChange={e => setPlan({ ...plan, count: Number(e.target.value) })} /></div>
             <div><Label>First due</Label><Input type="date" value={plan.start} onChange={e => setPlan({ ...plan, start: e.target.value })} /></div>
             <div><Label>Every</Label>
@@ -412,17 +410,19 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="weekly">Week</SelectItem><SelectItem value="biweekly">2 weeks</SelectItem><SelectItem value="monthly">Month</SelectItem></SelectContent>
               </Select></div>
-            <div className="col-span-4 flex items-center justify-between"><span>To be paid over time: <b>{usd(toFinance)}</b></span>
+            <div className="col-span-4 flex items-center justify-between"><span>To be paid over time: <b>{usd(toFinance)}</b>{priceCur === 'JMD' && <span className="text-muted-foreground"> (JMD {Number(toJmd(toFinance)).toLocaleString()})</span>}</span>
               <Button size="sm" variant="outline" onClick={() => setSchedule(buildSchedule(toFinance, plan.count, plan.start, plan.every))} disabled={!plan.start}>Build schedule</Button></div>
             {schedule.map((s, k) => (
               <div key={k} className="col-span-4 flex gap-2">
                 <Input type="date" value={s.due_date} onChange={e => setSchedule(schedule.map((x, j) => j === k ? { ...x, due_date: e.target.value } : x))} />
-                <Input type="number" value={s.amount} onChange={e => setSchedule(schedule.map((x, j) => j === k ? { ...x, amount: Number(e.target.value) } : x))} />
+                {moneyInput(s.amount, v => setSchedule(schedule.map((x, j) => j === k ? { ...x, amount: v } : x)), `sched-${k}`)}
               </div>
             ))}
           </div>}
           <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost))}</b> (before repairs)</div>
+          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost))}</b> (before repairs)
+            {priceCur === 'JMD' && <p className="text-xs text-muted-foreground mt-1">Sold for JMD {Number(toJmd(soldFor)).toLocaleString()} · Profit JMD {Number(toJmd(soldFor - Number(item.purchase_cost))).toLocaleString()}</p>}
+          </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Record sale</Button></DialogFooter>
       </DialogContent>
