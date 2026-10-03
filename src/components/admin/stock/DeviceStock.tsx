@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { GRADE_ORDER } from '@/lib/tradeInRequests';
 import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment } from '@/lib/stock';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
+import { useExchangeRate, SHIPPING_RATE, formatJMD } from '@/hooks/useExchangeRate';
+
+const autoShip = (price: any) => Math.round((Number(price) || 0) * SHIPPING_RATE * 100) / 100;
 import SaleDetails from './SaleDetails';
 
 const db = supabase as any;
@@ -37,11 +40,12 @@ const DeviceStock = () => {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<any[]>([]);
   const [pick, setPick] = useState({ brand: '', model: '', storage: '', condition: '' });
+  const { rate: liveRate } = useExchangeRate();
 
   const load = async () => {
     const [s, sl] = await Promise.all([
       db.from('device_stock').select('*, device_repairs(cost)').order('created_at', { ascending: false }),
-      db.from('device_sales').select('id, stock_id, sold_for, customers(name)'),
+      db.from('device_sales').select('id, stock_id, sold_for, sold_in, shipping_cost, customers(name)'),
     ]);
     setItems(s.data || []); setSales(sl.data || []);
   };
@@ -60,7 +64,7 @@ const DeviceStock = () => {
 
   const pickCatalogDevice = (d: any) => {
     if (!d) return;
-    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', condition: d.condition || prev.condition, website_price: d.price });
+    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', condition: d.condition || prev.condition, website_price: d.price, shipping_cost: autoShip(d.price) });
   };
 
   const saleFor = (id: string) => sales.find(s => s.stock_id === id);
@@ -70,7 +74,7 @@ const DeviceStock = () => {
   const stats = useMemo(() => ({
     inStock: items.filter(i => i.status === 'in_stock').length,
     value: items.filter(i => i.status !== 'sold').reduce((a, i) => a + Number(i.purchase_cost) + Number(i.shipping_cost || 0) + repairCost(i), 0),
-    profit: items.filter(i => i.status === 'sold').reduce((a, i) => a + Number(saleFor(i.id)?.sold_for || 0) - Number(i.purchase_cost) - Number(i.shipping_cost || 0) - repairCost(i), 0),
+    profit: items.filter(i => i.status === 'sold').reduce((a, i) => { const sl = saleFor(i.id); return a + Number(sl?.sold_for || 0) - Number(i.purchase_cost) - (sl ? Number(sl.shipping_cost || 0) : Number(i.shipping_cost || 0)) - repairCost(i); }, 0),
   }), [items, sales]);
 
   const openEdit = async (it: any | null) => {
@@ -137,10 +141,10 @@ const DeviceStock = () => {
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-muted-foreground border-b"><tr>
-              <th className="py-2"></th><th>Device</th><th>Condition</th><th>IMEI / Serial</th><th className="text-right">Cost</th><th className="text-right">Website</th><th>Status</th><th className="text-right">Sold for</th><th></th></tr></thead>
+              <th className="py-2"></th><th>Device</th><th>Condition</th><th>IMEI / Serial</th><th className="text-right">Cost</th><th className="text-right">Shipping</th><th className="text-right">Website (US / Jamaica)</th><th>Status</th><th className="text-right">Sold for</th><th></th></tr></thead>
             <tbody>
               {filtered.map(it => {
-                const sale = saleFor(it.id); const cost = Number(it.purchase_cost) + Number(it.shipping_cost || 0) + repairCost(it);
+                const sale = saleFor(it.id); const cost = Number(it.purchase_cost) + repairCost(it);
                 return (
                   <tr key={it.id} className="border-b last:border-0">
                     <td className="py-2">{it.photos?.[0] ? <img src={it.photos[0]} className="h-10 w-10 rounded object-cover" alt="" /> : <div className="h-10 w-10 rounded bg-muted" />}</td>
@@ -148,9 +152,10 @@ const DeviceStock = () => {
                     <td>{it.condition}{it.battery_health != null && <div className="text-xs text-muted-foreground">Battery {it.battery_health}%</div>}</td>
                     <td className="text-xs">{it.imei || '—'}<br />{it.serial || ''}</td>
                     <td className="text-right tabular-nums">{usd(cost)}</td>
-                    <td className="text-right tabular-nums">{usd(it.website_price)}</td>
+                    <td className="text-right tabular-nums">{usd(it.shipping_cost || 0)}</td>
+                    <td className="text-right tabular-nums">{usd(it.website_price)}<div className="text-xs text-muted-foreground">{formatJMD((Number(it.website_price) + Number(it.shipping_cost || 0)) * liveRate)}</div></td>
                     <td><Badge variant={it.status === 'sold' ? 'secondary' : 'outline'}>{STOCK_STATUSES[it.status] || it.status}</Badge></td>
-                    <td className="text-right tabular-nums">{sale ? <>{usd(sale.sold_for)}<div className="text-xs text-muted-foreground">{sale.customers?.name}</div></> : '—'}</td>
+                    <td className="text-right tabular-nums">{sale ? <>{usd(sale.sold_for)} <Badge variant="outline" className="ml-1 text-[10px]">{sale.sold_in === 'JM' ? 'JA' : 'US'}</Badge><div className="text-xs text-muted-foreground">{sale.customers?.name}</div></> : '—'}</td>
                     <td className="text-right whitespace-nowrap">
                       {sale ? <Button size="sm" variant="ghost" onClick={() => setDetailId(sale.id)}><Eye className="h-4 w-4" /></Button>
                         : <Button size="sm" variant="ghost" onClick={() => setSelling(it)} title="Mark as sold"><ShoppingBag className="h-4 w-4" /></Button>}
@@ -210,11 +215,12 @@ const DeviceStock = () => {
               <div><Label>Serial</Label><Input value={editing.serial || ''} onChange={e => set('serial', e.target.value)} /></div>
               <div><Label>Battery health (%)</Label><Input type="number" min={0} max={100} value={editing.battery_health ?? ''} onChange={e => set('battery_health', e.target.value)} placeholder="e.g. 87" /></div>
               <div><Label>Purchased for (USD)</Label><Input type="number" value={editing.purchase_cost} onChange={e => set('purchase_cost', e.target.value)} /></div>
-              <div><Label>Shipping cost (USD)</Label><Input type="number" value={editing.shipping_cost ?? 0} onChange={e => set('shipping_cost', e.target.value)} />
-                <p className="mt-1 text-xs text-muted-foreground">Edit anytime if the actual amount paid was less than quoted.</p></div>
+              <div><Label>Shipping to Jamaica (USD)</Label><Input type="number" value={editing.shipping_cost ?? 0} onChange={e => set('shipping_cost', e.target.value)} />
+                <p className="mt-1 text-xs text-muted-foreground">Auto-filled from the website's shipping ({usd(autoShip(editing.website_price))}). Lower it if you actually paid less.</p></div>
               <div><Label>Purchased from</Label><Input value={editing.purchased_from || ''} onChange={e => set('purchased_from', e.target.value)} /></div>
               <div><Label>Purchase date</Label><Input type="date" value={editing.purchase_date || ''} onChange={e => set('purchase_date', e.target.value)} /></div>
-              <div><Label>Website selling price (USD)</Label><Input type="number" value={editing.website_price} onChange={e => set('website_price', e.target.value)} /></div>
+              <div><Label>Website selling price (USD)</Label><Input type="number" value={editing.website_price} onChange={e => { const v = e.target.value; setEditing((p: any) => ({ ...p, website_price: v, shipping_cost: Number(p.shipping_cost || 0) === autoShip(p.website_price) ? autoShip(v) : p.shipping_cost })); }} />
+                <p className="mt-1 text-xs text-muted-foreground">Jamaica website price: {formatJMD((Number(editing.website_price) + Number(editing.shipping_cost || 0)) * liveRate)} (incl. shipping)</p></div>
               <div><Label>Warranty (days)</Label><Input type="number" value={editing.warranty_days} onChange={e => set('warranty_days', e.target.value)} /></div>
               <div className="col-span-2"><Label>Photos</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
@@ -239,7 +245,9 @@ const DeviceStock = () => {
                 </div></div>
               <div className="col-span-2"><Label>Notes</Label><Textarea value={editing.notes || ''} onChange={e => set('notes', e.target.value)} /></div>
               <div className="col-span-2 bg-muted/50 rounded p-3 text-sm">
-                Total cost (incl. shipping): <b>{usd(Number(editing.purchase_cost) + Number(editing.shipping_cost || 0) + repairs.reduce((a, r) => a + Number(r.cost), 0))}</b> · Expected profit at website price: <b>{usd(Number(editing.website_price) - Number(editing.purchase_cost) - Number(editing.shipping_cost || 0) - repairs.reduce((a, r) => a + Number(r.cost), 0))}</b>
+                Cost (purchase + repairs): <b>{usd(Number(editing.purchase_cost) + repairs.reduce((a, r) => a + Number(r.cost), 0))}</b> · Shipping: <b>{usd(editing.shipping_cost || 0)}</b><br />
+                US: website <b>{usd(editing.website_price)}</b>, profit <b>{usd(Number(editing.website_price) - Number(editing.purchase_cost) - repairs.reduce((a, r) => a + Number(r.cost), 0))}</b><br />
+                Jamaica: website <b>{formatJMD((Number(editing.website_price) + Number(editing.shipping_cost || 0)) * liveRate)}</b>, profit after shipping <b>{formatJMD((Number(editing.website_price) - Number(editing.purchase_cost) - repairs.reduce((a, r) => a + Number(r.cost), 0)) * liveRate)}</b>
               </div>
             </div>
           )}
@@ -262,6 +270,9 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
   const [counts, setCounts] = useState({ purchases: 0, referrals: 0 });
   const [f, setF] = useState<any>({});
   const [priceCur, setPriceCur] = useState<'USD' | 'JMD'>('USD');
+  const [soldIn, setSoldIn] = useState<'US' | 'JM'>('US');
+  const [shipCost, setShipCost] = useState(0);
+  const { rate: liveRate } = useExchangeRate();
   const [jmdRate, setJmdRate] = useState(() => Number(localStorage.getItem('pm_stock_jmd_rate')) || 0);
   const [schedule, setSchedule] = useState<Installment[]>([]);
   const [plan, setPlan] = useState({ count: 3, start: '', every: 'monthly' as 'weekly' | 'biweekly' | 'monthly' });
@@ -270,7 +281,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     if (!item) return;
     setF({ customer_id: 'new', name: '', phone: '', email: '', referred_by: 'none', actual_price: item.website_price, payment_method: 'Cash',
       sold_as_trade: false, trade_in_request_id: 'none', trade_credit: 0, is_payment_plan: false, deposit: 0, warranty_days: item.warranty_days, notes: '', apply_loyalty: true });
-    setPriceCur('USD');
+    setPriceCur('USD'); setSoldIn('US'); setShipCost(Number(item.shipping_cost) || 0);
     setSchedule([]);
     Promise.all([
       db.from('customers').select('id, name, phone, email').order('name'),
@@ -289,7 +300,16 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
 
   if (!item) return null;
   const set = (k: string, v: any) => setF((x: any) => ({ ...x, [k]: v }));
-  const effRate = jmdRate || partsRate || 157;
+  const effRate = jmdRate || liveRate || partsRate || 157;
+  const jm = soldIn === 'JM';
+  const money = (v: any) => (jm || priceCur === 'JMD') ? `J$${Number(toJmd(v)).toLocaleString()}` : usd(v);
+  const chooseMarket = (m: 'US' | 'JM') => {
+    setSoldIn(m);
+    setPriceCur(m === 'JM' ? 'JMD' : 'USD');
+    set('actual_price', m === 'JM' ? Math.round((Number(item.website_price) + shipCost) * 100) / 100 : Number(item.website_price));
+  };
+  const saleShip = jm ? shipCost : 0;
+  const profit = (sf: number) => sf - Number(item.purchase_cost) - saleShip;
   const switchCur = (cur: 'USD' | 'JMD') => setPriceCur(cur);
   const toJmd = (usdVal: any) => String(Math.round((Number(usdVal) || 0) * effRate));
   const fromJmd = (v: string) => Math.round(((Number(v) || 0) / effRate) * 100) / 100;
@@ -325,7 +345,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     }
     const tradeId = f.sold_as_trade && f.trade_in_request_id !== 'none' ? f.trade_in_request_id : null;
     const { data: sale, error } = await db.from('device_sales').insert({
-      stock_id: item.id, customer_id: customerId, listed_price: Number(item.website_price) || 0, actual_price: Number(f.actual_price) || 0,
+      stock_id: item.id, customer_id: customerId, listed_price: jm ? Number(item.website_price) + shipCost : Number(item.website_price) || 0, sold_in: soldIn, shipping_cost: saleShip, rate_used: effRate, actual_price: Number(f.actual_price) || 0,
       sold_for: soldFor, loyalty_rule_id: discount ? loyalty!.rule.id : null, loyalty_discount: discount,
       sold_as_trade: f.sold_as_trade, trade_in_request_id: tradeId, trade_credit: f.sold_as_trade ? Number(f.trade_credit) || 0 : 0,
       payment_method: f.payment_method, is_payment_plan: f.is_payment_plan, plan_total: f.is_payment_plan ? soldFor : 0,
@@ -334,7 +354,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     if (error) return toast({ title: 'Sale failed', description: error.message, variant: 'destructive' });
     if (f.is_payment_plan && schedule.length) await db.from('sale_installments').insert(schedule.map(s => ({ ...s, sale_id: sale.id })));
     if (tradeId) await db.from('trade_in_requests').update({ customer_id: customerId }).eq('id', tradeId);
-    await db.from('device_stock').update({ status: 'sold' }).eq('id', item.id);
+    await db.from('device_stock').update({ status: 'sold', ...(jm ? { shipping_cost: shipCost } : {}) }).eq('id', item.id);
     toast({ title: 'Sale recorded' });
     onSold(sale.id);
   };
@@ -344,10 +364,28 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Sell {item.brand} {item.model} {item.storage}</DialogTitle></DialogHeader>
         <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
-          <span className="text-muted-foreground">Enter all amounts in</span>
+          <span className="font-medium">Where was it sold?</span>
+          <div className="flex rounded-md border overflow-hidden text-xs">
+            {([['US', 'United States'], ['JM', 'Jamaica']] as const).map(([k, l]) => (
+              <button key={k} type="button" onClick={() => chooseMarket(k)}
+                className={`px-3 py-1 ${soldIn === k ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{l}</button>
+            ))}
+          </div>
+        </div>
+        {jm && (
+          <div className="grid grid-cols-3 gap-2 rounded-md border p-3 text-sm">
+            <div><div className="text-xs text-muted-foreground">Device (website)</div><b>{money(item.website_price)}</b></div>
+            <div><div className="text-xs text-muted-foreground">Shipping to Jamaica (JMD)</div>
+              <Input type="number" className="h-8" value={toJmd(shipCost)} onChange={e => { const s2 = fromJmd(e.target.value); setShipCost(s2); }} /></div>
+            <div><div className="text-xs text-muted-foreground">Jamaica website price</div><b>{money(Number(item.website_price) + shipCost)}</b></div>
+            <p className="col-span-3 text-xs text-muted-foreground">Shipping is counted as a cost and taken out of profit. Lower it if you actually paid less.</p>
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">{jm ? 'All amounts in JMD' : 'Enter all amounts in'}</span>
           <div className="flex items-center gap-2">
             <div className="flex rounded-md border overflow-hidden text-xs">
-              {(['USD', 'JMD'] as const).map(c => (
+              {(jm ? (['JMD'] as const) : (['USD', 'JMD'] as const)).map(c => (
                 <button key={c} type="button" onClick={() => switchCur(c)}
                   className={`px-3 py-1 ${priceCur === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{c}</button>
               ))}
@@ -375,16 +413,16 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
                 <SelectContent><SelectItem value="none">Nobody</SelectItem>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select></div>
           </>}
-          <div><Label>Website price</Label><Input disabled value={usd(item.website_price)} /></div>
+          <div><Label>{jm ? 'Jamaica website price (incl. shipping)' : 'Website price'}</Label><Input disabled value={money(jm ? Number(item.website_price) + shipCost : item.website_price)} /></div>
           <div>
             <Label>Actual selling price{curTag}</Label>
             {moneyInput(f.actual_price, v => set('actual_price', v))}
-            {priceCur === 'JMD' && <p className="mt-1 text-xs text-muted-foreground">= {usd(Number(f.actual_price) || 0)} (USD)</p>}
+            {priceCur === 'JMD' && !jm && <p className="mt-1 text-xs text-muted-foreground">= {usd(Number(f.actual_price) || 0)} (USD)</p>}
           </div>
           <div className="col-span-2 rounded border p-2">
             {loyalty ? (
               <div className="flex items-center gap-2"><Switch checked={f.apply_loyalty} onCheckedChange={v => set('apply_loyalty', v)} />
-                <span>Loyalty: <b>{loyalty.rule.name}</b> — −{usd(loyalty.amount)}</span></div>
+                <span>Loyalty: <b>{loyalty.rule.name}</b> — −{money(loyalty.amount)}</span></div>
             ) : <span className="text-muted-foreground">No loyalty discount ({counts.purchases} past purchases, {counts.referrals} referrals)</span>}
           </div>
           <div><Label>How they paid</Label>
@@ -412,7 +450,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="weekly">Week</SelectItem><SelectItem value="biweekly">2 weeks</SelectItem><SelectItem value="monthly">Month</SelectItem></SelectContent>
               </Select></div>
-            <div className="col-span-4 flex items-center justify-between"><span>To be paid over time: <b>{usd(toFinance)}</b>{priceCur === 'JMD' && <span className="text-muted-foreground"> (JMD {Number(toJmd(toFinance)).toLocaleString()})</span>}</span>
+            <div className="col-span-4 flex items-center justify-between"><span>To be paid over time: <b>{jm ? money(toFinance) : usd(toFinance)}</b>{priceCur === 'JMD' && !jm && <span className="text-muted-foreground"> (JMD {Number(toJmd(toFinance)).toLocaleString()})</span>}</span>
               <Button size="sm" variant="outline" onClick={() => setSchedule(buildSchedule(toFinance, plan.count, plan.start, plan.every))} disabled={!plan.start}>Build schedule</Button></div>
             {schedule.map((s, k) => (
               <div key={k} className="col-span-4 flex gap-2">
@@ -422,8 +460,11 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
             ))}
           </div>}
           <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost) - Number(item.shipping_cost || 0))}</b> (before repairs)
-            {priceCur === 'JMD' && <p className="text-xs text-muted-foreground mt-1">Sold for JMD {Number(toJmd(soldFor)).toLocaleString()} · Profit JMD {Number(toJmd(soldFor - Number(item.purchase_cost) - Number(item.shipping_cost || 0))).toLocaleString()}</p>}
+          <div className="col-span-2 bg-muted/50 rounded p-3 space-y-0.5">
+            <div>Sold for: <b>{money(soldFor)}</b></div>
+            <div className="text-muted-foreground">Purchase cost: −{money(item.purchase_cost)}{jm && <> · Shipping: −{money(saleShip)}</>}</div>
+            <div>Profit: <b>{money(profit(soldFor))}</b> (before repairs)</div>
+            {priceCur === 'JMD' && !jm && <p className="text-xs text-muted-foreground">= {usd(soldFor)} · profit {usd(profit(soldFor))} USD</p>}
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Record sale</Button></DialogFooter>
