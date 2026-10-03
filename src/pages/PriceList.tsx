@@ -9,7 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import PurchaseRequestModal from '@/components/PurchaseRequestModal';
-import { Search, Smartphone, X } from 'lucide-react';
+import { Search, Smartphone, X, ShoppingCart } from 'lucide-react';
+import CartSheet from '@/components/CartSheet';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 import Reveal from '@/components/Reveal';
 import DeviceImage from '@/components/DeviceImage';
 import { useExchangeRate, formatJMD, formatUSD, calcBreakdown } from '@/hooks/useExchangeRate';
@@ -62,6 +65,12 @@ const PriceList: React.FC = () => {
   useEffect(() => { try { localStorage.setItem('preferred_currency', currency); } catch {} }, [currency]);
 
   const [search, setSearch] = useState('');
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+  const handleAddToCart = (d: DeviceData) => {
+    addToCart({ ...d, Color: d.Colors?.[0] || '' } as DeviceData);
+    toast({ title: 'Added to cart', description: `${d.Brand} ${d.Model} ${d.Storage}` });
+  };
   const [os, setOs] = useState(ALL);
   const [brand, setBrand] = useState(ALL);
   const [model, setModel] = useState(ALL);
