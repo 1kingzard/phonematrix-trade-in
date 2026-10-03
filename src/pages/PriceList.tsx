@@ -1,286 +1,88 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useDeviceData, DeviceData, getUniqueValues } from '@/services/deviceDataService';
-import { useSiteMedia } from '@/services/mediaService';
+import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowRight, ChevronRight, Headphones, Search, ShieldCheck, Smartphone, Truck, Watch, X } from 'lucide-react';
 import Header from '@/components/Header';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import PurchaseRequestModal from '@/components/PurchaseRequestModal';
-import { Search, Smartphone, X, ShoppingCart } from 'lucide-react';
-import CartSheet from '@/components/CartSheet';
-import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
-import Reveal from '@/components/Reveal';
 import DeviceImage from '@/components/DeviceImage';
-import { useExchangeRate, formatJMD, formatUSD, calcBreakdown } from '@/hooks/useExchangeRate';
+import CatalogCurrency, { useCatalogCurrency } from '@/components/CatalogCurrency';
+import GradeGallery from '@/components/GradeGallery';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDeviceData, type DeviceData } from '@/services/deviceDataService';
+import { calcTotalJMD, formatJMD, formatUSD, useExchangeRate } from '@/hooks/useExchangeRate';
+import { deviceCategory, gradeOrder, platformOf, productPath } from '@/lib/catalog';
 
-const ALL = '__all__';
-
-const FlagUS = () => (
-  <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm" aria-hidden="true">
-    <rect width="24" height="16" fill="#fff" />
-    {[1,3,5,7,9,11,13].map(y => <rect key={y} y={y} width="24" height="1.23" fill="#b22234" />)}
-    <rect width="10" height="8.6" fill="#3c3b6e" />
-  </svg>
-);
-
-const FlagJM = () => (
-  <svg viewBox="0 0 24 16" className="w-5 h-3.5 rounded-sm shadow-sm overflow-hidden" aria-hidden="true">
-    <rect width="24" height="16" fill="#fed100" />
-    <polygon points="2,0 12,6.8 22,0" fill="#009b3a" />
-    <polygon points="2,16 12,9.2 22,16" fill="#009b3a" />
-    <polygon points="0,2 10.5,8 0,14" fill="#000" />
-    <polygon points="24,2 13.5,8 24,14" fill="#000" />
-  </svg>
-);
-
-const colorSwatch = (name: string): string => {
-  const lower = name.toLowerCase();
-  const map: Record<string, string> = {
-    black: '#1a1a1a', 'space black': '#0a0a0a', graphite: '#3a3a3a', midnight: '#1c2330',
-    silver: '#e3e3e3', white: '#f5f5f5', star: '#f5efe6', starlight: '#f5efe6', blanco: '#f5f5f5',
-    gold: '#d4af37', 'rose gold': '#e0bfb8',
-    blue: '#1e6fb8', 'alpine blue': '#5d7d9c', 'sierra blue': '#94b4c1',
-    'deep blue': '#1a3a5c', natural: '#c9c2b6',
-    'cosmic orange': '#d97342', orange: '#e87b2c',
-    red: '#c8202e', green: '#3a7d44', 'alpine green': '#576f5e',
-    purple: '#9a7bb0', 'dark purple': '#4a3957', 'deep purple': '#5e4870',
-    yellow: '#f3d35e', pink: '#f8c8d0',
-  };
-  for (const [k, v] of Object.entries(map)) if (lower.includes(k)) return v;
-  return '#9ca3af';
-};
-
-const PriceList: React.FC = () => {
-  const { devices, loading } = useDeviceData();
-  const { media } = useSiteMedia();
-  const logoUrl = media['logo']?.file_url;
-  const { rate, isFallback } = useExchangeRate();
-  const [currency, setCurrency] = useState<'USD' | 'JMD'>(() => {
-    try { return (localStorage.getItem('preferred_currency') as 'USD' | 'JMD') || 'USD'; } catch { return 'USD'; }
-  });
-  useEffect(() => { try { localStorage.setItem('preferred_currency', currency); } catch {} }, [currency]);
-
+const ALL = 'all';
+const PriceList = () => {
+  const { devices, loading, error } = useDeviceData();
+  const { rate } = useExchangeRate();
+  const [currency] = useCatalogCurrency();
+  const [params, setParams] = useSearchParams();
+  const platform = params.get('platform') || '';
+  const category = params.get('category') || '';
   const [search, setSearch] = useState('');
-  const { addToCart } = useCart();
-  const { toast } = useToast();
-  const handleAddToCart = (d: DeviceData) => {
-    addToCart({ ...d, Color: d.Colors?.[0] || '' } as DeviceData);
-    toast({ title: 'Added to cart', description: `${d.Brand} ${d.Model} ${d.Storage}` });
-  };
-  const [os, setOs] = useState(ALL);
-  const [brand, setBrand] = useState(ALL);
-  const [model, setModel] = useState(ALL);
-  const [condition, setCondition] = useState(ALL);
+  const [grade, setGrade] = useState(ALL);
   const [storage, setStorage] = useState(ALL);
-  const [color, setColor] = useState(ALL);
-  const [selected, setSelected] = useState<{ device: DeviceData; color: string } | null>(null);
-
-  const osOptions = useMemo(() => getUniqueValues(devices, 'OS'), [devices]);
-  const brandOptions = useMemo(
-    () => getUniqueValues(devices.filter(d => os === ALL || d.OS === os), 'Brand'),
-    [devices, os]
-  );
-  const modelOptions = useMemo(
-    () => getUniqueValues(devices.filter(d => (os === ALL || d.OS === os) && (brand === ALL || d.Brand === brand)), 'Model'),
-    [devices, os, brand]
-  );
-  const conditionOptions = useMemo(() => getUniqueValues(devices, 'Condition'), [devices]);
-  const storageOptions = useMemo(() => getUniqueValues(devices, 'Storage'), [devices]);
-  const colorOptions = useMemo(() => {
-    const set = new Set<string>();
-    devices.forEach(d => d.Colors.forEach(c => set.add(c)));
-    return Array.from(set).sort();
-  }, [devices]);
-
-  const filtered = useMemo(() => devices.filter(d => {
-    if (os !== ALL && d.OS !== os) return false;
-    if (brand !== ALL && d.Brand !== brand) return false;
-    if (model !== ALL && d.Model !== model) return false;
-    if (condition !== ALL && d.Condition !== condition) return false;
-    if (storage !== ALL && d.Storage !== storage) return false;
-    if (color !== ALL && !d.Colors.includes(color)) return false;
-    if (search && !`${d.Brand} ${d.Model} ${d.Storage}`.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [devices, os, brand, model, condition, storage, color, search]);
-
-  const clearFilters = () => {
-    setSearch(''); setOs(ALL); setBrand(ALL); setModel(ALL); setCondition(ALL); setStorage(ALL); setColor(ALL);
-  };
-  const hasFilters = search || os !== ALL || brand !== ALL || model !== ALL || condition !== ALL || storage !== ALL || color !== ALL;
-
-  const conditionColor = (c: string) => {
-    switch (c.toLowerCase()) {
-      case 'like new': return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30';
-      case 'good': return 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30';
-      case 'fair': return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30';
-      case 'poor': return 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
-        <div className="mb-8 md:mb-12 text-center">
-          {logoUrl && <img src={logoUrl} alt="Phone Matrix" className="h-12 mx-auto mb-4" />}
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
-            Device <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">Catalog</span>
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Browse our full inventory. Filter by what matters to you, then request a purchase in seconds.
-          </p>
+  const [sort, setSort] = useState('featured');
+  const choose = (p = '', c = '') => { setParams(p ? { platform: p, ...(c ? { category: c } : {}) } : {}); setGrade(ALL); setStorage(ALL); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const categories = useMemo(() => [...new Set(devices.filter(d => platformOf(d) === platform).map(deviceCategory))].sort(), [devices, platform]);
+  const group = useMemo(() => devices.filter(d => (!platform || platformOf(d) === platform) && (!category || deviceCategory(d) === category)), [devices, platform, category]);
+  const models = useMemo(() => {
+    const matches = group.filter(d => (grade === ALL || d.Condition === grade) && (storage === ALL || d.Storage === storage) && `${d.Brand} ${d.Model} ${d.Storage}`.toLowerCase().includes(search.toLowerCase()));
+    const map = new Map<string, DeviceData>();
+    matches.forEach(d => { const key = `${d.Brand}|${d.Model}`; if (!map.has(key) || map.get(key)!.Price > d.Price) map.set(key, d); });
+    const results = [...map.values()];
+    if (sort === 'price-low') results.sort((a, b) => a.Price - b.Price);
+    else if (sort === 'price-high') results.sort((a, b) => b.Price - a.Price);
+    else results.sort((a, b) => `${a.Brand} ${a.Model}`.localeCompare(`${b.Brand} ${b.Model}`));
+    return results;
+  }, [group, grade, storage, search, sort]);
+  const price = (value: number) => currency === 'JMD' ? formatJMD(calcTotalJMD(value, rate)) : formatUSD(value);
+  return <div className="min-h-screen bg-background text-foreground"><Header />
+    <main className="container max-w-7xl mx-auto px-4 pt-24 pb-16">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-8">
+        <Link to="/" className="hover:text-foreground">Home</Link><ChevronRight className="h-4 w-4" />
+        {platform ? <><Button variant="link" className="p-0 h-auto text-muted-foreground" onClick={() => choose()}>Browse Devices</Button><ChevronRight className="h-4 w-4" /><Button variant="link" className="p-0 h-auto text-muted-foreground" onClick={() => choose(platform)}>{platform} Devices</Button>{category && <><ChevronRight className="h-4 w-4" /><span className="text-foreground">{category}</span></>}</> : <span className="text-foreground">Browse Devices</span>}
+      </nav>
+      <div className="flex justify-between items-start gap-4 mb-9"><div><p className="text-xs uppercase text-muted-foreground mb-2">PhoneMatrix / Catalog</p><h1 className="text-4xl md:text-6xl font-semibold">{category || (platform ? `${platform} Devices` : 'Browse Devices')}</h1></div><CatalogCurrency /></div>
+      {!platform && <>
+        <h2 className="text-2xl mb-4">Shop by platform</h2>
+        <div className="grid md:grid-cols-2 gap-4 mb-12">{['Apple', 'Android'].map(p => {
+          const sample = devices.find(d => platformOf(d) === p && /iphone|galaxy|pixel/i.test(d.Model)) || devices.find(d => platformOf(d) === p);
+          return <Button variant="outline" key={p} onClick={() => choose(p)} className="h-48 p-0 overflow-hidden rounded-md border-border bg-muted/30 hover:bg-muted/70 justify-between text-left group">
+            <span className="p-6 md:p-8 flex flex-col items-start gap-3"><span className="text-xs uppercase text-muted-foreground">Explore the collection</span><span className="text-2xl md:text-3xl font-semibold text-foreground">{p} Devices</span><span className="text-sm text-muted-foreground inline-flex items-center gap-2">Shop now <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" /></span></span>
+            {sample && <DeviceImage brand={sample.Brand} model={sample.Model} className="w-40 md:w-56 h-full shrink-0 !bg-transparent" aspectClass="aspect-auto" />}
+          </Button>;
+        })}</div>
+        <h2 className="text-2xl mb-4">Explore devices</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">{[...new Set(devices.map(deviceCategory))].slice(0, 8).map(c => {
+          const sample = devices.find(d => deviceCategory(d) === c);
+          return <Button key={c} variant="outline" className="h-24 justify-start gap-3 px-4 text-left bg-card hover:bg-muted/50 border-border rounded-md" onClick={() => choose(sample ? platformOf(sample) : '', c)}>
+            <span className="w-14 h-14 bg-muted rounded-md overflow-hidden shrink-0">{sample && <DeviceImage brand={sample.Brand} model={sample.Model} className="h-full" aspectClass="aspect-square" />}</span><span className="whitespace-normal text-sm">{c}</span><ChevronRight className="h-4 w-4 ml-auto shrink-0" />
+          </Button>;
+        })}</div>
+        <GradeGallery />
+      </>}
+      {platform && !category && <><h2 className="text-2xl mb-4">Choose a device type</h2><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">{categories.map(c => {
+        const sample = group.find(d => deviceCategory(d) === c);
+        return <Button key={c} variant="outline" onClick={() => choose(platform, c)} className="h-32 p-3 bg-card border-border hover:bg-muted/50 rounded-md flex-col items-start justify-between text-left"><span className="w-14 h-14 overflow-hidden rounded-md bg-muted">{sample && <DeviceImage brand={sample.Brand} model={sample.Model} aspectClass="aspect-square" />}</span><span className="text-sm whitespace-normal">{c} <ArrowRight className="inline h-4 w-4 ml-1" /></span></Button>;
+      })}</div></>}
+      {platform && <>
+        <div className="bg-muted/50 rounded-md p-4 flex flex-wrap gap-x-8 gap-y-2 text-sm mb-9"><span className="inline-flex gap-2 items-center"><ShieldCheck className="h-4 w-4" /> Condition options</span><span className="inline-flex gap-2 items-center"><Truck className="h-4 w-4" /> Jamaica delivery estimate in JMD</span><span className="inline-flex gap-2 items-center"><Smartphone className="h-4 w-4" /> Shop by grade & storage</span></div>
+        <div className="flex flex-wrap gap-2 mb-5">{categories.map(c => <Button key={c} variant={category === c ? 'default' : 'secondary'} size="sm" onClick={() => choose(platform, c)} className="rounded-full">{c}</Button>)}{category && <Button variant="ghost" size="sm" onClick={() => choose(platform)}>All {platform}</Button>}</div>
+        <div className="flex flex-wrap items-center gap-3 mb-5"><div className="relative w-full sm:w-64"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Search devices" value={search} onChange={e => setSearch(e.target.value)} /></div>
+          <Select value={grade} onValueChange={setGrade}><SelectTrigger className="w-36"><SelectValue placeholder="Grade" /></SelectTrigger><SelectContent><SelectItem value={ALL}>All grades</SelectItem>{gradeOrder.filter(g => group.some(d => d.Condition === g)).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select>
+          <Select value={storage} onValueChange={setStorage}><SelectTrigger className="w-36"><SelectValue placeholder="Storage" /></SelectTrigger><SelectContent><SelectItem value={ALL}>All storage</SelectItem>{[...new Set(group.map(d => d.Storage))].filter(Boolean).sort().map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+          <Select value={sort} onValueChange={setSort}><SelectTrigger className="w-44 sm:ml-auto"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="featured">Sort: Name</SelectItem><SelectItem value="price-low">Price: low to high</SelectItem><SelectItem value="price-high">Price: high to low</SelectItem></SelectContent></Select>
+          {(search || grade !== ALL || storage !== ALL) && <Button variant="ghost" size="icon" title="Clear filters" onClick={() => { setSearch(''); setGrade(ALL); setStorage(ALL); }}><X className="h-4 w-4" /></Button>}
         </div>
-
-        <Card className="p-4 md:p-6 mb-6 bg-card/60 backdrop-blur border-border/60">
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-2 items-center">
-  <div className="flex-1">
-            <div className="relative search-expand rounded-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search brand, model, storage…" value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11" />
-            </div>
-  </div>
-              <CartSheet currency={currency} />
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <Select value={os} onValueChange={setOs}>
-                <SelectTrigger><SelectValue placeholder="OS" /></SelectTrigger>
-                <SelectContent><SelectItem value={ALL}>All OS</SelectItem>{osOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={brand} onValueChange={v => { setBrand(v); setModel(ALL); }}>
-                <SelectTrigger><SelectValue placeholder="Brand" /></SelectTrigger>
-                <SelectContent><SelectItem value={ALL}>All Brands</SelectItem>{brandOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={model} onValueChange={setModel}>
-                <SelectTrigger><SelectValue placeholder="Model" /></SelectTrigger>
-                <SelectContent><SelectItem value={ALL}>All Models</SelectItem>{modelOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={condition} onValueChange={setCondition}>
-                <SelectTrigger><SelectValue placeholder="Condition" /></SelectTrigger>
-                <SelectContent><SelectItem value={ALL}>All Conditions</SelectItem>{conditionOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={storage} onValueChange={setStorage}>
-                <SelectTrigger><SelectValue placeholder="Storage" /></SelectTrigger>
-                <SelectContent><SelectItem value={ALL}>All Storage</SelectItem>{storageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={color} onValueChange={setColor}>
-                <SelectTrigger><SelectValue placeholder="Color" /></SelectTrigger>
-                <SelectContent><SelectItem value={ALL}>All Colors</SelectItem>{colorOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground"><span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? 'device' : 'devices'} found</span>
-              <div className="flex items-center gap-3">
-                <div className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 p-0.5 text-xs">
-                  <button
-                    onClick={() => setCurrency('USD')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${currency === 'USD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  ><FlagUS /> USD</button>
-                  <button
-                    onClick={() => setCurrency('JMD')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${currency === 'JMD' ? 'bg-background shadow-sm font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  ><FlagJM /> JMD</button>
-                </div>
-                {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8"><X className="h-3.5 w-3.5 mr-1" /> Clear</Button>}
-              </div>
-            </div>
-            {currency === 'JMD' && isFallback && (
-              <p className="text-xs text-muted-foreground -mt-2">Using estimated rate (~{Math.round(rate)} JMD per USD)</p>
-            )}
-          </div>
-        </Card>
-
-        {loading ? (
-          <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
-        ) : filtered.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Smartphone className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-medium">No devices match your filters</p>
-            <p className="text-muted-foreground mt-1">Try adjusting your search or clearing filters.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((d, i) => (
-              <Reveal
-                key={`${d.Brand}-${d.Model}-${d.Storage}-${d.Condition}-${i}`}
-                variant="fade-up"
-                delay={Math.min(i, 8) * 60}
-              >
-                <Card className="card-lift group overflow-hidden border-border/60 hover:border-primary/50 flex flex-col h-full">
-                  <div className="relative">
-                    <DeviceImage brand={d.Brand} model={d.Model} aspectClass="aspect-[3/4]" />
-                    <Badge variant="outline" className={`absolute top-3 right-3 ${conditionColor(d.Condition)} border`}>{d.Condition}</Badge>
-                  </div>
-                  <div className="p-4 flex flex-col flex-1">
-                    <div className="mb-2">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{d.Brand}</p>
-                      <h3 className="font-semibold text-base leading-tight">{d.Model}</h3>
-                    </div>
-                    <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-                      <span className="px-2 py-0.5 bg-muted rounded text-xs font-medium">{d.Storage}</span>
-                    </div>
-                    {d.Colors.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {d.Colors.slice(0, 5).map(c => (
-                          <span key={c} title={c} className="w-5 h-5 rounded-full border border-border/60 ring-1 ring-background" style={{ backgroundColor: colorSwatch(c) }} />
-                        ))}
-                        {d.Colors.length > 5 && <span className="text-xs text-muted-foreground self-center">+{d.Colors.length - 5}</span>}
-                      </div>
-                    )}
-                    {currency === 'USD' ? (
-                      <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Price</p>
-                          <p className="text-2xl font-bold text-foreground">{formatUSD(d.Price)}</p>
-                        </div>
-                        <div className="flex flex-col gap-1.5 shrink-0">
-                          <Button size="sm" variant="outline" onClick={() => handleAddToCart(d)}><ShoppingCart className="h-4 w-4 mr-1" />Add to cart</Button>
-                          <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop">Request</Button>
-                        </div>
-                      </div>
-                    ) : (
-                      (() => {
-                        const b = calcBreakdown(d.Price, rate);
-                        return (
-                      <div className="mt-auto pt-2 space-y-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Total Price (incl. shipping)</p>
-                          <p className="text-2xl font-bold text-foreground">{formatJMD(b.totalJmd)}</p>
-                        </div>
-                        <div className="border-t border-border/60 pt-2 space-y-1 text-xs">
-                          <div className="flex justify-between text-muted-foreground">
-                            <span>Device Price</span>
-                            <span>{formatJMD(b.deviceJmd)}</span>
-                          </div>
-                          <div className="flex justify-between text-muted-foreground">
-                            <span>Shipping to Jamaica</span>
-                            <span>{formatJMD(b.shippingJmd)}</span>
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline" onClick={() => handleAddToCart(d)} className="w-full"><ShoppingCart className="h-4 w-4 mr-1" />Add to cart</Button>
-                        <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop w-full">Request</Button>
-                      </div>
-                        );
-                      })()
-                    )}
-                  </div>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {selected && (
-        <PurchaseRequestModal open={!!selected} onClose={() => setSelected(null)} device={selected.device} initialColor={selected.color} />
-      )}
-    </div>
-  );
+        <p className="text-sm text-muted-foreground mb-5">{models.length} models</p>
+        {loading ? <p className="py-12 text-muted-foreground">Loading devices…</p> : error ? <p className="py-12 text-destructive">Could not load devices.</p> : models.length === 0 ? <p className="py-12 text-muted-foreground">No devices match these filters.</p> : <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-12">{models.map(d => <Link key={`${d.Brand}-${d.Model}`} to={productPath(d)} className="group border border-border rounded-md overflow-hidden bg-card hover:border-primary/50 transition-colors flex flex-col">
+          <DeviceImage brand={d.Brand} model={d.Model} aspectClass="aspect-square" className="!bg-muted/40" />
+          <div className="p-3 md:p-5 flex flex-col flex-1"><p className="text-xs text-muted-foreground mb-1">{d.Brand} / {deviceCategory(d)}</p><h3 className="text-lg md:text-xl leading-tight mb-2">{d.Model}</h3><p className="text-xs text-muted-foreground mb-5">{d.Storage} · From {d.Condition}</p><div className="mt-auto border-t border-border pt-3"><p className="text-xs text-muted-foreground">Starting at {currency === 'JMD' ? '· incl. shipping' : ''}</p><p className="text-lg md:text-2xl font-semibold">{price(d.Price)}</p><span className="text-xs text-primary inline-flex items-center gap-1 mt-2">View options <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" /></span></div></div>
+        </Link>)}</div>}
+        <GradeGallery />
+      </>}
+    </main></div>;
 };
-
 export default PriceList;
