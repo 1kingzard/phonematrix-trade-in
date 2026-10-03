@@ -44,6 +44,24 @@ const DeviceStock = () => {
     setItems(s.data || []); setSales(sl.data || []);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    db.from('devices').select('id, brand, model, storage, price').eq('active', true)
+      .order('brand').order('model').order('storage')
+      .then(({ data }: any) => setCatalog(data || []));
+  }, []);
+
+  const catalogKey = (d: any) => `${d.brand}||${d.model}||${d.storage || ''}`;
+  const catalogOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return catalog.filter(d => { const k = catalogKey(d); if (seen.has(k)) return false; seen.add(k); return true; });
+  }, [catalog]);
+
+  const pickCatalogDevice = (key: string) => {
+    if (key === '__manual') return;
+    const d = catalogOptions.find(x => catalogKey(x) === key);
+    if (!d) return;
+    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', website_price: d.price });
+  };
 
   const saleFor = (id: string) => sales.find(s => s.stock_id === id);
   const repairCost = (it: any) => (it.device_repairs || []).reduce((a: number, r: any) => a + Number(r.cost), 0);
