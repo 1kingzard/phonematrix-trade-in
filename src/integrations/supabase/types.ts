@@ -50,6 +50,53 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          public_token: string
+          referred_by: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          public_token?: string
+          referred_by?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          public_token?: string
+          referred_by?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_images: {
         Row: {
           brand: string
@@ -77,6 +124,208 @@ export type Database = {
           model?: string
           source_url?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      device_repairs: {
+        Row: {
+          cost: number
+          created_at: string
+          description: string
+          id: string
+          repaired_at: string | null
+          stock_id: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          description: string
+          id?: string
+          repaired_at?: string | null
+          stock_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          description?: string
+          id?: string
+          repaired_at?: string | null
+          stock_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_repairs_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "device_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_sales: {
+        Row: {
+          actual_price: number
+          courier: string | null
+          created_at: string
+          customer_id: string | null
+          deposit: number
+          id: string
+          is_payment_plan: boolean
+          listed_price: number
+          loyalty_discount: number
+          loyalty_rule_id: string | null
+          notes: string | null
+          payment_method: string
+          plan_total: number
+          sold_as_trade: boolean
+          sold_at: string
+          sold_for: number
+          stock_id: string
+          tracking_number: string | null
+          trade_credit: number
+          trade_in_request_id: string | null
+          warranty_days: number
+        }
+        Insert: {
+          actual_price?: number
+          courier?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deposit?: number
+          id?: string
+          is_payment_plan?: boolean
+          listed_price?: number
+          loyalty_discount?: number
+          loyalty_rule_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          plan_total?: number
+          sold_as_trade?: boolean
+          sold_at?: string
+          sold_for?: number
+          stock_id: string
+          tracking_number?: string | null
+          trade_credit?: number
+          trade_in_request_id?: string | null
+          warranty_days?: number
+        }
+        Update: {
+          actual_price?: number
+          courier?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deposit?: number
+          id?: string
+          is_payment_plan?: boolean
+          listed_price?: number
+          loyalty_discount?: number
+          loyalty_rule_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          plan_total?: number
+          sold_as_trade?: boolean
+          sold_at?: string
+          sold_for?: number
+          stock_id?: string
+          tracking_number?: string | null
+          trade_credit?: number
+          trade_in_request_id?: string | null
+          warranty_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sales_loyalty_rule_id_fkey"
+            columns: ["loyalty_rule_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sales_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "device_stock"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sales_trade_in_request_id_fkey"
+            columns: ["trade_in_request_id"]
+            isOneToOne: false
+            referencedRelation: "trade_in_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_stock: {
+        Row: {
+          brand: string
+          colour: string | null
+          condition: string | null
+          created_at: string
+          id: string
+          imei: string | null
+          model: string
+          notes: string | null
+          photos: string[]
+          purchase_cost: number
+          purchase_date: string | null
+          purchased_from: string | null
+          serial: string | null
+          sku: string | null
+          status: string
+          storage: string | null
+          updated_at: string
+          warranty_days: number
+          website_price: number
+        }
+        Insert: {
+          brand?: string
+          colour?: string | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          imei?: string | null
+          model: string
+          notes?: string | null
+          photos?: string[]
+          purchase_cost?: number
+          purchase_date?: string | null
+          purchased_from?: string | null
+          serial?: string | null
+          sku?: string | null
+          status?: string
+          storage?: string | null
+          updated_at?: string
+          warranty_days?: number
+          website_price?: number
+        }
+        Update: {
+          brand?: string
+          colour?: string | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          imei?: string | null
+          model?: string
+          notes?: string | null
+          photos?: string[]
+          purchase_cost?: number
+          purchase_date?: string | null
+          purchased_from?: string | null
+          serial?: string | null
+          sku?: string | null
+          status?: string
+          storage?: string | null
+          updated_at?: string
+          warranty_days?: number
+          website_price?: number
         }
         Relationships: []
       }
@@ -182,6 +431,39 @@ export type Database = {
           sold_at?: string | null
           sold_to_user_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          discount_amount: number
+          discount_percent: number
+          id: string
+          name: string
+          rule_type: string
+          threshold: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          discount_amount?: number
+          discount_percent?: number
+          id?: string
+          name: string
+          rule_type?: string
+          threshold?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          discount_amount?: number
+          discount_percent?: number
+          id?: string
+          name?: string
+          rule_type?: string
+          threshold?: number
         }
         Relationships: []
       }
@@ -697,6 +979,50 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          late_fee: number
+          note: string | null
+          paid_amount: number
+          paid_at: string | null
+          sale_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          late_fee?: number
+          note?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          sale_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          late_fee?: number
+          note?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_installments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "device_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scraped_prices: {
         Row: {
           brand: string | null
@@ -822,6 +1148,38 @@ export type Database = {
         }
         Relationships: []
       }
+      shipment_events: {
+        Row: {
+          id: string
+          note: string | null
+          occurred_at: string
+          sale_id: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          note?: string | null
+          occurred_at?: string
+          sale_id: string
+          status: string
+        }
+        Update: {
+          id?: string
+          note?: string | null
+          occurred_at?: string
+          sale_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_events_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "device_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_media: {
         Row: {
           asset_key: string
@@ -900,6 +1258,7 @@ export type Database = {
           condition: string | null
           created_at: string
           customer_email: string | null
+          customer_id: string | null
           customer_name: string
           customer_phone: string
           desired_device: Json | null
@@ -923,6 +1282,7 @@ export type Database = {
           condition?: string | null
           created_at?: string
           customer_email?: string | null
+          customer_id?: string | null
           customer_name: string
           customer_phone: string
           desired_device?: Json | null
@@ -946,6 +1306,7 @@ export type Database = {
           condition?: string | null
           created_at?: string
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string
           customer_phone?: string
           desired_device?: Json | null
@@ -963,7 +1324,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trade_in_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1058,6 +1427,7 @@ export type Database = {
     Functions: {
       assign_parts_guest: { Args: { user_email: string }; Returns: boolean }
       create_trade_in_request: { Args: { payload: Json }; Returns: Json }
+      get_customer_portal: { Args: { token: string }; Returns: Json }
       get_trade_in_request: { Args: { token: string }; Returns: Json }
       has_role: {
         Args: {

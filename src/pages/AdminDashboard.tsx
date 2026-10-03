@@ -18,6 +18,8 @@ import DevicesManagement from '@/components/admin/DevicesManagement';
 import PriceScraper from '@/components/admin/PriceScraper';
 import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
 import TradeInRequests from '@/components/admin/TradeInRequests';
+import DeviceStock from '@/components/admin/stock/DeviceStock';
+import Customers from '@/components/admin/stock/Customers';
 
 interface ReferralCode {
   id: string;
@@ -187,12 +189,13 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="orders" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="tradeins">Trade-Ins</TabsTrigger>
             <TabsTrigger value="devices">Devices</TabsTrigger>
             <TabsTrigger value="scraper">Scraper</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="csv">CSV</TabsTrigger>
             <TabsTrigger value="media">Media</TabsTrigger>
@@ -217,7 +220,11 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-4">
-            <InventoryManagement inventory={inventory} onRefresh={fetchAdminData} user={user} />
+            <DeviceStock />
+          </TabsContent>
+
+          <TabsContent value="customers" className="space-y-4">
+            <Customers />
           </TabsContent>
 
           <TabsContent value="referrals" className="space-y-4">
