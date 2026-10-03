@@ -12,7 +12,7 @@ import { Plus, Pencil, Trash2, ShoppingBag, Eye, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_ORDER } from '@/lib/tradeInRequests';
-import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment } from '@/lib/stock';
+import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment, saleMoney } from '@/lib/stock';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { useExchangeRate, SHIPPING_RATE, formatJMD } from '@/hooks/useExchangeRate';
 
