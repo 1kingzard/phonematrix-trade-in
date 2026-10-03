@@ -177,9 +177,12 @@ export type Database = {
           notes: string | null
           payment_method: string
           plan_total: number
+          rate_used: number | null
+          shipping_cost: number
           sold_as_trade: boolean
           sold_at: string
           sold_for: number
+          sold_in: string
           stock_id: string
           tracking_number: string | null
           trade_credit: number
@@ -200,9 +203,12 @@ export type Database = {
           notes?: string | null
           payment_method?: string
           plan_total?: number
+          rate_used?: number | null
+          shipping_cost?: number
           sold_as_trade?: boolean
           sold_at?: string
           sold_for?: number
+          sold_in?: string
           stock_id: string
           tracking_number?: string | null
           trade_credit?: number
@@ -223,9 +229,12 @@ export type Database = {
           notes?: string | null
           payment_method?: string
           plan_total?: number
+          rate_used?: number | null
+          shipping_cost?: number
           sold_as_trade?: boolean
           sold_at?: string
           sold_for?: number
+          sold_in?: string
           stock_id?: string
           tracking_number?: string | null
           trade_credit?: number

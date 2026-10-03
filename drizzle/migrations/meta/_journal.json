@@ -43,6 +43,13 @@
       "when": 1790995459606,
       "tag": "0005_device_stock_shipping_cost",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790996208798,
+      "tag": "0006_device_sales_sold_in",
+      "breakpoints": true
     }
   ]
 }
