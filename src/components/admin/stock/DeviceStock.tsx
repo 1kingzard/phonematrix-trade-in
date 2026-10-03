@@ -260,7 +260,6 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
   const [counts, setCounts] = useState({ purchases: 0, referrals: 0 });
   const [f, setF] = useState<any>({});
   const [priceCur, setPriceCur] = useState<'USD' | 'JMD'>('USD');
-  const [jmdStr, setJmdStr] = useState('');
   const [jmdRate, setJmdRate] = useState(() => Number(localStorage.getItem('pm_stock_jmd_rate')) || 0);
   const [schedule, setSchedule] = useState<Installment[]>([]);
   const [plan, setPlan] = useState({ count: 3, start: '', every: 'monthly' as 'weekly' | 'biweekly' | 'monthly' });
@@ -269,7 +268,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     if (!item) return;
     setF({ customer_id: 'new', name: '', phone: '', email: '', referred_by: 'none', actual_price: item.website_price, payment_method: 'Cash',
       sold_as_trade: false, trade_in_request_id: 'none', trade_credit: 0, is_payment_plan: false, deposit: 0, warranty_days: item.warranty_days, notes: '', apply_loyalty: true });
-    setPriceCur('USD'); setJmdStr('');
+    setPriceCur('USD');
     setSchedule([]);
     Promise.all([
       db.from('customers').select('id, name, phone, email').order('name'),
