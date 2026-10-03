@@ -375,26 +375,9 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
           </>}
           <div><Label>Website price</Label><Input disabled value={usd(item.website_price)} /></div>
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <Label>Actual selling price</Label>
-              <div className="flex rounded-md border overflow-hidden text-xs">
-                {(['USD', 'JMD'] as const).map(c => (
-                  <button key={c} type="button" onClick={() => switchCur(c)}
-                    className={`px-2 py-0.5 ${priceCur === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{c}</button>
-                ))}
-              </div>
-            </div>
-            {priceCur === 'USD'
-              ? <Input type="number" value={f.actual_price} onChange={e => set('actual_price', e.target.value)} />
-              : <Input type="number" value={jmdStr} onChange={e => setJmdPrice(e.target.value)} />}
-            {priceCur === 'JMD' && (
-              <div className="flex items-center justify-between gap-2 mt-1 text-xs text-muted-foreground">
-                <span>= {usd(Number(f.actual_price) || 0)} (USD)</span>
-                <span className="flex items-center gap-1">Rate
-                  <Input type="number" className="h-6 w-20 text-xs" value={jmdRate || ''} placeholder={String(partsRate)} onChange={e => changeRate(e.target.value)} />
-                  JMD/USD</span>
-              </div>
-            )}
+            <Label>Actual selling price{curTag}</Label>
+            {moneyInput(f.actual_price, v => set('actual_price', v))}
+            {priceCur === 'JMD' && <p className="mt-1 text-xs text-muted-foreground">= {usd(Number(f.actual_price) || 0)} (USD)</p>}
           </div>
           <div className="col-span-2 rounded border p-2">
             {loyalty ? (
