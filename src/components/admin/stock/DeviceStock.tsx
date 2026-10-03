@@ -257,6 +257,9 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
   const [trades, setTrades] = useState<any[]>([]);
   const [counts, setCounts] = useState({ purchases: 0, referrals: 0 });
   const [f, setF] = useState<any>({});
+  const [priceCur, setPriceCur] = useState<'USD' | 'JMD'>('USD');
+  const [jmdStr, setJmdStr] = useState('');
+  const [jmdRate, setJmdRate] = useState(() => Number(localStorage.getItem('pm_stock_jmd_rate')) || 0);
   const [schedule, setSchedule] = useState<Installment[]>([]);
   const [plan, setPlan] = useState({ count: 3, start: '', every: 'monthly' as 'weekly' | 'biweekly' | 'monthly' });
 
