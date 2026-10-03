@@ -30,7 +30,7 @@ interface ScrapedRow {
   scraped_at: string;
 }
 
-interface DeviceOpt { id: string; brand: string; model: string; storage: string; condition: string; }
+interface DeviceOpt { id: string; brand: string; model: string; storage: string; condition: string; price: number; }
 
 const PriceScraper: React.FC = () => {
   const { toast } = useToast();
@@ -54,7 +54,7 @@ const PriceScraper: React.FC = () => {
     const [{ data: s }, { data: r }, { data: d }] = await Promise.all([
       supabase.from('scraper_settings').select('*').limit(1).maybeSingle(),
       supabase.from('scraped_prices').select('*').order('scraped_at', { ascending: false }).limit(500),
-      supabase.from('devices').select('id,brand,model,storage,condition').order('brand').order('model'),
+      supabase.from('devices').select('id,brand,model,storage,condition,price').order('brand').order('model'),
     ]);
     if (s) {
       const x = s as any;
