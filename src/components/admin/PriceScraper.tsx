@@ -274,9 +274,33 @@ const PriceScraper: React.FC = () => {
                       <TableCell>${r.market_price_usd}</TableCell>
                       <TableCell>
                         {r.status === 'pending' ? (
-                          <Input type="number" className="w-24" value={priceEdit[r.id] ?? r.suggested_price_usd}
-                            onChange={e => setPriceEdit({ ...priceEdit, [r.id]: e.target.value })} />
-                        ) : `$${r.suggested_price_usd}`}
+                          <div>
+                            <Input type="number" className="w-24" value={priceEdit[r.id] ?? r.suggested_price_usd}
+                              onChange={e => setPriceEdit({ ...priceEdit, [r.id]: e.target.value })} />
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {isBm(r) ? 'your sell price' : 'trade-in offer'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            ${r.suggested_price_usd}
+                            <div className="text-[10px] text-muted-foreground">
+                              {isBm(r) ? 'your sell price' : 'trade-in offer'}
+                            </div>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {current ? (
+                          <div>
+                            <div className="tabular-nums">${current.price}</div>
+                            {delta !== null && delta !== 0 && r.status === 'pending' && (
+                              <div className={`text-[10px] ${delta > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {delta > 0 ? '↑' : '↓'} ${Math.abs(delta).toFixed(2)} vs new
+                              </div>
+                            )}
+                          </div>
+                        ) : '—'}
                       </TableCell>
                       <TableCell>
                         {r.status === 'pending' ? (
@@ -307,7 +331,7 @@ const PriceScraper: React.FC = () => {
                   );
                 })}
                 {!filtered.length && (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No listings. Click "Scrape Now" above.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No listings. Click "Scrape Now" above.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
