@@ -410,7 +410,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="weekly">Week</SelectItem><SelectItem value="biweekly">2 weeks</SelectItem><SelectItem value="monthly">Month</SelectItem></SelectContent>
               </Select></div>
-            <div className="col-span-4 flex items-center justify-between"><span>To be paid over time: <b>{usd(toFinance)}</b></span>
+            <div className="col-span-4 flex items-center justify-between"><span>To be paid over time: <b>{usd(toFinance)}</b>{priceCur === 'JMD' && <span className="text-muted-foreground"> (JMD {Number(toJmd(toFinance)).toLocaleString()})</span>}</span>
               <Button size="sm" variant="outline" onClick={() => setSchedule(buildSchedule(toFinance, plan.count, plan.start, plan.every))} disabled={!plan.start}>Build schedule</Button></div>
             {schedule.map((s, k) => (
               <div key={k} className="col-span-4 flex gap-2">
@@ -420,7 +420,9 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
             ))}
           </div>}
           <div className="col-span-2"><Label>Notes</Label><Textarea value={f.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost))}</b> (before repairs)</div>
+          <div className="col-span-2 bg-muted/50 rounded p-3">Sold for: <b>{usd(soldFor)}</b> · Profit: <b>{usd(soldFor - Number(item.purchase_cost))}</b> (before repairs)
+            {priceCur === 'JMD' && <p className="text-xs text-muted-foreground mt-1">Sold for JMD {Number(toJmd(soldFor)).toLocaleString()} · Profit JMD {Number(toJmd(soldFor - Number(item.purchase_cost))).toLocaleString()}</p>}
+          </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Record sale</Button></DialogFooter>
       </DialogContent>
