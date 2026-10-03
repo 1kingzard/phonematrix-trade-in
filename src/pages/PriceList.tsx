@@ -138,9 +138,14 @@ const PriceList: React.FC = () => {
 
         <Card className="p-4 md:p-6 mb-6 bg-card/60 backdrop-blur border-border/60">
           <div className="flex flex-col gap-4">
+            <div className="flex gap-2 items-center">
+  <div className="flex-1">
             <div className="relative search-expand rounded-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search brand, model, storage…" value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11" />
+            </div>
+  </div>
+              <CartSheet currency={currency} />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <Select value={os} onValueChange={setOs}>
