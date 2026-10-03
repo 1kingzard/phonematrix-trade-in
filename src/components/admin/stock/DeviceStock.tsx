@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_ORDER } from '@/lib/tradeInRequests';
 import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment } from '@/lib/stock';
+import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import SaleDetails from './SaleDetails';
 
 const db = supabase as any;
