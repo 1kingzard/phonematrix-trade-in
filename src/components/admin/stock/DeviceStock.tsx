@@ -398,11 +398,11 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="none">None</SelectItem>{trades.map(t => <SelectItem key={t.id} value={t.id}>{t.request_code} · {t.customer_name}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><Label>Trade credit (USD)</Label><Input type="number" value={f.trade_credit} onChange={e => set('trade_credit', e.target.value)} /></div>
+            <div><Label>Trade credit{curTag}</Label>{moneyInput(f.trade_credit, v => set('trade_credit', v))}</div>
           </>}
           <div className="col-span-2 flex items-center gap-2"><Switch checked={f.is_payment_plan} onCheckedChange={v => set('is_payment_plan', v)} /><Label>Monthly / payment plan</Label></div>
           {f.is_payment_plan && <div className="col-span-2 grid grid-cols-4 gap-2 items-end border rounded p-2">
-            <div><Label>Deposit</Label><Input type="number" value={f.deposit} onChange={e => set('deposit', e.target.value)} /></div>
+            <div><Label>Deposit{curTag}</Label>{moneyInput(f.deposit, v => set('deposit', v))}</div>
             <div><Label>Payments</Label><Input type="number" value={plan.count} onChange={e => setPlan({ ...plan, count: Number(e.target.value) })} /></div>
             <div><Label>First due</Label><Input type="date" value={plan.start} onChange={e => setPlan({ ...plan, start: e.target.value })} /></div>
             <div><Label>Every</Label>
@@ -415,7 +415,7 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
             {schedule.map((s, k) => (
               <div key={k} className="col-span-4 flex gap-2">
                 <Input type="date" value={s.due_date} onChange={e => setSchedule(schedule.map((x, j) => j === k ? { ...x, due_date: e.target.value } : x))} />
-                <Input type="number" value={s.amount} onChange={e => setSchedule(schedule.map((x, j) => j === k ? { ...x, amount: Number(e.target.value) } : x))} />
+                {moneyInput(s.amount, v => setSchedule(schedule.map((x, j) => j === k ? { ...x, amount: v } : x)), `sched-${k}`)}
               </div>
             ))}
           </div>}
