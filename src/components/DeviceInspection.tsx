@@ -67,7 +67,7 @@ export default function DeviceInspection() {
     </div>
     <div ref={trackRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {checks.map(({ name, detail, icon: Icon }) => (
-        <div key={name} data-card className="snap-start shrink-0 w-[78%] xs:w-[60%] sm:w-[46%] lg:w-[31.5%] xl:w-[23.5%] rounded-lg border border-border bg-card/50 p-5 flex flex-col gap-3">
+        <div key={name} data-card className="snap-start shrink-0 w-[78%] sm:w-[46%] lg:w-[31.5%] xl:w-[23.5%] rounded-lg border border-border bg-card/50 p-5 flex flex-col gap-3">
           <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
             <Icon className="h-5 w-5 text-primary" />
           </div>
