@@ -34,6 +34,7 @@ const DeviceStock = () => {
   const [uploading, setUploading] = useState(false);
   const [selling, setSelling] = useState<any | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<any[]>([]);
 
   const load = async () => {
     const [s, sl] = await Promise.all([
@@ -43,6 +44,24 @@ const DeviceStock = () => {
     setItems(s.data || []); setSales(sl.data || []);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    db.from('devices').select('id, brand, model, storage, price').eq('active', true)
+      .order('brand').order('model').order('storage')
+      .then(({ data }: any) => setCatalog(data || []));
+  }, []);
+
+  const catalogKey = (d: any) => `${d.brand}||${d.model}||${d.storage || ''}`;
+  const catalogOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return catalog.filter(d => { const k = catalogKey(d); if (seen.has(k)) return false; seen.add(k); return true; });
+  }, [catalog]);
+
+  const pickCatalogDevice = (key: string) => {
+    if (key === '__manual') return;
+    const d = catalogOptions.find(x => catalogKey(x) === key);
+    if (!d) return;
+    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', website_price: d.price });
+  };
 
   const saleFor = (id: string) => sales.find(s => s.stock_id === id);
   const repairCost = (it: any) => (it.device_repairs || []).reduce((a: number, r: any) => a + Number(r.cost), 0);
@@ -151,6 +170,14 @@ const DeviceStock = () => {
           <DialogHeader><DialogTitle>{editing?.id ? 'Edit phone' : 'Add phone'}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2"><Label>Pick from catalog</Label>
+                <Select value="" onValueChange={pickCatalogDevice}>
+                  <SelectTrigger><SelectValue placeholder="Choose a device to auto-fill, or enter details manually below…" /></SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    <SelectItem value="__manual">Enter manually</SelectItem>
+                    {catalogOptions.map(d => <SelectItem key={catalogKey(d)} value={catalogKey(d)}>{d.brand} {d.model}{d.storage ? ` ${d.storage}` : ''} — {usd(d.price)}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
               <div><Label>Brand</Label><Input value={editing.brand} onChange={e => set('brand', e.target.value)} /></div>
               <div><Label>Model</Label><Input value={editing.model} onChange={e => set('model', e.target.value)} placeholder="iPhone 15 Pro" /></div>
               <div><Label>Storage</Label><Input value={editing.storage || ''} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
