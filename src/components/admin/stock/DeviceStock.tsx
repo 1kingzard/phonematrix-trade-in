@@ -35,6 +35,7 @@ const DeviceStock = () => {
   const [selling, setSelling] = useState<any | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<any[]>([]);
+  const [pick, setPick] = useState({ brand: '', model: '', storage: '', condition: '' });
 
   const load = async () => {
     const [s, sl] = await Promise.all([
@@ -45,22 +46,20 @@ const DeviceStock = () => {
   };
   useEffect(() => { load(); }, []);
   useEffect(() => {
-    db.from('devices').select('id, brand, model, storage, price').eq('active', true)
+    db.from('devices').select('id, brand, model, storage, condition, price').eq('active', true)
       .order('brand').order('model').order('storage')
       .then(({ data }: any) => setCatalog(data || []));
   }, []);
 
-  const catalogKey = (d: any) => `${d.brand}||${d.model}||${d.storage || ''}`;
-  const catalogOptions = useMemo(() => {
-    const seen = new Set<string>();
-    return catalog.filter(d => { const k = catalogKey(d); if (seen.has(k)) return false; seen.add(k); return true; });
-  }, [catalog]);
+  const uniq = (arr: string[]) => [...new Set(arr.filter(Boolean))];
+  const catBrands = useMemo(() => uniq(catalog.map(d => d.brand)), [catalog]);
+  const catModels = useMemo(() => uniq(catalog.filter(d => d.brand === pick.brand).map(d => d.model)), [catalog, pick.brand]);
+  const catStorages = useMemo(() => uniq(catalog.filter(d => d.brand === pick.brand && d.model === pick.model).map(d => d.storage)), [catalog, pick.brand, pick.model]);
+  const catConditions = useMemo(() => catalog.filter(d => d.brand === pick.brand && d.model === pick.model && (d.storage || '') === pick.storage), [catalog, pick.brand, pick.model, pick.storage]);
 
-  const pickCatalogDevice = (key: string) => {
-    if (key === '__manual') return;
-    const d = catalogOptions.find(x => catalogKey(x) === key);
+  const pickCatalogDevice = (d: any) => {
     if (!d) return;
-    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', website_price: d.price });
+    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', condition: d.condition || prev.condition, website_price: d.price });
   };
 
   const saleFor = (id: string) => sales.find(s => s.stock_id === id);
@@ -75,6 +74,7 @@ const DeviceStock = () => {
 
   const openEdit = async (it: any | null) => {
     setEditing(it ? { ...it, purchase_date: it.purchase_date || '' } : { ...emptyItem });
+    setPick({ brand: '', model: '', storage: '', condition: '' });
     if (it) { const { data } = await db.from('device_repairs').select('*').eq('stock_id', it.id).order('repaired_at'); setRepairs(data || []); }
     else setRepairs([]);
   };
@@ -170,14 +170,27 @@ const DeviceStock = () => {
           <DialogHeader><DialogTitle>{editing?.id ? 'Edit phone' : 'Add phone'}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2"><Label>Pick from catalog</Label>
-                <Select value="" onValueChange={pickCatalogDevice}>
-                  <SelectTrigger><SelectValue placeholder="Choose a device to auto-fill, or enter details manually below…" /></SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    <SelectItem value="__manual">Enter manually</SelectItem>
-                    {catalogOptions.map(d => <SelectItem key={catalogKey(d)} value={catalogKey(d)}>{d.brand} {d.model}{d.storage ? ` ${d.storage}` : ''} — {usd(d.price)}</SelectItem>)}
-                  </SelectContent>
-                </Select></div>
+              <div className="col-span-2 rounded-lg border border-border p-3 space-y-2">
+                <Label>Pick from catalog <span className="text-muted-foreground font-normal">(or fill in the fields below manually)</span></Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={pick.brand} onValueChange={v => setPick({ brand: v, model: '', storage: '', condition: '' })}>
+                    <SelectTrigger><SelectValue placeholder="1. Brand" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={pick.model} onValueChange={v => setPick(p => ({ ...p, model: v, storage: '', condition: '' }))} disabled={!pick.brand}>
+                    <SelectTrigger><SelectValue placeholder="2. Model" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={pick.storage || '__none'} onValueChange={v => setPick(p => ({ ...p, storage: v === '__none' ? '' : v, condition: '' }))} disabled={!pick.model}>
+                    <SelectTrigger><SelectValue placeholder="3. Storage" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catStorages.map(s => <SelectItem key={s || '__none'} value={s || '__none'}>{s || 'N/A'}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={pick.condition} onValueChange={v => { setPick(p => ({ ...p, condition: v })); pickCatalogDevice(catConditions.find(d => d.condition === v)); }} disabled={!pick.model}>
+                    <SelectTrigger><SelectValue placeholder="4. Grade" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catConditions.map(d => <SelectItem key={d.id} value={d.condition}>{d.condition} — {usd(d.price)}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div><Label>Brand</Label><Input value={editing.brand} onChange={e => set('brand', e.target.value)} /></div>
               <div><Label>Model</Label><Input value={editing.model} onChange={e => set('model', e.target.value)} placeholder="iPhone 15 Pro" /></div>
               <div><Label>Storage</Label><Input value={editing.storage || ''} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
