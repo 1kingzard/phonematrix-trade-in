@@ -1,39 +1,46 @@
+# Device Inventory, Sales, Payment Plans and Customer Portal
 
-## Goal
+## What you get
 
-Replace the Google Sheets CSV as the source of device prices with a database-backed catalog that admins can edit directly. Seed it from the current sheet so nothing is lost, and give the admin UI a search box for fast navigation.
+**1. Admin – Inventory (upgraded "Inventory" tab)**
+Add/edit a phone with:
+- Device, storage, colour, condition (Like New / Very Good / Good / Fair), photos (multiple)
+- IMEI, serial number
+- Purchase cost, where it was bought, purchase date
+- Repairs done (list: what, cost, date) – added to total cost automatically
+- Website selling price, actual selling price
+- Warranty length (e.g. 30/90 days) – end date worked out from the sale date
+- Status: In stock / Reserved / Sold
+- Profit shown automatically (sold price − purchase cost − repairs)
 
-## What changes
+**2. Admin – Recording a sale** ("Mark as sold" on a phone)
+- Buyer name, phone, email (links to a customer record, created if new)
+- Sold for, sold as a trade? (pick an existing trade-in request so its credit shows)
+- How they paid: Cash / Bank transfer / Card / Trade credit / Mixed
+- Payment plan toggle: agreed total, deposit, number of payments, due dates (auto-filled weekly/monthly, editable)
+- Record each payment as it comes in; remaining balance updates
+- Late detection: past-due payments flagged in red; add a late fee to any payment
 
-### 1. New `devices` table (Lovable Cloud)
-Columns: os, brand, model, condition, storage, price, screen_replacement, battery_replacement, rear_glass_replacement, colors (text[]), active (bool), plus standard id/created_at/updated_at.
-- Public read (anon + authenticated) so the storefront works without login.
-- Insert/update/delete restricted to admins via `has_role`.
-- Seed rows from the current published Google Sheet on migration.
+**3. Admin – Shipping tracking** (per sale)
+- Tracking number and courier
+- Status updates, each time-stamped: Ordered → Arrived at US address → In transit → At customs → At Jamaica shipping company / Ready for pickup → Delivered
+- Optional note on each update
 
-### 2. Admin "Devices" tab (in AdminDashboard)
-New tab alongside Inventory / Orders / etc. Features:
-- Search bar filtering across brand / model / storage / condition (live filter).
-- Table listing every device with inline-editable price, screen, battery, rear glass (double-click to edit, same pattern as Inventory/Collections).
-- Add device button (dialog with all fields).
-- Delete / toggle active.
-- Optional: "Re-import from Google Sheet" button that pulls the current CSV and upserts rows, for future bulk updates.
+**4. Admin – Customers tab**
+- List of customers with their purchases, trade-in requests, balance owed, late flags
+- "Copy link" / "Show QR" / "WhatsApp link" for each customer's private page
 
-### 3. Storefront pulls from DB instead of CSV
-`useDeviceData` hook rewritten to query the `devices` table (still returns the same `DeviceData[]` shape so `DeviceGrid`, `DeviceCard`, filters, cart, trade-in, price list all keep working with no changes).
-- CSV URL / column-mapping settings become legacy; the CsvManagement admin tab can stay as a one-off importer or be removed later.
-- Battery / screen / rear-glass prices used by `DeductionCalculator` now come from the same DB rows.
+**5. Customer page** (private link + QR, like the trade-in ones)
+- Their purchases: device, purchase price, date, warranty and days left
+- Shipping timeline with dates/times for each update
+- Payment plan: agreed amount, paid so far, remaining, schedule with due dates, paid/late status, late fees
+- Their trade-in requests and quotes
+- Phone number partly hidden; nothing private to the business (costs, IMEI purchase source, profit) is ever shown
 
-### 4. Realtime reflection
-Enable Postgres realtime on `devices` so admin edits appear on the public site without a refresh (same pattern already used elsewhere).
-
-## Technical notes
-
-- Migration includes `CREATE TABLE`, GRANTs (SELECT to anon+authenticated, ALL to authenticated for admin-gated policies, ALL to service_role), RLS enable, and policies using `has_role(auth.uid(),'admin')`.
-- Seed step: I'll fetch the current published CSV once during planning-to-build, parse it, and emit an `INSERT ... ON CONFLICT DO NOTHING` block in the migration so every current device/condition/storage combo is preloaded.
-- Uniqueness key for upsert: (brand, model, condition, storage).
-- No changes to trade-in math, cart, or checkout beyond swapping the data source.
-
-## Open question
-
-Do you want the old CSV import kept as a one-click "Sync from Google Sheet" button in the admin panel (useful if you still update the sheet), or should the sheet be fully retired and the DB become the only source of truth going forward?
+## Technical section
+- New tables: `customers` (name, phone, email, public_token, user_id nullable), `device_stock` (all device fields, photos text[], status), `device_repairs`, `device_sales` (stock_id, customer_id, prices, payment method, trade_in_request_id, warranty_days), `payment_plans` + `payment_plan_installments` (due_date, amount, paid_amount, paid_at, late_fee), `sale_payments`, `shipment_events` (status, note, created_at). All admin-only RLS with GRANTs.
+- Photos in the existing public `media` bucket under `inventory/`.
+- `trade_in_requests` gets nullable `customer_id`, matched by phone when a customer is created.
+- Security-definer RPC `get_customer_portal(token)` returns only customer-safe fields; route `/c/:token`.
+- Existing `inventory` table left in place (marked deprecated); new tab replaces it in the admin panel.
+- Late = installment past due and not fully paid, computed on read.
