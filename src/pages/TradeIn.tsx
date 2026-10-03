@@ -13,6 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Smartphone, Battery, Sparkles, Wrench, ShoppingBag, FileCheck, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { Pencil, Plus, X } from 'lucide-react';
 import DeviceImage from '@/components/DeviceImage';
+import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import TradeInQrCard from '@/components/TradeInQrCard';
+import { gradeInfo, sortGrades, requestUrl } from '@/lib/tradeInRequests';
 
 const WHATSAPP_NUMBER = '18765472061';
 const SERVICE_FEE_PCT = 0.30;
@@ -48,6 +52,10 @@ const TradeIn: React.FC = () => {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<{ code: string; token: string; key: string } | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
 
   const goNext = () => { setDirection('forward'); setStep(s => Math.min(STEPS.length, s + 1)); };
   const goBack = () => { setDirection('back'); setStep(s => Math.max(1, s - 1)); };
@@ -66,7 +74,7 @@ const TradeIn: React.FC = () => {
 
   const cModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand).map(d => d.Model))).sort(), [devices, c.brand]);
   const cStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model).map(d => d.Storage))).sort(), [devices, c.brand, c.model]);
-  const cConditions = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model && d.Storage === c.storage).map(d => d.Condition))), [devices, c.brand, c.model, c.storage]);
+  const cConditions = useMemo(() => sortGrades(Array.from(new Set(devices.filter(d => d.Brand === c.brand && d.Model === c.model && d.Storage === c.storage).map(d => d.Condition)))), [devices, c.brand, c.model, c.storage]);
   const cColors = useMemo(() => devices.find(d => d.Brand === c.brand && d.Model === c.model && d.Storage === c.storage)?.Colors || [], [devices, c.brand, c.model, c.storage]);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
@@ -79,7 +87,7 @@ const TradeIn: React.FC = () => {
   const newBrands = tradeBrands;
   const newModels = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === n.brand).map(d => d.Model))).sort(), [devices, n.brand]);
   const newStorages = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === n.brand && d.Model === n.model).map(d => d.Storage))).sort(), [devices, n.brand, n.model]);
-  const newConditions = useMemo(() => Array.from(new Set(devices.filter(d => d.Brand === n.brand && d.Model === n.model && d.Storage === n.storage).map(d => d.Condition))), [devices, n.brand, n.model, n.storage]);
+  const newConditions = useMemo(() => sortGrades(Array.from(new Set(devices.filter(d => d.Brand === n.brand && d.Model === n.model && d.Storage === n.storage).map(d => d.Condition)))), [devices, n.brand, n.model, n.storage]);
   const newColors = useMemo(() => devices.find(d => d.Brand === n.brand && d.Model === n.model && d.Storage === n.storage)?.Colors || [], [devices, n.brand, n.model, n.storage]);
 
   const estimate = useMemo(() => {
@@ -174,11 +182,47 @@ const TradeIn: React.FC = () => {
     }
   };
 
+  const faultList = () => [
+    t.brokenScreen && 'Broken screen', t.brokenBackGlass && 'Broken back glass', t.brokenCamera && 'Broken camera',
+    !t.faceIdWorks && 'Face ID not working', !t.speakersWork && 'Speakers not working',
+  ].filter(Boolean) as string[];
+
+  const quoteKey = JSON.stringify([t, n, name.trim(), phone.trim(), email.trim(), estimate.tradeValue]);
+
+  const saveRequest = async (): Promise<{ code: string; token: string } | null> => {
+    if (saved && saved.key === quoteKey) return saved;
+    const { data, error } = await supabase.rpc('create_trade_in_request', { payload: {
+      customer_name: name.trim().slice(0, 100), customer_phone: phone.trim().slice(0, 30), customer_email: email.trim() || null,
+      trade_device: { brand: t.brand, model: t.model, storage: t.storage, color: t.color, imei: t.imei, unlocked: t.unlocked, scratch: t.scratch },
+      condition: estimate.condition, battery_pct: t.batteryPct, faults: faultList(),
+      desired_device: n, estimated_value_usd: estimate.tradeValue,
+      estimate: { tradeValue: estimate.tradeValue, newPrice: estimate.newPrice, usaTotalUSD: estimate.usaTotalUSD,
+        jamaicaTotalJMD: estimate.jamaicaTotalJMD, repairs: estimate.repairBreakdown.map(r => r.label), exchangeRate },
+    } as any });
+    if (error || !data) { toast({ title: 'Could not save request', description: error?.message, variant: 'destructive' }); return null; }
+    const d = data as any;
+    const res = { code: d.request_code, token: d.public_token, key: quoteKey };
+    setSaved(res);
+    return res;
+  };
+
+  const createRequest = async () => {
+    if (!name.trim() || !phone.trim()) {
+      toast({ title: 'Almost there', description: 'Please enter your name and phone.', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    const r = await saveRequest();
+    setSaving(false);
+    if (r) setShowSaved(true);
+  };
+
   const sendWhatsApp = () => {
     if (!name.trim() || !phone.trim()) {
       toast({ title: 'Almost there', description: 'Please enter your name and phone.', variant: 'destructive' });
       return;
     }
+    const link = saved ? `\n\nRequest ID: ${saved.code}\nView: ${requestUrl(saved.token)}` : '';
     const repairsList = estimate.repairBreakdown.length
       ? estimate.repairBreakdown.map(r => `  • ${r.label}`).join('\n') : '  • None';
     const msg = `Hello Phone Matrix! I'd like to submit a trade-in request.
@@ -207,7 +251,7 @@ Price for Jamaica customers (incl. shipping): ${formatCurrency(estimate.jamaicaT
 
 — CUSTOMER —
 Name: ${name}
-Phone: ${phone}`;
+Phone: ${phone}${link}`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
     toast({ title: 'Opening WhatsApp', description: 'Your trade-in request is ready to send.' });
   };
@@ -392,7 +436,7 @@ Phone: ${phone}`;
                 <div className="space-y-2"><Label>Condition</Label>
                   <Select value={n.condition} onValueChange={v => setN({ ...n, condition: v })} disabled={!n.storage}>
                     <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
-                    <SelectContent>{newConditions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <SelectContent>{newConditions.map(c => <SelectItem key={c} value={c}><span className="font-medium">{c}</span>{gradeInfo(c) && <span className="block text-xs text-muted-foreground">{gradeInfo(c)!.short}</span>}</SelectItem>)}</SelectContent>
                   </Select></div>
                 <div className="space-y-2 md:col-span-2"><Label>Color</Label>
                   <Select value={n.color} onValueChange={v => setN({ ...n, color: v })} disabled={!n.storage || newColors.length === 0}>
@@ -422,6 +466,7 @@ Phone: ${phone}`;
                   <p className="font-semibold">{t.brand} {t.model}</p>
                   <p className="text-sm text-muted-foreground">{t.storage} • {t.color}</p>
                   <Badge variant="outline" className="mt-2">Assessed: {estimate.condition}</Badge>
+                  {gradeInfo(estimate.condition) && <p className="text-xs text-muted-foreground mt-1">{gradeInfo(estimate.condition)!.short}</p>}
                 </Card>
                 <Card className="p-4 bg-primary/5 border-primary/30 relative">
                   <Button size="sm" variant="ghost" onClick={() => { setDirection('back'); setStep(5); }}
@@ -621,9 +666,11 @@ Phone: ${phone}`;
                     <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="Full name" /></div>
                   <div className="space-y-2"><Label htmlFor="phone">Phone</Label>
                     <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 (876) 555-0000" /></div>
+                  <div className="space-y-2 md:col-span-2"><Label htmlFor="email">Email (optional)</Label>
+                    <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></div>
                 </div>
-                <Button onClick={sendWhatsApp} className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white h-12 text-base">
-                  <MessageCircle className="h-5 w-5 mr-2" />Send Trade-In Request via WhatsApp
+                <Button onClick={createRequest} disabled={saving} className="w-full h-12 text-base">
+                  <FileCheck className="h-5 w-5 mr-2" />{saving ? 'Saving…' : 'Get My Trade-In Request & QR Code'}
                 </Button>
               </div>
             </div>
@@ -644,6 +691,27 @@ Phone: ${phone}`;
           </div>
         </Card>
       </div>
+
+      <Dialog open={showSaved} onOpenChange={setShowSaved}>
+        <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Trade-In Request Created</DialogTitle></DialogHeader>
+          {saved && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-sm space-y-1">
+                <p className="text-xs text-muted-foreground">Request ID</p>
+                <p className="text-2xl font-bold tabular-nums">{saved.code}</p>
+                <p>{t.brand} {t.model} • {t.storage} • {t.color}</p>
+                <p>Network: {t.unlocked === 'unlocked' ? 'Unlocked' : 'Carrier locked'} • Battery {t.batteryPct}%</p>
+                <p>Grade: <b>{estimate.condition}</b> — <span className="text-muted-foreground">{gradeInfo(estimate.condition)?.short}</span></p>
+                <p>Faults: {faultList().join(', ') || 'None'}</p>
+                <p className="pt-1">Estimated trade value: <b className="text-lg">{formatCurrency(estimate.tradeValue, 'USD')}</b></p>
+                <p className="text-xs text-muted-foreground">Created {new Date().toLocaleDateString()} • Valid for 14 days</p>
+              </div>
+              <TradeInQrCard url={requestUrl(saved.token)} code={saved.code} onWhatsApp={sendWhatsApp} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

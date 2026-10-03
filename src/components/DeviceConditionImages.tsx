@@ -22,7 +22,7 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Perfect condition with no visible scratches or signs of use. Looks and works like brand new and battery health is over 85%.
+              No noticeable blemishes and in excellent cosmetic condition. Battery health generally 95% or higher.
             </p>
           </CardContent>
         </Card>
@@ -36,7 +36,7 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Minor signs of wear but no significant scratches, dents or marks. Fully functional with battery health above 82%.
+              Little to no noticeable blemishes and in very good overall condition. Battery health generally 85% or higher.
             </p>
           </CardContent>
         </Card>
@@ -50,7 +50,7 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Visible signs of use with some scratches or marks. May have battery, screen or other components changed to ensure full functionality with or without minor dents. Battery health is above 80%.
+              May have visible scratches or other signs of normal use but fully functional. Battery health generally 80% or higher.
             </p>
           </CardContent>
         </Card>
@@ -64,7 +64,7 @@ const DeviceConditionImages: React.FC<DeviceConditionImagesProps> = ({ isVisible
               className="w-full h-48 object-cover rounded mb-2" 
             />
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Heavy signs of wear, significant scratches, dents or cracks. Still functional but visibly worn. Key components have been changed or in very rare cases, Face ID doesn't work.
+              May have visible scratches, significant cosmetic wear, poor battery health, functional faults, or other issues that reduce its value.
             </p>
           </CardContent>
         </Card>

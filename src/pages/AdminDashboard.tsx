@@ -17,6 +17,7 @@ import MediaManagement from '@/components/admin/MediaManagement';
 import DevicesManagement from '@/components/admin/DevicesManagement';
 import PriceScraper from '@/components/admin/PriceScraper';
 import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
+import TradeInRequests from '@/components/admin/TradeInRequests';
 
 interface ReferralCode {
   id: string;
@@ -188,6 +189,7 @@ const AdminDashboard = () => {
         <Tabs defaultValue="orders" className="space-y-4">
           <TabsList>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="tradeins">Trade-Ins</TabsTrigger>
             <TabsTrigger value="devices">Devices</TabsTrigger>
             <TabsTrigger value="scraper">Scraper</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
@@ -200,6 +202,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="orders" className="space-y-4">
             <OrderManagement orders={orders} onRefresh={fetchAdminData} user={user} />
+          </TabsContent>
+
+          <TabsContent value="tradeins" className="space-y-4">
+            <TradeInRequests />
           </TabsContent>
 
           <TabsContent value="devices" className="space-y-4">

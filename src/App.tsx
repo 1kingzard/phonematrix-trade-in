@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import TradeInRequestPage from '@/pages/TradeInRequestPage';
 import { CartProvider } from '@/contexts/CartContext';
 import { PurchaseHistoryProvider } from '@/contexts/PurchaseHistoryContext';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -50,6 +51,7 @@ function App() {
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/trade-in" element={<TradeIn />} />
+                        <Route path="/trade-in/request/:token" element={<TradeInRequestPage />} />
                         <Route path="/dashboard" element={<UserDashboard />} />
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/login" element={<AdminLogin />} />
