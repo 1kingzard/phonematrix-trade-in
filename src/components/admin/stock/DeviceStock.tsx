@@ -34,6 +34,7 @@ const DeviceStock = () => {
   const [uploading, setUploading] = useState(false);
   const [selling, setSelling] = useState<any | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<any[]>([]);
 
   const load = async () => {
     const [s, sl] = await Promise.all([
