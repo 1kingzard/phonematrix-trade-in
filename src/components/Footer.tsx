@@ -10,7 +10,7 @@ const Footer = () => {
           <img src={logoSrc} alt="PhoneMatrix" className="h-8 transition-opacity duration-300" />
         </Link>
         <nav className="flex flex-wrap items-center gap-5 text-sm text-foreground/70">
-          <Link to="/price-list" className="hover:text-foreground">Price List</Link>
+          <Link to="/price-list" className="hover:text-foreground">Browse Devices</Link>
           <Link to="/trade-in" className="hover:text-foreground">Trade-In</Link>
           <Link to="/faq" className="hover:text-foreground">FAQ</Link>
           <Link to="/reviews" className="hover:text-foreground">Reviews</Link>

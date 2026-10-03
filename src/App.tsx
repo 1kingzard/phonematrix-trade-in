@@ -15,6 +15,7 @@ import UserDashboard from '@/pages/UserDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminLogin from '@/pages/AdminLogin';
 import PriceList from '@/pages/PriceList';
+import DeviceProduct from '@/pages/DeviceProduct';
 import ReviewsPage from '@/pages/ReviewsPage';
 import FAQPage from '@/pages/FAQPage';
 import LoginPage from '@/pages/LoginPage';
@@ -57,6 +58,7 @@ function App() {
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/login" element={<AdminLogin />} />
                         <Route path="/price-list" element={<PriceList />} />
+                         <Route path="/devices/:brand/:model" element={<DeviceProduct />} />
                         <Route path="/reviews" element={<ReviewsPage />} />
                         <Route path="/faq" element={<FAQPage />} />
                         <Route path="/login" element={<LoginPage />} />
