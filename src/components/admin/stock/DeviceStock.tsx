@@ -341,6 +341,22 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
     <Dialog open={!!item} onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Sell {item.brand} {item.model} {item.storage}</DialogTitle></DialogHeader>
+        <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Enter all amounts in</span>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md border overflow-hidden text-xs">
+              {(['USD', 'JMD'] as const).map(c => (
+                <button key={c} type="button" onClick={() => switchCur(c)}
+                  className={`px-3 py-1 ${priceCur === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>{c}</button>
+              ))}
+            </div>
+            {priceCur === 'JMD' && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">Rate
+                <Input type="number" className="h-6 w-20 text-xs" value={jmdRate || ''} placeholder={String(partsRate)} onChange={e => changeRate(e.target.value)} />
+                JMD/USD</span>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="col-span-2"><Label>Buyer</Label>
             <Select value={f.customer_id} onValueChange={v => set('customer_id', v)}>
