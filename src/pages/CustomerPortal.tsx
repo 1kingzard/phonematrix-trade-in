@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { usd, fmtDate, fmtDateTime, installmentOwed, isLate, warrantyEnd, SHIPMENT_STATUSES } from '@/lib/stock';
+import { usd, saleMoney, fmtDate, fmtDateTime, installmentOwed, isLate, warrantyEnd, SHIPMENT_STATUSES } from '@/lib/stock';
 import { statusTone } from '@/lib/tradeInRequests';
 
 const CustomerPortal = () => {
@@ -43,9 +43,9 @@ const CustomerPortal = () => {
                 </CardHeader>
                 <CardContent className="space-y-5 text-sm">
                   <div className="grid sm:grid-cols-3 gap-3">
-                    <div><div className="text-muted-foreground">Purchase price</div><div className="font-semibold">{usd(p.sold_for)}</div>
-                      {p.loyalty_discount > 0 && <div className="text-xs text-muted-foreground">Includes loyalty discount −{usd(p.loyalty_discount)}</div>}
-                      {p.trade_credit > 0 && <div className="text-xs text-muted-foreground">Trade-in credit {usd(p.trade_credit)}</div>}</div>
+                    <div><div className="text-muted-foreground">Purchase price</div><div className="font-semibold">{saleMoney(p.sold_for, p)}</div>
+                      {p.loyalty_discount > 0 && <div className="text-xs text-muted-foreground">Includes loyalty discount −{saleMoney(p.loyalty_discount, p)}</div>}
+                      {p.trade_credit > 0 && <div className="text-xs text-muted-foreground">Trade-in credit {saleMoney(p.trade_credit, p)}</div>}</div>
                     <div><div className="text-muted-foreground">Purchase date</div><div className="font-semibold">{fmtDateTime(p.sold_at)}</div></div>
                     <div><div className="text-muted-foreground">Warranty</div><div className="font-semibold">Until {fmtDate(wEnd.toISOString())}</div>
                       <Badge variant={daysLeft > 0 ? 'secondary' : 'outline'}>{daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}</Badge></div>
@@ -64,15 +64,15 @@ const CustomerPortal = () => {
                   {p.is_payment_plan && <section>
                     <h3 className="font-semibold mb-2">Payment plan</h3>
                     <div className="grid grid-cols-3 gap-2 mb-2">
-                      <div><div className="text-muted-foreground">Agreed</div><div className="font-semibold">{usd(p.plan_total)}</div></div>
-                      <div><div className="text-muted-foreground">Paid</div><div className="font-semibold">{usd(paid)}</div></div>
-                      <div><div className="text-muted-foreground">Remaining</div><div className="font-semibold">{usd(owed)}</div></div>
+                      <div><div className="text-muted-foreground">Agreed</div><div className="font-semibold">{saleMoney(p.plan_total, p)}</div></div>
+                      <div><div className="text-muted-foreground">Paid</div><div className="font-semibold">{saleMoney(paid, p)}</div></div>
+                      <div><div className="text-muted-foreground">Remaining</div><div className="font-semibold">{saleMoney(owed, p)}</div></div>
                     </div>
                     <div className="border rounded-md divide-y">
                       {p.installments.map((i: any, k: number) => (
                         <div key={k} className="flex items-center justify-between p-2">
                           <span>{fmtDate(i.due_date)}</span>
-                          <span className="tabular-nums">{usd(Number(i.amount) + Number(i.late_fee))}{i.late_fee > 0 && <span className="text-xs text-muted-foreground"> (late fee {usd(i.late_fee)})</span>}</span>
+                          <span className="tabular-nums">{saleMoney(Number(i.amount) + Number(i.late_fee), p)}{i.late_fee > 0 && <span className="text-xs text-muted-foreground"> (late fee {saleMoney(i.late_fee, p)})</span>}</span>
                           {installmentOwed(i) === 0 ? <Badge variant="secondary">Paid</Badge> : isLate(i) ? <Badge variant="destructive">Overdue</Badge> : <Badge variant="outline">Upcoming</Badge>}
                         </div>
                       ))}
