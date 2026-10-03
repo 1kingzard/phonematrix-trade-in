@@ -46,22 +46,20 @@ const DeviceStock = () => {
   };
   useEffect(() => { load(); }, []);
   useEffect(() => {
-    db.from('devices').select('id, brand, model, storage, price').eq('active', true)
+    db.from('devices').select('id, brand, model, storage, condition, price').eq('active', true)
       .order('brand').order('model').order('storage')
       .then(({ data }: any) => setCatalog(data || []));
   }, []);
 
-  const catalogKey = (d: any) => `${d.brand}||${d.model}||${d.storage || ''}`;
-  const catalogOptions = useMemo(() => {
-    const seen = new Set<string>();
-    return catalog.filter(d => { const k = catalogKey(d); if (seen.has(k)) return false; seen.add(k); return true; });
-  }, [catalog]);
+  const uniq = (arr: string[]) => [...new Set(arr.filter(Boolean))];
+  const catBrands = useMemo(() => uniq(catalog.map(d => d.brand)), [catalog]);
+  const catModels = useMemo(() => uniq(catalog.filter(d => d.brand === pick.brand).map(d => d.model)), [catalog, pick.brand]);
+  const catStorages = useMemo(() => uniq(catalog.filter(d => d.brand === pick.brand && d.model === pick.model).map(d => d.storage)), [catalog, pick.brand, pick.model]);
+  const catConditions = useMemo(() => catalog.filter(d => d.brand === pick.brand && d.model === pick.model && (d.storage || '') === pick.storage), [catalog, pick.brand, pick.model, pick.storage]);
 
-  const pickCatalogDevice = (key: string) => {
-    if (key === '__manual') return;
-    const d = catalogOptions.find(x => catalogKey(x) === key);
+  const pickCatalogDevice = (d: any) => {
     if (!d) return;
-    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', website_price: d.price });
+    setEditing((prev: any) => prev && { ...prev, brand: d.brand, model: d.model, storage: d.storage || '', condition: d.condition || prev.condition, website_price: d.price });
   };
 
   const saleFor = (id: string) => sales.find(s => s.stock_id === id);
