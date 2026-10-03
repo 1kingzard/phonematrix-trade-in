@@ -19,7 +19,7 @@ const db = supabase as any;
 
 const emptyItem = {
   brand: 'Apple', model: '', storage: '', colour: '', condition: 'Very Good', photos: [] as string[],
-  imei: '', serial: '', purchase_cost: 0, purchased_from: '', purchase_date: '', website_price: 0,
+  imei: '', serial: '', battery_health: '', purchase_cost: 0, purchased_from: '', purchase_date: '', website_price: 0,
   warranty_days: 30, status: 'in_stock', notes: '',
 };
 
@@ -95,7 +95,7 @@ const DeviceStock = () => {
 
   const save = async () => {
     const { id, device_repairs, created_at, updated_at, ...rest } = editing;
-    const payload = { ...rest, purchase_cost: Number(rest.purchase_cost) || 0, website_price: Number(rest.website_price) || 0, warranty_days: Number(rest.warranty_days) || 0, purchase_date: rest.purchase_date || null };
+    const payload = { ...rest, battery_health: rest.battery_health === '' || rest.battery_health == null ? null : Number(rest.battery_health), purchase_cost: Number(rest.purchase_cost) || 0, website_price: Number(rest.website_price) || 0, warranty_days: Number(rest.warranty_days) || 0, purchase_date: rest.purchase_date || null };
     const res = id ? await db.from('device_stock').update(payload).eq('id', id).select().single() : await db.from('device_stock').insert(payload).select().single();
     if (res.error) return toast({ title: 'Save failed', description: res.error.message, variant: 'destructive' });
     const pending = repairs.filter(r => !r.id).map(r => ({ ...r, stock_id: res.data.id }));
@@ -144,7 +144,7 @@ const DeviceStock = () => {
                   <tr key={it.id} className="border-b last:border-0">
                     <td className="py-2">{it.photos?.[0] ? <img src={it.photos[0]} className="h-10 w-10 rounded object-cover" alt="" /> : <div className="h-10 w-10 rounded bg-muted" />}</td>
                     <td><div className="font-medium">{it.brand} {it.model}</div><div className="text-xs text-muted-foreground">{[it.storage, it.colour].filter(Boolean).join(' · ')}</div></td>
-                    <td>{it.condition}</td>
+                    <td>{it.condition}{it.battery_health != null && <div className="text-xs text-muted-foreground">Battery {it.battery_health}%</div>}</td>
                     <td className="text-xs">{it.imei || '—'}<br />{it.serial || ''}</td>
                     <td className="text-right tabular-nums">{usd(cost)}</td>
                     <td className="text-right tabular-nums">{usd(it.website_price)}</td>
@@ -207,6 +207,7 @@ const DeviceStock = () => {
                 </Select></div>
               <div><Label>IMEI</Label><Input value={editing.imei || ''} onChange={e => set('imei', e.target.value)} /></div>
               <div><Label>Serial</Label><Input value={editing.serial || ''} onChange={e => set('serial', e.target.value)} /></div>
+              <div><Label>Battery health (%)</Label><Input type="number" min={0} max={100} value={editing.battery_health ?? ''} onChange={e => set('battery_health', e.target.value)} placeholder="e.g. 87" /></div>
               <div><Label>Purchased for (USD)</Label><Input type="number" value={editing.purchase_cost} onChange={e => set('purchase_cost', e.target.value)} /></div>
               <div><Label>Purchased from</Label><Input value={editing.purchased_from || ''} onChange={e => set('purchased_from', e.target.value)} /></div>
               <div><Label>Purchase date</Label><Input type="date" value={editing.purchase_date || ''} onChange={e => set('purchase_date', e.target.value)} /></div>
