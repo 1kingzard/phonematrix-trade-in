@@ -181,9 +181,9 @@ const DeviceStock = () => {
                     <SelectTrigger><SelectValue placeholder="2. Model" /></SelectTrigger>
                     <SelectContent className="max-h-64">{catModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                   </Select>
-                  <Select value={pick.storage} onValueChange={v => setPick(p => ({ ...p, storage: v, condition: '' }))} disabled={!pick.model}>
+                  <Select value={pick.storage || '__none'} onValueChange={v => setPick(p => ({ ...p, storage: v === '__none' ? '' : v, condition: '' }))} disabled={!pick.model}>
                     <SelectTrigger><SelectValue placeholder="3. Storage" /></SelectTrigger>
-                    <SelectContent className="max-h-64">{catStorages.map(s => <SelectItem key={s} value={s}>{s || 'N/A'}</SelectItem>)}</SelectContent>
+                    <SelectContent className="max-h-64">{catStorages.map(s => <SelectItem key={s || '__none'} value={s || '__none'}>{s || 'N/A'}</SelectItem>)}</SelectContent>
                   </Select>
                   <Select value={pick.condition} onValueChange={v => { setPick(p => ({ ...p, condition: v })); pickCatalogDevice(catConditions.find(d => d.condition === v)); }} disabled={!pick.storage && catStorages.length > 0}>
                     <SelectTrigger><SelectValue placeholder="4. Grade" /></SelectTrigger>
