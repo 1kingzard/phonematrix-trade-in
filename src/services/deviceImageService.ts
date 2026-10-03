@@ -1,4 +1,20 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+let dbImages: Promise<Map<string, string>> | null = null;
+const loadDbImages = () => {
+  if (!dbImages) dbImages = (async () => {
+    const m = new Map<string, string>();
+    const { data } = await supabase.from('device_images').select('brand,model,image_url');
+    (data || []).forEach((r: any) => m.set(`${r.brand}|${r.model}`.toLowerCase(), r.image_url));
+    return m;
+  })().catch(() => new Map());
+  return dbImages;
+};
+const dbLookup = async (brand: string, model: string) => {
+  const m = await loadDbImages();
+  return m.get(`${brand}|${model}`.toLowerCase()) || m.get(`|${model}`.toLowerCase()) || null;
+};
 
 /**
  * Fetches an official-looking image for a device by Brand + Model.
@@ -68,6 +84,8 @@ const fetchFromWikipedia = async (brand: string, model: string): Promise<string 
 
 export const fetchDeviceImage = async (brand: string, model: string): Promise<string | null> => {
   if (!brand || !model) return null;
+  const fromDb = await dbLookup(brand, model);
+  if (fromDb) return fromDb;
   const cached = getCachedDeviceImage(brand, model);
   if (cached !== undefined) return cached;
 
@@ -87,13 +105,7 @@ export const useDeviceImage = (brand: string, model: string) => {
 
   useEffect(() => {
     let cancelled = false;
-    const cached = getCachedDeviceImage(brand, model);
-    if (cached !== undefined) {
-      setSrc(cached);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    setLoading(src === null);
     fetchDeviceImage(brand, model)
       .then((url) => {
         if (!cancelled) {

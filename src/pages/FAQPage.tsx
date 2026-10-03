@@ -14,7 +14,7 @@ const FAQPage = () => {
     },
     {
       question: "What condition should my device be in?",
-      answer: "We accept devices in various conditions from Like New to Poor. The better the condition, the higher the trade-in value. Devices should be functional unless specified otherwise."
+      answer: "We accept devices in various conditions from Like New to Fair. The better the condition, the higher the trade-in value. Devices should be functional unless specified otherwise."
     },
     {
       question: "How long does the trade-in process take?",
@@ -30,7 +30,7 @@ const FAQPage = () => {
     },
     {
       question: "Do you buy devices with cracked screens?",
-      answer: "Yes, we do buy devices with cracked screens, though at a reduced value. These would typically fall into the 'Poor' condition category."
+      answer: "Yes, we do buy devices with cracked screens, though at a reduced value. These would typically fall into the 'Fair' condition category."
     },
     {
       question: "What happens if my device is in worse condition than described?",

@@ -9,7 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import PurchaseRequestModal from '@/components/PurchaseRequestModal';
-import { Search, Smartphone, X } from 'lucide-react';
+import { Search, Smartphone, X, ShoppingCart } from 'lucide-react';
+import CartSheet from '@/components/CartSheet';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 import Reveal from '@/components/Reveal';
 import DeviceImage from '@/components/DeviceImage';
 import { useExchangeRate, formatJMD, formatUSD, calcBreakdown } from '@/hooks/useExchangeRate';
@@ -62,6 +65,12 @@ const PriceList: React.FC = () => {
   useEffect(() => { try { localStorage.setItem('preferred_currency', currency); } catch {} }, [currency]);
 
   const [search, setSearch] = useState('');
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+  const handleAddToCart = (d: DeviceData) => {
+    addToCart({ ...d, Color: d.Colors?.[0] || '' } as DeviceData);
+    toast({ title: 'Added to cart', description: `${d.Brand} ${d.Model} ${d.Storage}` });
+  };
   const [os, setOs] = useState(ALL);
   const [brand, setBrand] = useState(ALL);
   const [model, setModel] = useState(ALL);
@@ -129,9 +138,14 @@ const PriceList: React.FC = () => {
 
         <Card className="p-4 md:p-6 mb-6 bg-card/60 backdrop-blur border-border/60">
           <div className="flex flex-col gap-4">
+            <div className="flex gap-2 items-center">
+  <div className="flex-1">
             <div className="relative search-expand rounded-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search brand, model, storage…" value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11" />
+            </div>
+  </div>
+              <CartSheet currency={currency} />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <Select value={os} onValueChange={setOs}>
@@ -224,7 +238,10 @@ const PriceList: React.FC = () => {
                           <p className="text-xs text-muted-foreground">Price</p>
                           <p className="text-2xl font-bold text-foreground">{formatUSD(d.Price)}</p>
                         </div>
-                        <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop shrink-0">Request</Button>
+                        <div className="flex flex-col gap-1.5 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => handleAddToCart(d)}><ShoppingCart className="h-4 w-4 mr-1" />Add to cart</Button>
+                          <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop">Request</Button>
+                        </div>
                       </div>
                     ) : (
                       (() => {
@@ -245,6 +262,7 @@ const PriceList: React.FC = () => {
                             <span>{formatJMD(b.shippingJmd)}</span>
                           </div>
                         </div>
+                        <Button size="sm" variant="outline" onClick={() => handleAddToCart(d)} className="w-full"><ShoppingCart className="h-4 w-4 mr-1" />Add to cart</Button>
                         <Button size="sm" onClick={() => setSelected({ device: d, color: d.Colors[0] || '' })} className="btn-pop w-full">Request</Button>
                       </div>
                         );

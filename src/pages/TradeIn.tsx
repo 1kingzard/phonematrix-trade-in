@@ -18,10 +18,10 @@ const WHATSAPP_NUMBER = '18765472061';
 const SERVICE_FEE_PCT = 0.30;
 const SHIPPING_PCT = 0.30;
 
-type Cond = 'Like New' | 'Good' | 'Fair' | 'Poor';
-const ORDER: Cond[] = ['Like New', 'Good', 'Fair', 'Poor'];
+type Cond = 'Like New' | 'Very Good' | 'Good' | 'Fair';
+const ORDER: Cond[] = ['Like New', 'Very Good', 'Good', 'Fair'];
 const downgrade = (c: Cond, target: Cond): Cond => ORDER.indexOf(target) > ORDER.indexOf(c) ? target : c;
-const batteryToCondition = (pct: number): Cond => pct >= 90 ? 'Like New' : pct >= 83 ? 'Good' : pct >= 77 ? 'Fair' : 'Poor';
+const batteryToCondition = (pct: number): Cond => pct >= 90 ? 'Like New' : pct >= 83 ? 'Very Good' : pct >= 77 ? 'Good' : 'Fair';
 
 interface TradeIn {
   imei: string; brand: string; model: string; storage: string; color: string;
@@ -84,10 +84,10 @@ const TradeIn: React.FC = () => {
 
   const estimate = useMemo(() => {
     let cond: Cond = batteryToCondition(t.batteryPct);
-    if (t.scratch === 'B' && cond === 'Like New') cond = 'Good';
-    if (t.scratch === 'C') cond = downgrade(cond, 'Fair');
+    if (t.scratch === 'B' && cond === 'Like New') cond = 'Very Good';
+    if (t.scratch === 'C') cond = downgrade(cond, 'Good');
     const anyFault = t.brokenScreen || t.brokenBackGlass || t.brokenCamera || !t.faceIdWorks || !t.speakersWork;
-    if (anyFault) cond = 'Poor';
+    if (anyFault) cond = 'Fair';
 
     const tradeRow: DeviceData | undefined =
       devices.find(d => d.Brand === t.brand && d.Model === t.model && d.Storage === t.storage && d.Condition === cond) ||

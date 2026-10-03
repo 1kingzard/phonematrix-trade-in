@@ -36,6 +36,9 @@ const PriceScraper: React.FC = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [markup, setMarkup] = useState<string>('60');
+  const [bmMarkup, setBmMarkup] = useState<string>('20');
+  const [imgBusy, setImgBusy] = useState(false);
+  const [imgCount, setImgCount] = useState<number>(0);
   const [swappaUrl, setSwappaUrl] = useState('');
   const [bmUrl, setBmUrl] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -55,11 +58,13 @@ const PriceScraper: React.FC = () => {
     ]);
     if (s) {
       const x = s as any;
-      setSettings(x); setMarkup(String(x.markup_percent));
+      setSettings(x); setMarkup(String(x.markup_percent)); setBmMarkup(String(x.backmarket_markup_percent ?? 20));
       setSwappaUrl(x.swappa_url || ''); setBmUrl(x.backmarket_url || ''); setAutoRefresh(x.auto_refresh !== false);
     }
     if (r) setRows(r as any);
     if (d) setDevices(d as any);
+    const { count } = await supabase.from('device_images').select('id', { count: 'exact', head: true });
+    setImgCount(count || 0);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -67,8 +72,10 @@ const PriceScraper: React.FC = () => {
   const saveSettings = async () => {
     const pct = parseFloat(markup);
     if (!isFinite(pct) || pct <= 0 || pct > 100) return toast({ title: 'Invalid markup', variant: 'destructive' });
+    const bm = parseFloat(bmMarkup);
+    if (!isFinite(bm) || bm < 0 || bm > 500) return toast({ title: 'Invalid Back Market markup', variant: 'destructive' });
     if (!settings) return;
-    const { error } = await supabase.from('scraper_settings').update({ markup_percent: pct, swappa_url: swappaUrl, backmarket_url: bmUrl, auto_refresh: autoRefresh } as any).eq('id', settings.id);
+    const { error } = await supabase.from('scraper_settings').update({ markup_percent: pct, swappa_url: swappaUrl, backmarket_url: bmUrl, auto_refresh: autoRefresh, backmarket_markup_percent: bm } as any).eq('id', settings.id);
     if (error) return toast({ title: 'Error', description: error.message, variant: 'destructive' });
     toast({ title: 'Settings saved' });
     load();
@@ -87,6 +94,19 @@ const PriceScraper: React.FC = () => {
     } finally {
       setScraping(false);
     }
+  };
+
+  const grabImages = async () => {
+    setImgBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-prices', { body: { mode: 'images' } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Images saved', description: `${data?.count ?? 0} device images saved from Back Market.` });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Image grab failed', description: e?.message, variant: 'destructive' });
+    } finally { setImgBusy(false); }
   };
 
   const findMatch = (r: ScrapedRow): string => {
@@ -157,7 +177,12 @@ const PriceScraper: React.FC = () => {
           <div>
             <Label>Trade-in markup %</Label>
             <Input type="number" value={markup} onChange={e => setMarkup(e.target.value)} />
-            <p className="text-xs text-muted-foreground mt-1">Suggested = market price × markup%</p>
+            <p className="text-xs text-muted-foreground mt-1">Swappa: suggested = market price × markup%</p>
+          </div>
+          <div>
+            <Label>Back Market markup % (profit)</Label>
+            <Input type="number" value={bmMarkup} onChange={e => setBmMarkup(e.target.value)} />
+            <p className="text-xs text-muted-foreground mt-1">Back Market: your price = their price + {bmMarkup || 0}%. Grades: Fair→Fair, Good→Good, Excellent→Very Good, Premium→Like New</p>
           </div>
           <div className="flex items-center gap-2 pb-6">
             <input id="auto" type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="h-4 w-4" />
@@ -173,6 +198,17 @@ const PriceScraper: React.FC = () => {
               Last updated: {(settings as any)?.last_run_at ? new Date((settings as any).last_run_at).toLocaleString() : 'never'}
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Device Images (Back Market)</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" onClick={grabImages} disabled={imgBusy}>
+            <RefreshCcw className={`h-4 w-4 mr-1 ${imgBusy ? 'animate-spin' : ''}`} />
+            {imgBusy ? 'Grabbing images...' : 'Grab Images from Back Market'}
+          </Button>
+          <span className="text-xs text-muted-foreground">Uses the Back Market page above. {imgCount} device images saved — they show on your site automatically.</span>
         </CardContent>
       </Card>
 

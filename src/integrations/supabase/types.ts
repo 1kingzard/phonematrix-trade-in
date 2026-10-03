@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      device_images: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          image_url: string
+          model: string
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          image_url: string
+          model: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          model?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           active: boolean
@@ -753,6 +783,7 @@ export type Database = {
       scraper_settings: {
         Row: {
           auto_refresh: boolean
+          backmarket_markup_percent: number
           backmarket_url: string
           created_at: string
           default_source_url: string
@@ -765,6 +796,7 @@ export type Database = {
         }
         Insert: {
           auto_refresh?: boolean
+          backmarket_markup_percent?: number
           backmarket_url?: string
           created_at?: string
           default_source_url?: string
@@ -777,6 +809,7 @@ export type Database = {
         }
         Update: {
           auto_refresh?: boolean
+          backmarket_markup_percent?: number
           backmarket_url?: string
           created_at?: string
           default_source_url?: string
