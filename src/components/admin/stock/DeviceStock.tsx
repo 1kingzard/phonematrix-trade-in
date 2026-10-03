@@ -35,6 +35,7 @@ const DeviceStock = () => {
   const [selling, setSelling] = useState<any | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<any[]>([]);
+  const [pick, setPick] = useState({ brand: '', model: '', storage: '', condition: '' });
 
   const load = async () => {
     const [s, sl] = await Promise.all([
