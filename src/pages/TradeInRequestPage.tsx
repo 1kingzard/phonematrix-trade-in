@@ -12,6 +12,8 @@ import { gradeInfo, requestUrl, statusTone } from '@/lib/tradeInRequests';
 const usd = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n || 0);
 const jmd = (n: number) => 'J' + new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n || 0);
 
+const dn = (b?: string, m?: string) => (m && b && m.toLowerCase().startsWith(b.toLowerCase()) ? m : `${b ?? ''} ${m ?? ''}`.trim());
+
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
   <div className="flex justify-between gap-4 py-2 border-b border-border/50 last:border-0 text-sm">
     <span className="text-muted-foreground">{k}</span><span className="text-right font-medium">{v}</span>
@@ -71,7 +73,7 @@ const TradeInRequestPage: React.FC = () => {
           </div>
 
           <h2 className="font-semibold mb-1">Your device</h2>
-          <Row k="Device" v={`${td.brand ?? ''} ${td.model ?? ''}`} />
+          <Row k="Device" v={dn(td.brand, td.model)} />
           <Row k="Storage" v={td.storage || '—'} />
           {td.color && <Row k="Color" v={td.color} />}
           {td.unlocked && <Row k="Network" v={td.unlocked === 'unlocked' ? 'Unlocked' : 'Carrier locked'} />}
@@ -82,7 +84,7 @@ const TradeInRequestPage: React.FC = () => {
 
           {dd && (<>
             <h2 className="font-semibold mt-5 mb-1">Device you want</h2>
-            <Row k="Device" v={`${dd.brand} ${dd.model}`} />
+            <Row k="Device" v={dn(dd.brand, dd.model)} />
             <Row k="Details" v={`${dd.storage} • ${dd.condition} • ${dd.color}`} />
             {est.usaTotalUSD != null && <Row k="Price for USA customers" v={usd(est.usaTotalUSD)} />}
             {est.jamaicaTotalJMD != null && <Row k="Price for Jamaica customers" v={jmd(est.jamaicaTotalJMD)} />}
