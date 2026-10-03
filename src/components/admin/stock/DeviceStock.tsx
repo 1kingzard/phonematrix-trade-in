@@ -253,6 +253,7 @@ const DeviceStock = () => {
 
 const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () => void; onSold: (saleId: string) => void }) => {
   const { toast } = useToast();
+  const { rate: partsRate } = useExchangeRateSetting();
   const [customers, setCustomers] = useState<any[]>([]);
   const [rules, setRules] = useState<LoyaltyRule[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
