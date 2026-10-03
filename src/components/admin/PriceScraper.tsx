@@ -133,6 +133,18 @@ const PriceScraper: React.FC = () => {
     });
   }, [rows, search, statusFilter]);
 
+  // Column label depends on which source is in view: Swappa rows are trade-in
+  // offers, Back Market rows are our resale price.
+  const priceColLabel = useMemo(() => {
+    const hasSwappa = filtered.some(r => (r.source || '').toLowerCase().includes('swappa'));
+    const hasBm = filtered.some(r => (r.source || '').toLowerCase().includes('back'));
+    if (hasSwappa && hasBm) return 'Trade-in / Your price $';
+    if (hasBm) return 'Your sell price $';
+    return 'Trade-in $';
+  }, [filtered]);
+
+  const isBm = (r: ScrapedRow) => (r.source || '').toLowerCase().includes('back');
+
   const approve = async (r: ScrapedRow) => {
     const matchId = matchEdit[r.id] || findMatch(r);
     if (!matchId) return toast({ title: 'No matched device', description: 'Pick a target device first.', variant: 'destructive' });
