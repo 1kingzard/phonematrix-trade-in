@@ -74,6 +74,7 @@ const DeviceStock = () => {
 
   const openEdit = async (it: any | null) => {
     setEditing(it ? { ...it, purchase_date: it.purchase_date || '' } : { ...emptyItem });
+    setPick({ brand: '', model: '', storage: '', condition: '' });
     if (it) { const { data } = await db.from('device_repairs').select('*').eq('stock_id', it.id).order('repaired_at'); setRepairs(data || []); }
     else setRepairs([]);
   };
@@ -169,14 +170,27 @@ const DeviceStock = () => {
           <DialogHeader><DialogTitle>{editing?.id ? 'Edit phone' : 'Add phone'}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2"><Label>Pick from catalog</Label>
-                <Select value="" onValueChange={pickCatalogDevice}>
-                  <SelectTrigger><SelectValue placeholder="Choose a device to auto-fill, or enter details manually below…" /></SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    <SelectItem value="__manual">Enter manually</SelectItem>
-                    {catalogOptions.map(d => <SelectItem key={catalogKey(d)} value={catalogKey(d)}>{d.brand} {d.model}{d.storage ? ` ${d.storage}` : ''} — {usd(d.price)}</SelectItem>)}
-                  </SelectContent>
-                </Select></div>
+              <div className="col-span-2 rounded-lg border border-border p-3 space-y-2">
+                <Label>Pick from catalog <span className="text-muted-foreground font-normal">(or fill in the fields below manually)</span></Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={pick.brand} onValueChange={v => setPick({ brand: v, model: '', storage: '', condition: '' })}>
+                    <SelectTrigger><SelectValue placeholder="1. Brand" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={pick.model} onValueChange={v => setPick(p => ({ ...p, model: v, storage: '', condition: '' }))} disabled={!pick.brand}>
+                    <SelectTrigger><SelectValue placeholder="2. Model" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catModels.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={pick.storage} onValueChange={v => setPick(p => ({ ...p, storage: v, condition: '' }))} disabled={!pick.model}>
+                    <SelectTrigger><SelectValue placeholder="3. Storage" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catStorages.map(s => <SelectItem key={s} value={s}>{s || 'N/A'}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={pick.condition} onValueChange={v => { setPick(p => ({ ...p, condition: v })); pickCatalogDevice(catConditions.find(d => d.condition === v)); }} disabled={!pick.storage && catStorages.length > 0}>
+                    <SelectTrigger><SelectValue placeholder="4. Grade" /></SelectTrigger>
+                    <SelectContent className="max-h-64">{catConditions.map(d => <SelectItem key={d.id} value={d.condition}>{d.condition} — {usd(d.price)}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div><Label>Brand</Label><Input value={editing.brand} onChange={e => set('brand', e.target.value)} /></div>
               <div><Label>Model</Label><Input value={editing.model} onChange={e => set('model', e.target.value)} placeholder="iPhone 15 Pro" /></div>
               <div><Label>Storage</Label><Input value={editing.storage || ''} onChange={e => set('storage', e.target.value)} placeholder="256GB" /></div>
