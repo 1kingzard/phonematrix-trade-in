@@ -287,6 +287,21 @@ const SellDialog = ({ item, onClose, onSold }: { item: any | null; onClose: () =
 
   if (!item) return null;
   const set = (k: string, v: any) => setF((x: any) => ({ ...x, [k]: v }));
+  const effRate = jmdRate || partsRate || 157;
+  const switchCur = (cur: 'USD' | 'JMD') => {
+    if (cur === priceCur) return;
+    if (cur === 'JMD') setJmdStr(f.actual_price ? String(Math.round(Number(f.actual_price) * effRate)) : '');
+    else if (jmdStr) set('actual_price', Math.round((Number(jmdStr) / effRate) * 100) / 100);
+    setPriceCur(cur);
+  };
+  const setJmdPrice = (v: string) => {
+    setJmdStr(v);
+    set('actual_price', Math.round(((Number(v) || 0) / effRate) * 100) / 100);
+  };
+  const changeRate = (v: string) => {
+    const r = Number(v) || 0;
+    setJmdRate(r); localStorage.setItem('pm_stock_jmd_rate', String(r));
+  };
   const loyalty = bestLoyalty(rules, counts.purchases, counts.referrals, Number(f.actual_price) || 0);
   const discount = f.apply_loyalty && loyalty ? loyalty.amount : 0;
   const soldFor = Math.max(0, (Number(f.actual_price) || 0) - discount);
