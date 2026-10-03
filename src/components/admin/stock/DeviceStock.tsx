@@ -12,7 +12,7 @@ import { Plus, Pencil, Trash2, ShoppingBag, Eye, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GRADE_ORDER } from '@/lib/tradeInRequests';
-import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment } from '@/lib/stock';
+import { PAYMENT_METHODS, STOCK_STATUSES, usd, buildSchedule, bestLoyalty, LoyaltyRule, Installment, saleMoney } from '@/lib/stock';
 import { useExchangeRateSetting } from '@/hooks/useExchangeRateSetting';
 import { useExchangeRate, SHIPPING_RATE, formatJMD } from '@/hooks/useExchangeRate';
 
@@ -45,7 +45,7 @@ const DeviceStock = () => {
   const load = async () => {
     const [s, sl] = await Promise.all([
       db.from('device_stock').select('*, device_repairs(cost)').order('created_at', { ascending: false }),
-      db.from('device_sales').select('id, stock_id, sold_for, sold_in, shipping_cost, customers(name)'),
+      db.from('device_sales').select('id, stock_id, sold_for, sold_in, shipping_cost, rate_used, customers(name)'),
     ]);
     setItems(s.data || []); setSales(sl.data || []);
   };
@@ -155,7 +155,7 @@ const DeviceStock = () => {
                     <td className="text-right tabular-nums">{usd(it.shipping_cost || 0)}</td>
                     <td className="text-right tabular-nums">{usd(it.website_price)}<div className="text-xs text-muted-foreground">{formatJMD((Number(it.website_price) + Number(it.shipping_cost || 0)) * liveRate)}</div></td>
                     <td><Badge variant={it.status === 'sold' ? 'secondary' : 'outline'}>{STOCK_STATUSES[it.status] || it.status}</Badge></td>
-                    <td className="text-right tabular-nums">{sale ? <>{usd(sale.sold_for)} <Badge variant="outline" className="ml-1 text-[10px]">{sale.sold_in === 'JM' ? 'JA' : 'US'}</Badge><div className="text-xs text-muted-foreground">{sale.customers?.name}</div></> : '—'}</td>
+                    <td className="text-right tabular-nums">{sale ? <>{saleMoney(sale.sold_for, sale)} <Badge variant="outline" className="ml-1 text-[10px]">{sale.sold_in === 'JM' ? 'JA' : 'US'}</Badge><div className="text-xs text-muted-foreground">{sale.customers?.name}</div></> : '—'}</td>
                     <td className="text-right whitespace-nowrap">
                       {sale ? <Button size="sm" variant="ghost" onClick={() => setDetailId(sale.id)}><Eye className="h-4 w-4" /></Button>
                         : <Button size="sm" variant="ghost" onClick={() => setSelling(it)} title="Mark as sold"><ShoppingBag className="h-4 w-4" /></Button>}
