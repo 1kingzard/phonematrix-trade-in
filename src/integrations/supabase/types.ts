@@ -265,6 +265,7 @@ export type Database = {
       }
       device_stock: {
         Row: {
+          battery_health: number | null
           brand: string
           colour: string | null
           condition: string | null
@@ -286,6 +287,7 @@ export type Database = {
           website_price: number
         }
         Insert: {
+          battery_health?: number | null
           brand?: string
           colour?: string | null
           condition?: string | null
@@ -307,6 +309,7 @@ export type Database = {
           website_price?: number
         }
         Update: {
+          battery_health?: number | null
           brand?: string
           colour?: string | null
           condition?: string | null

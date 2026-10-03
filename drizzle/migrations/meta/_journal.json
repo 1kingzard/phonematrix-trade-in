@@ -29,6 +29,13 @@
       "when": 1790993111282,
       "tag": "0003_device_stock_sales_customers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790994731217,
+      "tag": "0004_add_battery_health",
+      "breakpoints": true
     }
   ]
 }
