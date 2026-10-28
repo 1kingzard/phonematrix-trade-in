@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     if (error || !order) throw error ?? new Error('Could not save payment.');
     const session = await stripe.checkout.sessions.create({
       customer, customer_update: { address: 'auto' }, mode: 'payment', ui_mode: 'embedded_page',
-      line_items: lineItems, automatic_tax: { enabled: true },
+      line_items: lineItems, automatic_tax: { enabled: body.environment === 'live' },
       payment_intent_data: { description: body.kind === 'wallet' ? 'PhoneMatrix $5 Wallet Credit' : snapshots.map((i) => `${i.brand} ${i.model} pre-order`).join(', ') },
       metadata: { userId: user.id, orderId: order.id, kind: body.kind, environment: body.environment },
       return_url: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
