@@ -3,3 +3,5 @@
 - Public catalog variants come from devices; product URLs identify brand/model and select storage/grade via query parameters, while cart stores USD base prices and derives JMD totals using the shared shipping formula to prevent conversion drift.
 
 - IMEI service deletion sets deleted_at and disables ordering instead of removing the row, so historical orders retain their supplier service and reports; admin lists exclude deleted rows and supplier sync must never re-enable them.
+
+- Admin wallet owner labels are resolved through the authenticated, admin-checked IMEI function using account metadata with an email-prefix fallback; do not expose the auth user directory to clients.
