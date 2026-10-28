@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Add and delete IMEI services in the admin service list
 - [x] Device stock inventory (all fields, photos, repairs, IMEI/serial)
 - [x] Sales: buyer, payment method, trade link, payment plans, installments, late fees
 - [x] Shipping timeline events
