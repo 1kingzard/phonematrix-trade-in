@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Add customer wallet and phone pre-order payment history with statuses and details — verified signed-in purchases, filters, delivery details and mobile layout
 - [x] Refresh signup, account profile details, verification, password recovery and password changes — profile persistence and recovery requests verified; real inbox links and password changes not exercised
 - [x] Connect embedded test checkout for $5 wallet purchases and US/Jamaica device pre-orders; server catalog prices and shipping verified
 - [ ] Complete a test card purchase and confirm fulfillment — automated card interaction did not finish; user can test in preview

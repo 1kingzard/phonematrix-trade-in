@@ -13,3 +13,5 @@
 - Account access uses one shared form for pages and dialogs; account settings are available to all authenticated roles at /account, and recovery stays public at /reset-password with a recovery-event guard, so admins and customers share secure account lifecycle behavior.
 
 - Vite deduplicates React and React DOM so dependency updates cannot load separate hook and renderer instances.
+
+- Customer payment history reads payment_orders for the authenticated owner and current payment environment; recorded currency amounts are displayed without reconversion and payment status is separate from fulfillment status.
