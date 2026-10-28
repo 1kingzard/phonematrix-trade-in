@@ -50,7 +50,7 @@ interface OrderRow {
   supplier_order_id: string | null; error_message: string | null;
   imei_services?: { display_name: string } | null;
 }
-interface WalletRow { id: string; user_id: string; balance: number; reserved: number; updated_at: string }
+interface WalletRow { id: string; user_id: string; username: string; balance: number; reserved: number; updated_at: string }
 
 const STATUS_STYLES: Record<string, string> = {
   completed: 'bg-green-500/15 text-green-600 dark:text-green-400',
@@ -93,14 +93,17 @@ export default function ImeiServicesAdmin() {
       supabase.from('imei_service_categories').select('*').order('sort_order'),
       supabase.from('service_pricing_rules').select('*').order('sort_order'),
       supabase.from('imei_orders').select('*, imei_services(display_name)').order('created_at', { ascending: false }).limit(200),
-      supabase.from('customer_wallets').select('*').order('updated_at', { ascending: false }),
+      supabase.functions.invoke('imei-services', { body: { action: 'wallets' } }),
       supabase.from('imei_settings').select('key, value'),
     ]);
     setServices((svc.data ?? []) as Service[]);
     setCategories(cat.data ?? []);
     setRules((rl.data ?? []) as PricingRule[]);
     setOrders((ord.data ?? []) as unknown as OrderRow[]);
-    setWallets((wal.data ?? []) as WalletRow[]);
+    if (wal.error || wal.data?.error) {
+      toast({ title: 'Could not load wallet owners', description: wal.data?.error ?? wal.error?.message, variant: 'destructive' });
+    }
+    setWallets((wal.data?.wallets ?? []) as WalletRow[]);
     setSettings(Object.fromEntries((stg.data ?? []).map((s: any) => [s.key, s.value])));
     setLoading(false);
   };
@@ -471,7 +474,8 @@ export default function ImeiServicesAdmin() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer</TableHead>
+                <TableHead>Username</TableHead>
+                <TableHead>User ID</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
                 <TableHead className="text-right">Reserved</TableHead>
                 <TableHead>Last activity</TableHead>
@@ -481,7 +485,8 @@ export default function ImeiServicesAdmin() {
             <TableBody>
               {wallets.map((w) => (
                 <TableRow key={w.id}>
-                  <TableCell className="font-mono text-xs">{w.user_id.slice(0, 8)}…</TableCell>
+                  <TableCell className="font-medium">{w.username}</TableCell>
+                  <TableCell className="font-mono text-xs"><span className="block min-w-48 break-all select-all">{w.user_id}</span></TableCell>
                   <TableCell className="text-right tabular-nums">${Number(w.balance).toFixed(2)}</TableCell>
                   <TableCell className="text-right tabular-nums">${Number(w.reserved).toFixed(2)}</TableCell>
                   <TableCell>{new Date(w.updated_at).toLocaleDateString()}</TableCell>
@@ -493,7 +498,7 @@ export default function ImeiServicesAdmin() {
                 </TableRow>
               ))}
               {!wallets.length && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No wallets yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No wallets yet.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -716,7 +721,11 @@ export default function ImeiServicesAdmin() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add wallet credit</DialogTitle>
-            <DialogDescription>Promotional or manual credit for wallet {creditWallet?.user_id.slice(0, 8)}…. Every adjustment is recorded with your identity and a reason.</DialogDescription>
+            <DialogDescription className="break-words">
+              Wallet owner: {creditWallet?.username}<br />
+              User ID: <span className="font-mono text-xs break-all select-all">{creditWallet?.user_id}</span><br />
+              Every adjustment is recorded with your identity and a reason.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

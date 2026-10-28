@@ -160,6 +160,27 @@ Deno.serve(async (req) => {
       if (!isAdmin) throw Object.assign(new Error('Forbidden'), { status: 403 });
     };
 
+    // ----- Wallet owners (admin only; never expose account details publicly) -----
+    if (action === 'wallets') {
+      await requireAdmin();
+      const { data: wallets, error } = await supabase.from('customer_wallets')
+        .select('id, user_id, balance, reserved, updated_at').order('updated_at', { ascending: false });
+      if (error) throw error;
+      const rows = [];
+      for (let offset = 0; offset < (wallets ?? []).length; offset += 10) {
+        const batch = await Promise.all((wallets ?? []).slice(offset, offset + 10).map(async (wallet: any) => {
+          const { data, error: ownerError } = await supabase.auth.admin.getUserById(wallet.user_id);
+          if (ownerError) throw new Error('Could not load wallet owner details.');
+          const owner = data.user;
+          const metadata = owner?.user_metadata;
+          const username = metadata?.username || metadata?.user_name || metadata?.first_name || owner?.email?.split('@')[0];
+          return { ...wallet, username: typeof username === 'string' && username.trim() ? username.trim() : 'Unnamed account' };
+        }));
+        rows.push(...batch);
+      }
+      return json({ wallets: rows });
+    }
+
     // ----- Supplier balance (admin) -----
     if (action === 'balance') {
       await requireAdmin();
