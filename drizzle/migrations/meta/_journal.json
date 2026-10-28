@@ -50,6 +50,27 @@
       "when": 1790996208798,
       "tag": "0006_device_sales_sold_in",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793151275347,
+      "tag": "0007_imei_services_platform",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793151401771,
+      "tag": "0008_imei_admin_bypass_resale_flag",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793151701903,
+      "tag": "0009_wallet_credit_admin_only",
+      "breakpoints": true
     }
   ]
 }

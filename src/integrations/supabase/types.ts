@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          reserved: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          reserved?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          reserved?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           created_at: string
@@ -392,6 +419,220 @@ export type Database = {
           screen_replacement?: number
           storage?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      imei_order_results: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          raw_response: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          raw_response?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          raw_response?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imei_order_results_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "imei_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imei_orders: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          idempotency_key: string
+          identifier: string
+          identifier_masked: string
+          order_ref: string
+          result: Json | null
+          retail_price: number
+          service_id: string
+          status: string
+          supplier_order_id: string | null
+          trade_in_request_id: string | null
+          user_id: string
+          wholesale_cost: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          idempotency_key: string
+          identifier: string
+          identifier_masked: string
+          order_ref?: string
+          result?: Json | null
+          retail_price: number
+          service_id: string
+          status?: string
+          supplier_order_id?: string | null
+          trade_in_request_id?: string | null
+          user_id: string
+          wholesale_cost: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string
+          identifier?: string
+          identifier_masked?: string
+          order_ref?: string
+          result?: Json | null
+          retail_price?: number
+          service_id?: string
+          status?: string
+          supplier_order_id?: string | null
+          trade_in_request_id?: string | null
+          user_id?: string
+          wholesale_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imei_orders_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "imei_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imei_orders_trade_in_request_id_fkey"
+            columns: ["trade_in_request_id"]
+            isOneToOne: false
+            referencedRelation: "trade_in_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imei_service_categories: {
+        Row: {
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      imei_services: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          display_name: string
+          enabled: boolean
+          id: string
+          identifier_type: string
+          is_instant: boolean
+          is_unlock: boolean
+          last_synced_at: string | null
+          markup_amount: number
+          markup_type: string
+          min_profit: number
+          processing_time: string
+          requires_manual_approval: boolean
+          requires_ownership_confirm: boolean
+          retail_price: number
+          supplier_name: string
+          supplier_service_id: number
+          updated_at: string
+          wholesale_cost: number
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          enabled?: boolean
+          id?: string
+          identifier_type?: string
+          is_instant?: boolean
+          is_unlock?: boolean
+          last_synced_at?: string | null
+          markup_amount?: number
+          markup_type?: string
+          min_profit?: number
+          processing_time?: string
+          requires_manual_approval?: boolean
+          requires_ownership_confirm?: boolean
+          retail_price?: number
+          supplier_name: string
+          supplier_service_id: number
+          updated_at?: string
+          wholesale_cost?: number
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          identifier_type?: string
+          is_instant?: boolean
+          is_unlock?: boolean
+          last_synced_at?: string | null
+          markup_amount?: number
+          markup_type?: string
+          min_profit?: number
+          processing_time?: string
+          requires_manual_approval?: boolean
+          requires_ownership_confirm?: boolean
+          retail_price?: number
+          supplier_name?: string
+          supplier_service_id?: number
+          updated_at?: string
+          wholesale_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imei_services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "imei_service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imei_settings: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
         }
         Relationships: []
       }
@@ -1163,6 +1404,48 @@ export type Database = {
         }
         Relationships: []
       }
+      service_pricing_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          markup_amount: number
+          markup_type: string
+          max_cost: number | null
+          min_cost: number
+          min_profit: number
+          min_retail: number
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          markup_amount?: number
+          markup_type?: string
+          max_cost?: number | null
+          min_cost?: number
+          min_profit?: number
+          min_retail?: number
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          markup_amount?: number
+          markup_type?: string
+          max_cost?: number | null
+          min_cost?: number
+          min_profit?: number
+          min_retail?: number
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       shipment_events: {
         Row: {
           id: string
@@ -1224,6 +1507,68 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      supplier_api_logs: {
+        Row: {
+          action: string
+          created_at: string
+          detail: string | null
+          error_code: string | null
+          id: string
+          service_id: number | null
+          status: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: string | null
+          error_code?: string | null
+          id?: string
+          service_id?: number | null
+          status?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: string | null
+          error_code?: string | null
+          id?: string
+          service_id?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      supplier_price_history: {
+        Row: {
+          id: string
+          new_cost: number | null
+          old_cost: number | null
+          service_id: string
+          synced_at: string
+        }
+        Insert: {
+          id?: string
+          new_cost?: number | null
+          old_cost?: number | null
+          service_id: string
+          synced_at?: string
+        }
+        Update: {
+          id?: string
+          new_cost?: number | null
+          old_cost?: number | null
+          service_id?: string
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_price_history_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "imei_services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trade_in_request_history: {
         Row: {
@@ -1370,6 +1715,53 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          admin_id: string | null
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          order_id: string | null
+          reason: string | null
+          reference: string
+          type: string
+          wallet_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          reason?: string | null
+          reference: string
+          type: string
+          wallet_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          reason?: string | null
+          reference?: string
+          type?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "customer_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       parts_inventory_public: {
@@ -1457,6 +1849,35 @@ export type Database = {
         Returns: boolean
       }
       promote_to_admin: { Args: { user_email: string }; Returns: boolean }
+      refund_imei_order: {
+        Args: { p_admin_id: string; p_order_id: string; p_reason: string }
+        Returns: undefined
+      }
+      release_imei_order: {
+        Args: { p_order_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      settle_imei_order: { Args: { p_order_id: string }; Returns: undefined }
+      submit_imei_order: {
+        Args: {
+          p_idempotency_key: string
+          p_identifier: string
+          p_service_id: string
+          p_trade_in_request_id?: string
+        }
+        Returns: string
+      }
+      wallet_credit: {
+        Args: {
+          p_admin_id?: string
+          p_amount: number
+          p_reason?: string
+          p_reference: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "parts_guest"

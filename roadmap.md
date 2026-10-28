@@ -6,3 +6,7 @@
 - [x] Loyalty tie-in: admin-set discount rules by referrals / devices purchased
 - [x] Browse Devices: category cards, filtered listing, product detail, grade gallery, cart and currency consistency
 - [ ] Invoices (Phase 2 trade-in spec) — waiting for the go-ahead
+- [x] IMEI Checks & Unlock platform (SICKW): DB+wallet ledger, mock supplier, customer page (/imei-services), admin section, pricing engine, tests — verified in preview
+- [ ] IMEI go-live: SICKW API key (secure form), resale authorization, then flip resale_enabled + mock_mode flags
+- [ ] Wallet top-ups via payment provider (Stripe/Paddle) — needs payments enabled + provider approval for prepaid credits
+- [ ] IMEI extras: email notifications, PDF reports, delayed-order background polling, trade-in check linking UI, profitability charts/CSV export

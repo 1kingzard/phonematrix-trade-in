@@ -20,6 +20,7 @@ import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
 import TradeInRequests from '@/components/admin/TradeInRequests';
 import DeviceStock from '@/components/admin/stock/DeviceStock';
 import Customers from '@/components/admin/stock/Customers';
+import ImeiServicesAdmin from '@/components/admin/ImeiServicesAdmin';
 
 interface ReferralCode {
   id: string;
@@ -200,6 +201,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="csv">CSV</TabsTrigger>
             <TabsTrigger value="media">Media</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
+            <TabsTrigger value="imei">IMEI Services</TabsTrigger>
             <TabsTrigger value="admin">Tools</TabsTrigger>
           </TabsList>
 
@@ -241,6 +243,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="receipts" className="space-y-4">
             <ReceiptGenerator orders={orders as any} />
+          </TabsContent>
+
+          <TabsContent value="imei" className="space-y-4">
+            <ImeiServicesAdmin />
           </TabsContent>
 
           <TabsContent value="admin" className="space-y-4">
