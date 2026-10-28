@@ -20,6 +20,7 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/trade-in', label: 'Trade-In' },
   { to: '/price-list', label: 'Browse Devices' },
+  { to: '/imei-services', label: 'Phone Checks' },
 ];
 
 const Header = () => {

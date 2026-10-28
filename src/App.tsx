@@ -22,6 +22,8 @@ import LoginPage from '@/pages/LoginPage';
 import SplashPage from '@/pages/SplashPage';
 import NotFound from '@/pages/NotFound';
 import CustomerPortal from '@/pages/CustomerPortal';
+import ImeiServices from '@/pages/ImeiServices';
+import ImeiOrderDetail from '@/pages/ImeiOrderDetail';
 import PartsIndex from '@/pages/parts/PartsIndex';
 import PartsAdmin from '@/pages/parts/PartsAdmin';
 import PartsGuest from '@/pages/parts/PartsGuest';
@@ -64,6 +66,8 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/splash" element={<SplashPage />} />
                         <Route path="/c/:token" element={<CustomerPortal />} />
+                        <Route path="/imei-services" element={<ImeiServices />} />
+                        <Route path="/imei-services/orders/:id" element={<ImeiOrderDetail />} />
                         <Route path="/parts" element={<PartsIndex />} />
                         <Route path="/parts/admin" element={<PartsAdmin />} />
                         <Route path="/parts/guest" element={<PartsGuest />} />
