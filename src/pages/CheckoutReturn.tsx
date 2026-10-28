@@ -27,5 +27,5 @@ export default function CheckoutReturn() {
     // The payment is verified once per return page visit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return <div className="min-h-screen bg-background"><Header /><main className="max-w-2xl mx-auto pt-24 px-4 space-y-6"><PaymentTestModeBanner /><h1 className="text-3xl font-bold">Payment {paid ? 'confirmed' : 'status'}</h1>{pending ? <Loader2 className="animate-spin h-6 w-6" /> : paid && <CheckCircle2 className="h-8 w-8 text-primary" />}<p>{message}</p><Button asChild><Link to="/imei-services">Phone checks</Link></Button><Button asChild variant="outline"><Link to="/price-list">Browse devices</Link></Button></main></div>;
+  return <div className="min-h-screen bg-background"><Header /><main className="max-w-2xl mx-auto pt-24 px-4 space-y-6"><PaymentTestModeBanner /><h1 className="text-3xl font-bold">Payment {paid ? 'confirmed' : 'status'}</h1>{pending ? <Loader2 className="animate-spin h-6 w-6" /> : paid && <CheckCircle2 className="h-8 w-8 text-primary" />}<p>{message}</p><div className="flex flex-wrap gap-3"><Button asChild><Link to="/payments">Payment history</Link></Button><Button asChild variant="outline"><Link to="/imei-services">Phone checks</Link></Button><Button asChild variant="outline"><Link to="/price-list">Browse devices</Link></Button></div></main></div>;
 }
