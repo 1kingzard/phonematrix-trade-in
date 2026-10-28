@@ -21,6 +21,7 @@ import {
   ShieldCheck, Smartphone, Lock, Search, Wallet, Zap, Clock, ChevronRight, Loader2, Info,
 } from 'lucide-react';
 import { validateIdentifier, maskIdentifier } from '@/lib/imei';
+import { paymentsReady, paymentEnvironment } from '@/lib/payments';
 
 interface Category { id: string; name: string; sort_order: number }
 interface Service {
@@ -207,8 +208,8 @@ export default function ImeiServices() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {topupsEnabled ? (
-                    <Button disabled>Add Funds</Button>
+                  {paymentsReady && (paymentEnvironment() === 'sandbox' || topupsEnabled) ? (
+                    <Button asChild><Link to="/checkout?kind=wallet">{paymentEnvironment() === 'sandbox' ? 'Test $5 top-up' : 'Add $5'}</Link></Button>
                   ) : (
                     <p className="text-sm text-muted-foreground max-w-xs">
                       Wallet top-ups are coming soon. Credits can be added by our team in the meantime.

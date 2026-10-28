@@ -7,3 +7,5 @@
 - Admin wallet owner labels are resolved through the authenticated, admin-checked IMEI function using account metadata with an email-prefix fallback; do not expose the auth user directory to clients.
 
 - Customer IMEI catalog queries require enabled and undeleted services; historical order joins remain unfiltered. Normalize report fields through src/lib/imei-report.ts for both display and copy, excluding supplier billing envelope fields.
+
+- Payments use gateway-only Stripe Embedded Checkout, authenticated server-side catalog repricing, environment-isolated payment_orders and signed webhook fulfillment. Sandbox wallet purchases never credit customer_wallets; live top-ups stay blocked pending provider/tax approval. Physical live pre-orders create purchase_requests, not stock sales.

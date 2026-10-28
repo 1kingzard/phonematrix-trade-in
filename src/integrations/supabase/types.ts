@@ -1109,6 +1109,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_orders: {
+        Row: {
+          created_at: string
+          currency: string
+          delivery_country: string | null
+          delivery_details: Json | null
+          environment: string
+          id: string
+          items: Json
+          kind: string
+          paid_at: string | null
+          rate_used: number | null
+          shipping: number
+          status: string
+          stripe_session_id: string | null
+          subtotal: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          delivery_country?: string | null
+          delivery_details?: Json | null
+          environment: string
+          id?: string
+          items?: Json
+          kind: string
+          paid_at?: string | null
+          rate_used?: number | null
+          shipping?: number
+          status?: string
+          stripe_session_id?: string | null
+          subtotal: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          delivery_country?: string | null
+          delivery_details?: Json | null
+          environment?: string
+          id?: string
+          items?: Json
+          kind?: string
+          paid_at?: string | null
+          rate_used?: number | null
+          shipping?: number
+          status?: string
+          stripe_session_id?: string | null
+          subtotal?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -1837,6 +1894,15 @@ export type Database = {
     Functions: {
       assign_parts_guest: { Args: { user_email: string }; Returns: boolean }
       create_trade_in_request: { Args: { payload: Json }; Returns: Json }
+      fulfill_payment_order: {
+        Args: {
+          p_currency: string
+          p_order_id: string
+          p_session_id: string
+          p_total: number
+        }
+        Returns: undefined
+      }
       get_customer_portal: { Args: { token: string }; Returns: Json }
       get_trade_in_request: { Args: { token: string }; Returns: Json }
       has_role: {
