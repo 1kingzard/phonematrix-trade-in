@@ -6,3 +6,4 @@
 - [x] Loyalty tie-in: admin-set discount rules by referrals / devices purchased
 - [x] Browse Devices: category cards, filtered listing, product detail, grade gallery, cart and currency consistency
 - [ ] Invoices (Phase 2 trade-in spec) — waiting for the go-ahead
+- [ ] IMEI Checks & Unlock platform (SICKW): DB+wallet ledger, mock supplier, customer page, admin section; live key + top-up payments + resale flag blocked on user authorization
