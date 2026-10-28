@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('SICKW_API_KEY') ?? '';
 
     const requireAdmin = async () => {
-      const { data: isAdmin } = await supabase.rpc('is_admin', { _user_id: userId });
+      const { data: isAdmin } = await supabase.rpc('is_admin', { user_uuid: userId });
       if (!isAdmin) throw Object.assign(new Error('Forbidden'), { status: 403 });
     };
 
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!order) return json({ error: 'Order not found' }, 404);
 
-      const { data: isAdmin } = await supabase.rpc('is_admin', { _user_id: userId });
+      const { data: isAdmin } = await supabase.rpc('is_admin', { user_uuid: userId });
       if (order.user_id !== userId && !isAdmin) return json({ error: 'Forbidden' }, 403);
 
       const service = order.imei_services;
