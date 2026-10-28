@@ -19,6 +19,8 @@ import DeviceProduct from '@/pages/DeviceProduct';
 import ReviewsPage from '@/pages/ReviewsPage';
 import FAQPage from '@/pages/FAQPage';
 import LoginPage from '@/pages/LoginPage';
+import AccountSettings from '@/pages/AccountSettings';
+import ResetPassword from '@/pages/ResetPassword';
 import SplashPage from '@/pages/SplashPage';
 import NotFound from '@/pages/NotFound';
 import CustomerPortal from '@/pages/CustomerPortal';
@@ -66,6 +68,10 @@ function App() {
                         <Route path="/reviews" element={<ReviewsPage />} />
                         <Route path="/faq" element={<FAQPage />} />
                         <Route path="/login" element={<LoginPage />} />
+                        <Route path="/signup" element={<LoginPage initialMode="signup" />} />
+                        <Route path="/forgot-password" element={<LoginPage initialMode="forgot" />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/account" element={<AccountSettings />} />
                         <Route path="/splash" element={<SplashPage />} />
                         <Route path="/c/:token" element={<CustomerPortal />} />
                         <Route path="/imei-services" element={<ImeiServices />} />

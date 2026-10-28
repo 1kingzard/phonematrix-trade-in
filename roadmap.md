@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Refresh signup, account profile details, verification, password recovery and password changes — profile persistence and recovery requests verified; real inbox links and password changes not exercised
 - [x] Connect embedded test checkout for $5 wallet purchases and US/Jamaica device pre-orders; server catalog prices and shipping verified
 - [ ] Complete a test card purchase and confirm fulfillment — automated card interaction did not finish; user can test in preview
 - [ ] Live payments — account claim/verification and tax business address required; wallet top-ups additionally require provider approval and tax classification review
