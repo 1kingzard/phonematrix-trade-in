@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Connect test payments for $5 wallet top-ups and device orders to the US/Jamaica; live top-ups await provider approval
 - [x] Hide deleted services on customer pages and improve order report readability — verified live report, copy action, and mobile layout
 - [x] Add and delete IMEI services in the admin service list — verified creation and removal while signed in; historical orders preserved
 - [x] Device stock inventory (all fields, photos, repairs, IMEI/serial)
