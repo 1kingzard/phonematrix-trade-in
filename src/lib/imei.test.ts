@@ -101,8 +101,9 @@ describe('pricing rules', () => {
   it('suggests $1.00 minimum for sub-$0.10 costs', () => {
     expect(suggestRetailPrice(rules, 0.05)).toBe(1.0);
   });
-  it('doubles costs in the $0.10-$1.00 band', () => {
-    expect(suggestRetailPrice(rules, 0.3)).toBe(0.6);
+  it('doubles costs in the $0.10-$1.00 band, floored at the $1.00 minimum retail', () => {
+    expect(suggestRetailPrice(rules, 0.3)).toBe(1.0); // 0.3 x 2 = 0.6, raised to the $1.00 floor
+    expect(suggestRetailPrice(rules, 0.75)).toBe(1.5); // 0.75 x 2 = 1.5, above the floor
   });
   it('adds 50% above $10', () => {
     expect(suggestRetailPrice(rules, 24)).toBe(36);
