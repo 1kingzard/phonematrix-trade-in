@@ -50,6 +50,13 @@
       "when": 1790996208798,
       "tag": "0006_device_sales_sold_in",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793151275347,
+      "tag": "0007_imei_services_platform",
+      "breakpoints": true
     }
   ]
 }
