@@ -71,6 +71,13 @@
       "when": 1793151701903,
       "tag": "0009_wallet_credit_admin_only",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793153595157,
+      "tag": "0010_imei_service_removal_history",
+      "breakpoints": true
     }
   ]
 }
