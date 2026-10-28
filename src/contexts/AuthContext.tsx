@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; needsConfirmation?: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   isAdmin: boolean;
@@ -34,6 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          sessionStorage.setItem('pm_password_recovery', 'true');
+          if (window.location.pathname !== '/reset-password') window.location.replace(`${window.location.origin}/reset-password${window.location.hash}`);
+        }
+        if (event === 'SIGNED_IN') {
+          try { localStorage.setItem('lastActivityAt', String(Date.now())); } catch { /* ignore */ }
+        }
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -61,9 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user ?? null);
       setIsLoading(false);
     });
 
@@ -89,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, firstName: string, lastName: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (email: string, password: string, firstName: string, lastName: string): Promise<{ success: boolean; needsConfirmation?: boolean; error?: string }> => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -109,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: error.message };
       }
 
-      return { success: true };
+      return { success: true, needsConfirmation: !data.session };
     } catch (error) {
       return { success: false, error: 'An unexpected error occurred' };
     }
