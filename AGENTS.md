@@ -9,3 +9,5 @@
 - Customer IMEI catalog queries require enabled and undeleted services; historical order joins remain unfiltered. Normalize report fields through src/lib/imei-report.ts for both display and copy, excluding supplier billing envelope fields.
 
 - Payments use gateway-only Stripe Embedded Checkout, authenticated server-side catalog repricing, environment-isolated payment_orders and signed webhook fulfillment. Sandbox wallet purchases never credit customer_wallets; live top-ups stay blocked pending provider/tax approval. Physical live pre-orders create purchase_requests, not stock sales.
+
+- Account access uses one shared form for pages and dialogs; account settings are available to all authenticated roles at /account, and recovery stays public at /reset-password with a recovery-event guard, so admins and customers share secure account lifecycle behavior.
