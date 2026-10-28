@@ -545,6 +545,7 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           display_name: string
           enabled: boolean
@@ -568,6 +569,7 @@ export type Database = {
         Insert: {
           category_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           display_name: string
           enabled?: boolean
@@ -591,6 +593,7 @@ export type Database = {
         Update: {
           category_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           display_name?: string
           enabled?: boolean
