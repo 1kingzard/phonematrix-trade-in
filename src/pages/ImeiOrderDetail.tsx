@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Copy, Loader2, RefreshCw, CheckCircle2, XCircle, AlertTriangle, MinusCircle } from 'lucide-react';
 import { statusTone } from '@/lib/imei';
+import { formatImeiReport } from '@/lib/imei-report';
 
 interface OrderDetail {
   id: string;
@@ -94,7 +95,7 @@ export default function ImeiOrderDetail() {
       `Service: ${order.imei_services?.display_name ?? ''}`,
       `Date: ${new Date(order.created_at).toLocaleString()}`,
       ``,
-      ...Object.entries(order.result ?? {}).map(([k, v]) => `${k}: ${v}`),
+      ...formatImeiReport(order.result).flatMap((section) => [section.title, ...section.fields.map((field) => `${field.label}: ${field.value}`), '']),
     ];
     navigator.clipboard.writeText(lines.join('\n'));
     toast({ title: 'Copied', description: 'Report copied to clipboard.' });
@@ -126,11 +127,12 @@ export default function ImeiOrderDetail() {
   }
 
   const isPending = ['submitted', 'pending', 'processing'].includes(order.status);
+  const reportSections = formatImeiReport(order.result);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto max-w-3xl px-4 py-10 space-y-6">
+      <main className="container mx-auto max-w-3xl px-4 pt-24 pb-10 space-y-6">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link to="/imei-services"><ArrowLeft className="h-4 w-4 mr-1" /> Phone Checks & Unlocking</Link>
         </Button>
@@ -193,31 +195,34 @@ export default function ImeiOrderDetail() {
           </CardContent>
         </Card>
 
-        {order.result && Object.keys(order.result).length > 0 && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-lg">Device Report</CardTitle>
+        {reportSections.length > 0 && (
+          <section className="space-y-5" aria-label="Device report">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <h2 className="text-xl font-semibold">Device Report</h2>
               <Button size="sm" variant="outline" onClick={copyReport}>
                 <Copy className="h-4 w-4 mr-1" /> Copy report
               </Button>
-            </CardHeader>
-            <CardContent>
-              <dl className="divide-y divide-border">
-                {Object.entries(order.result).map(([key, value]) => {
-                  const tone = statusTone(String(value));
+            </div>
+            {reportSections.map((section) => (
+              <section key={section.title} className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
+              <dl className="divide-y divide-border border-y border-border">
+                {section.fields.map(({ label, value }) => {
+                  const tone = statusTone(value);
                   return (
-                    <div key={key} className="flex items-center justify-between gap-4 py-3">
-                      <dt className="text-sm text-muted-foreground">{key}</dt>
-                      <dd className="flex items-center gap-2 text-sm font-medium text-right">
-                        {TONE_ICON[tone]}
-                        {String(value)}
+                    <div key={label} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-1 sm:gap-6 py-3">
+                      <dt className="text-sm text-muted-foreground break-words">{label}</dt>
+                      <dd className="flex items-start gap-2 text-sm font-medium min-w-0">
+                        {tone !== 'neutral' && TONE_ICON[tone]}
+                        <span className="whitespace-pre-line break-words min-w-0">{value}</span>
                       </dd>
                     </div>
                   );
                 })}
               </dl>
-            </CardContent>
-          </Card>
+              </section>
+            ))}
+          </section>
         )}
       </main>
       <Footer />

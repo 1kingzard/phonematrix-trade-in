@@ -89,7 +89,7 @@ export default function ImeiServices() {
     const load = async () => {
       const [{ data: cats }, { data: svcs }, { data: settings }] = await Promise.all([
         supabase.from('imei_service_categories').select('*').order('sort_order'),
-        supabase.from('imei_services').select('*').order('retail_price'),
+        supabase.from('imei_services').select('*').eq('enabled', true).is('deleted_at', null).order('retail_price'),
         supabase.from('imei_settings').select('key, value'),
       ]);
       setCategories(cats ?? []);
