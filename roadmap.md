@@ -1,5 +1,7 @@
 # Roadmap
-- [ ] Connect test payments for $5 wallet top-ups and device orders to the US/Jamaica; live top-ups await provider approval
+- [x] Connect embedded test checkout for $5 wallet purchases and US/Jamaica device pre-orders; server catalog prices and shipping verified
+- [ ] Complete a test card purchase and confirm fulfillment — automated card interaction did not finish; user can test in preview
+- [ ] Live payments — account claim/verification and tax business address required; wallet top-ups additionally require provider approval and tax classification review
 - [x] Hide deleted services on customer pages and improve order report readability — verified live report, copy action, and mobile layout
 - [x] Add and delete IMEI services in the admin service list — verified creation and removal while signed in; historical orders preserved
 - [x] Device stock inventory (all fields, photos, repairs, IMEI/serial)
