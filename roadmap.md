@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Set up managed authentication emails for notify.shopphonematrix.com and deploy the handler; inbox delivery awaits domain activation
+- [ ] Resolve referral-code public-read security finding — review access requirements before changing permissions
 - [x] Add customer wallet and phone pre-order payment history with statuses and details — verified signed-in purchases, filters, delivery details and mobile layout
 - [x] Refresh signup, account profile details, verification, password recovery and password changes — profile persistence and recovery requests verified; real inbox links and password changes not exercised
 - [x] Connect embedded test checkout for $5 wallet purchases and US/Jamaica device pre-orders; server catalog prices and shipping verified

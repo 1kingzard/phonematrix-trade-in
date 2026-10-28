@@ -15,3 +15,5 @@
 - Vite deduplicates React and React DOM so dependency updates cannot load separate hook and renderer instances.
 
 - Customer payment history reads payment_orders for the authenticated owner and current payment environment; recorded currency amounts are displayed without reconversion and payment status is separate from fulfillment status.
+
+- Authentication emails use the scaffolded managed auth-email-hook and email-js sender, not database queues, because delivery is platform-managed.

@@ -29,6 +29,7 @@ export const MagicLinkEmail = ({
     <Preview>Your login link for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Text style={{ ...h1, fontSize: '18px' }}>PhoneMatrix</Text>
         <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
           Click the button below to log in to {siteName}. This link will expire
@@ -47,25 +48,25 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Poppins, Arial, sans-serif' }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(222.2, 84%, 4.9%)',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
+  color: 'hsl(215.4, 16.3%, 46.9%)',
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
+  backgroundColor: 'hsl(222.2, 47.4%, 11.2%)',
+  color: 'hsl(210, 40%, 98%)',
   fontSize: '14px',
-  border: '1px solid #000000',
+  border: '1px solid hsl(222.2, 47.4%, 11.2%)',
   borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
