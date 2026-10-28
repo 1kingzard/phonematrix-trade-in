@@ -18,8 +18,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Pencil, RefreshCw, DollarSign, Eye } from 'lucide-react';
+import { Loader2, Pencil, RefreshCw, DollarSign, Eye, Plus, Trash2 } from 'lucide-react';
 import { profitMetrics, suggestRetailPrice, type PricingRule, type MarkupType } from '@/lib/imei';
+import { serviceDetailsSchema, serviceRemovalValues } from '@/lib/imei-service-management';
 
 interface Service {
   id: string;
@@ -75,6 +76,8 @@ export default function ImeiServicesAdmin() {
   const [syncing, setSyncing] = useState(false);
 
   const [editing, setEditing] = useState<Service | null>(null);
+  const [removing, setRemoving] = useState<Service | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [creditWallet, setCreditWallet] = useState<WalletRow | null>(null);
   const [creditAmount, setCreditAmount] = useState('');
@@ -86,7 +89,7 @@ export default function ImeiServicesAdmin() {
 
   const load = async () => {
     const [svc, cat, rl, ord, wal, stg] = await Promise.all([
-      supabase.from('imei_services').select('*').order('supplier_service_id'),
+      supabase.from('imei_services').select('*').is('deleted_at', null).order('supplier_service_id'),
       supabase.from('imei_service_categories').select('*').order('sort_order'),
       supabase.from('service_pricing_rules').select('*').order('sort_order'),
       supabase.from('imei_orders').select('*, imei_services(display_name)').order('created_at', { ascending: false }).limit(200),
@@ -135,10 +138,15 @@ export default function ImeiServicesAdmin() {
 
   const saveService = async () => {
     if (!editing) return;
+    const parsed = serviceDetailsSchema.safeParse(editing);
+    if (!parsed.success) {
+      toast({ title: 'Check service details', description: parsed.error.issues.map((issue) => `${issue.path.join(' ')}: ${issue.message}`).join('; '), variant: 'destructive' });
+      return;
+    }
     setSaving(true);
     const { id, ...rest } = editing;
-    const { error } = await supabase.from('imei_services').update({
-      display_name: rest.display_name,
+    const values = {
+      display_name: parsed.data.display_name,
       description: rest.description,
       category_id: rest.category_id,
       retail_price: rest.retail_price,
@@ -151,15 +159,46 @@ export default function ImeiServicesAdmin() {
       enabled: rest.enabled,
       requires_ownership_confirm: rest.requires_ownership_confirm,
       requires_manual_approval: rest.requires_manual_approval,
+      is_unlock: rest.is_unlock,
       updated_at: new Date().toISOString(),
-    }).eq('id', id);
+    };
+    const { error } = id
+      ? await supabase.from('imei_services').update(values).eq('id', id)
+      : await supabase.from('imei_services').insert({
+          ...values,
+          supplier_service_id: parsed.data.supplier_service_id,
+          supplier_name: parsed.data.supplier_name,
+          wholesale_cost: parsed.data.wholesale_cost,
+        });
     setSaving(false);
     if (error) {
-      toast({ title: 'Could not save service', description: error.message, variant: 'destructive' });
+      toast({ title: 'Could not save service', description: error.code === '23505' ? 'This supplier service ID already exists, including previously deleted services. Use a different supplier ID.' : error.message, variant: 'destructive' });
       return;
     }
     toast({ title: 'Service saved' });
     setEditing(null);
+    load();
+  };
+
+  const addService = () => setEditing({
+    id: '', supplier_service_id: 0, supplier_name: '', display_name: '', description: '', category_id: null,
+    wholesale_cost: 0, retail_price: 0, markup_type: 'manual', markup_amount: 0, min_profit: 0,
+    is_instant: true, processing_time: 'Instant', identifier_type: 'imei', enabled: false,
+    requires_ownership_confirm: true, requires_manual_approval: false, is_unlock: false, last_synced_at: null,
+  });
+
+  const deleteService = async () => {
+    if (!removing) return;
+    setDeleting(true);
+    const { data, error } = await supabase.from('imei_services')
+      .update(serviceRemovalValues()).eq('id', removing.id).select('id').single();
+    setDeleting(false);
+    if (error || !data) {
+      toast({ title: 'Could not delete service', description: error?.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Service deleted', description: 'Past orders and reports are preserved.' });
+    setRemoving(null);
     load();
   };
 
@@ -300,14 +339,17 @@ export default function ImeiServicesAdmin() {
 
       {/* ---------- Services ---------- */}
       <TabsContent value="services" className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             {services.filter((s) => s.enabled).length} of {services.length} services enabled. Wholesale costs sync from the supplier; your retail prices are never overwritten.
           </p>
+          <div className="flex flex-wrap gap-2">
+          <Button onClick={addService}><Plus className="h-4 w-4 mr-2" />Add service</Button>
           <Button variant="outline" onClick={syncCatalog} disabled={syncing}>
             {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Sync supplier prices
           </Button>
+          </div>
         </div>
         <Card>
           <Table>
@@ -344,9 +386,12 @@ export default function ImeiServicesAdmin() {
                         : <Badge variant="outline">Disabled</Badge>}
                       {s.requires_manual_approval && <Badge variant="outline" className="ml-1">Approval</Badge>}
                     </TableCell>
-                    <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => setEditing({ ...s })}>
+                    <TableCell className="whitespace-nowrap">
+                      <Button size="icon" variant="ghost" title={`Edit ${s.display_name}`} aria-label={`Edit ${s.display_name}`} onClick={() => setEditing({ ...s })}>
                         <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" title={`Delete ${s.display_name}`} aria-label={`Delete ${s.display_name}`} onClick={() => setRemoving(s)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -528,16 +573,32 @@ export default function ImeiServicesAdmin() {
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit service</DialogTitle>
+            <DialogTitle>{editing?.id ? 'Edit service' : 'Add service'}</DialogTitle>
             <DialogDescription>
-              Supplier ID {editing?.supplier_service_id} · {editing?.supplier_name}
+              {editing?.id ? `Supplier ID ${editing.supplier_service_id} · ${editing.supplier_name}` : 'Use the exact service ID from your SICKW catalog. New services start disabled.'}
             </DialogDescription>
           </DialogHeader>
           {editing && (
             <div className="space-y-4">
+              {!editing.id && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-supplier-id">Supplier service ID</Label>
+                    <Input id="new-supplier-id" type="number" min="1" step="1" value={editing.supplier_service_id || ''} onChange={(e) => setEditing({ ...editing, supplier_service_id: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-wholesale">Wholesale cost (USD)</Label>
+                    <Input id="new-wholesale" type="number" min="0" step="0.0001" value={editing.wholesale_cost} onChange={(e) => setEditing({ ...editing, wholesale_cost: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="new-supplier-name">Supplier service name</Label>
+                    <Input id="new-supplier-name" value={editing.supplier_name} onChange={(e) => setEditing({ ...editing, supplier_name: e.target.value })} />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>Display name</Label>
-                <Input value={editing.display_name} onChange={(e) => setEditing({ ...editing, display_name: e.target.value })} />
+                <Label htmlFor="service-display-name">Display name</Label>
+                <Input id="service-display-name" value={editing.display_name} onChange={(e) => setEditing({ ...editing, display_name: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
@@ -592,6 +653,21 @@ export default function ImeiServicesAdmin() {
                 </div>
               </div>
               <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Device identifier</Label>
+                  <Select value={editing.identifier_type} onValueChange={(v) => setEditing({ ...editing, identifier_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="imei">IMEI</SelectItem>
+                      <SelectItem value="serial">Serial number</SelectItem>
+                      <SelectItem value="either">IMEI or serial number</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="font-normal">Unlock service</Label>
+                  <Switch checked={editing.is_unlock} onCheckedChange={(v) => setEditing({ ...editing, is_unlock: v, requires_manual_approval: v ? true : editing.requires_manual_approval })} />
+                </div>
                 <div className="flex items-center justify-between">
                   <Label className="font-normal">Enabled (customers can order)</Label>
                   <Switch checked={editing.enabled} onCheckedChange={(v) => setEditing({ ...editing, enabled: v })} />
@@ -612,9 +688,24 @@ export default function ImeiServicesAdmin() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button variant="outline" disabled={saving} onClick={() => setEditing(null)}>Cancel</Button>
             <Button onClick={saveService} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {editing?.id ? 'Save' : 'Add service'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!removing} onOpenChange={(open) => !open && !deleting && setRemoving(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete service?</DialogTitle>
+            <DialogDescription>Remove {removing?.display_name} from the service list and stop new orders. Existing orders and reports will remain available.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={deleting} onClick={() => setRemoving(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={deleting} onClick={deleteService}>
+              {deleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}Delete service
             </Button>
           </DialogFooter>
         </DialogContent>
