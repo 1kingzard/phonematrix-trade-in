@@ -42,6 +42,9 @@ describe('validateIdentifier', () => {
     expect(validateIdentifier('123', 'imei')).toMatch(/IMEI/);
     expect(validateIdentifier('F2LX3ABCD123', 'serial')).toBeNull();
     expect(validateIdentifier('!!', 'serial')).toMatch(/serial/i);
+    expect(validateIdentifier('490154203237518', 'either')).toBeNull();
+    expect(validateIdentifier('F2LX3ABCD123', 'either')).toBeNull();
+    expect(validateIdentifier('123', 'either')).toMatch(/IMEI or the device serial/i);
   });
 });
 

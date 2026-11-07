@@ -53,9 +53,10 @@ function mockCheck(service: any, identifier: string) {
   const carrier = carriers[seed % carriers.length];
   const blacklisted = seed % 11 === 0;
   const locked = carrier !== 'Unlocked' && seed % 3 !== 0;
+  const idLabel = service.identifier_type === 'serial' ? 'Serial Number' : 'IMEI';
   const result: Record<string, string> = {
     'Model': 'Apple iPhone (verified)',
-    'IMEI': maskIdentifier(identifier),
+    [idLabel]: maskIdentifier(identifier),
   };
   const name = (service.supplier_name || '').toLowerCase();
   if (name.includes('carrier') || name.includes('status')) {
