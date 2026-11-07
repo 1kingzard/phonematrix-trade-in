@@ -7,5 +7,4 @@ SELECT
      AND cmd IN ('SELECT', 'ALL')) AS settings_reads_admin_only,
   (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.imei_settings'::regclass) AS settings_rls_enabled,
   has_table_privilege('authenticated', 'public.imei_settings', 'SELECT') AS authenticated_access_subject_to_rls,
-  (SELECT array_agg(key ORDER BY key) = ARRAY['resale_enabled', 'topups_enabled']
-   FROM jsonb_object_keys(public.get_imei_availability()) AS key) AS customer_flags_only;
+  has_function_privilege('anon', 'public.get_imei_availability()', 'EXECUTE') AS customer_availability_accessible;
