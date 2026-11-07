@@ -1910,6 +1910,7 @@ export type Database = {
         Returns: undefined
       }
       get_customer_portal: { Args: { token: string }; Returns: Json }
+      get_imei_availability: { Args: never; Returns: Json }
       get_trade_in_request: { Args: { token: string }; Returns: Json }
       has_role: {
         Args: {

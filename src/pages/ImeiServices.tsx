@@ -89,16 +89,16 @@ export default function ImeiServices() {
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: cats }, { data: svcs }, { data: settings }] = await Promise.all([
+      const [{ data: cats }, { data: svcs }, { data: availability }] = await Promise.all([
         supabase.from('imei_service_categories').select('*').order('sort_order'),
         supabase.from('imei_services').select('*').eq('enabled', true).is('deleted_at', null).order('retail_price'),
-        supabase.from('imei_settings').select('key, value'),
+        supabase.rpc('get_imei_availability'),
       ]);
       setCategories(cats ?? []);
       setServices((svcs ?? []) as Service[]);
-      const flags = Object.fromEntries((settings ?? []).map((s: any) => [s.key, s.value]));
-      setResaleEnabled(flags.resale_enabled === true);
-      setTopupsEnabled(flags.topups_enabled === true);
+      const flags = availability as { resale_enabled?: boolean; topups_enabled?: boolean } | null;
+      setResaleEnabled(flags?.resale_enabled === true);
+      setTopupsEnabled(flags?.topups_enabled === true);
       setLoading(false);
     };
     load();
