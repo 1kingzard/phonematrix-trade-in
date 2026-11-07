@@ -141,7 +141,8 @@ export default function ImeiServices() {
 
   const submitOrder = async () => {
     if (!selected || !user) return;
-    const err = validateIdentifier(identifier, selected.identifier_type);
+    const checkType = selected.identifier_type === 'either' ? entryMode : selected.identifier_type;
+    const err = validateIdentifier(identifier, checkType);
     if (err) { setIdError(err); return; }
     if (selected.requires_ownership_confirm && !ownershipConfirmed) {
       toast({ title: 'Confirmation required', description: 'Please confirm you own or are authorized to check this device.', variant: 'destructive' });
@@ -326,12 +327,27 @@ export default function ImeiServices() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="imei-input">{selected?.identifier_type === 'serial' ? 'Serial number' : 'IMEI number'}</Label>
+              {selected?.identifier_type === 'either' && (
+                <div className="flex gap-2">
+                  {(['imei', 'serial'] as const).map((mode) => (
+                    <Button
+                      key={mode}
+                      type="button"
+                      size="sm"
+                      variant={entryMode === mode ? 'default' : 'outline'}
+                      onClick={() => { setEntryMode(mode); setIdentifier(''); setIdError(null); }}
+                    >
+                      {mode === 'imei' ? 'IMEI' : 'Serial number'}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              <Label htmlFor="imei-input">{entryMode === 'serial' ? 'Serial number' : 'IMEI number'}</Label>
               <Input
                 id="imei-input"
                 value={identifier}
                 onChange={(e) => { setIdentifier(e.target.value); setIdError(null); }}
-                placeholder={selected?.identifier_type === 'serial' ? 'e.g. F2LX3ABCD123' : '15-digit IMEI (dial *#06#)'}
+                placeholder={entryMode === 'serial' ? 'e.g. F2LX3ABCD123' : '15-digit IMEI (dial *#06#)'}
                 className="font-mono"
                 maxLength={32}
               />
