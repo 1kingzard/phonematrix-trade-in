@@ -38,10 +38,15 @@ export function isValidSerial(serial: string): boolean {
   return /^[A-Za-z0-9]{5,32}$/.test(serial.trim());
 }
 
-export function validateIdentifier(value: string, type: 'imei' | 'serial' | string): string | null {
+export function validateIdentifier(value: string, type: 'imei' | 'serial' | 'either' | string): string | null {
   const v = value.trim();
   if (type === 'serial') {
     return isValidSerial(v) ? null : 'Enter a valid serial number (5-32 letters or digits).';
+  }
+  if (type === 'either') {
+    return isValidImei(v) || isValidSerial(v)
+      ? null
+      : 'Enter a valid 15-digit IMEI or the device serial number.';
   }
   return isValidImei(v) ? null : 'Enter a valid 15-digit IMEI (dial *#06# on the phone to find it).';
 }
