@@ -82,6 +82,7 @@ export default function ImeiServices() {
 
   const [selected, setSelected] = useState<Service | null>(null);
   const [identifier, setIdentifier] = useState('');
+  const [entryMode, setEntryMode] = useState<'imei' | 'serial'>('imei');
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [idError, setIdError] = useState<string | null>(null);
@@ -133,6 +134,7 @@ export default function ImeiServices() {
     }
     setSelected(service);
     setIdentifier('');
+    setEntryMode(service.identifier_type === 'serial' ? 'serial' : 'imei');
     setIdError(null);
     setOwnershipConfirmed(false);
   };
