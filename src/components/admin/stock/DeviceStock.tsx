@@ -133,13 +133,13 @@ const DeviceStock = () => {
         <Card><CardContent className="pt-4"><div className="text-xs text-muted-foreground">Profit on sold</div><div className="text-2xl font-bold">{usd(stats.profit)}</div></CardContent></Card>
       </div>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Phones</CardTitle>
-          <div className="flex gap-2"><Input placeholder="Search model, IMEI, serial…" value={search} onChange={e => setSearch(e.target.value)} className="w-56" />
-            <Button onClick={() => openEdit(null)}><Plus className="h-4 w-4 mr-1" />Add phone</Button></div>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Input placeholder="Search model, IMEI, serial…" value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-56" />
+            <Button onClick={() => openEdit(null)} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" />Add phone</Button></div>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="text-left text-muted-foreground border-b"><tr>
               <th className="py-2"></th><th>Device</th><th>Condition</th><th>IMEI / Serial</th><th className="text-right">Cost</th><th className="text-right">Shipping</th><th className="text-right">Website (US / Jamaica)</th><th>Status</th><th className="text-right">Sold for</th><th></th></tr></thead>
             <tbody>
