@@ -137,7 +137,7 @@ const CollectionsTab = () => {
 
       <Card>
         <CardHeader><CardTitle className="text-base">Collect Payment</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-4 items-end">
+        <CardContent className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end">
           <div className="sm:col-span-2">
             <Label>Sale</Label>
             <Select value={newSale} onValueChange={pickSale}>

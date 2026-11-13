@@ -117,7 +117,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, onRefresh, us
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
           <div>
             <CardTitle>All Orders</CardTitle>
             <CardDescription>Manage customer orders and assignments</CardDescription>
@@ -171,7 +171,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, onRefresh, us
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="device-brand">Device Brand</Label>
                     <Input

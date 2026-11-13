@@ -204,7 +204,7 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
           </div>
           <div><Label>Name</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
           <div><Label>Address</Label><Textarea rows={3} value={address} onChange={e => setAddress(e.target.value)} /></div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div><Label>Tracking #</Label><Input value={tracking} onChange={e => setTracking(e.target.value)} /></div>
             <div><Label>Receipt #</Label><Input value={receiptNo} onChange={e => setReceiptNo(e.target.value)} /></div>
             <div><Label>Date</Label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
@@ -212,7 +212,7 @@ const ReceiptGenerator = ({ orders }: { orders: Order[] }) => {
         </CardContent>
       </Card>
       <Card className="lg:col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between space-y-0">
           <CardTitle>Devices & pricing</CardTitle>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>

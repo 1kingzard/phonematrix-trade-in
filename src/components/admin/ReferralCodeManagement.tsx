@@ -139,7 +139,7 @@ const ReferralCodeManagement: React.FC<ReferralCodeManagementProps> = ({ referra
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
           <div>
             <CardTitle>Referral Codes Management</CardTitle>
             <CardDescription>Create and manage referral discount codes</CardDescription>
@@ -156,58 +156,58 @@ const ReferralCodeManagement: React.FC<ReferralCodeManagementProps> = ({ referra
                 <DialogTitle>{editingCode ? 'Edit' : 'Create'} Referral Code</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="code" className="text-right">Code</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="code" className="sm:text-right">Code</Label>
                   <Input
                     id="code"
                     value={formData.code}
                     onChange={(e) => setFormData({...formData, code: e.target.value})}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="discount_percentage" className="text-right">Discount %</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="discount_percentage" className="sm:text-right">Discount %</Label>
                   <Input
                     id="discount_percentage"
                     type="number"
                     value={formData.discount_percentage}
                     onChange={(e) => setFormData({...formData, discount_percentage: Number(e.target.value)})}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="discount_amount" className="text-right">Discount $</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="discount_amount" className="sm:text-right">Discount $</Label>
                   <Input
                     id="discount_amount"
                     type="number"
                     value={formData.discount_amount}
                     onChange={(e) => setFormData({...formData, discount_amount: Number(e.target.value)})}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="max_uses" className="text-right">Max Uses</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="max_uses" className="sm:text-right">Max Uses</Label>
                   <Input
                     id="max_uses"
                     type="number"
                     value={formData.max_uses}
                     onChange={(e) => setFormData({...formData, max_uses: e.target.value})}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     placeholder="Unlimited if empty"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="expires_at" className="text-right">Expires</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="expires_at" className="sm:text-right">Expires</Label>
                   <Input
                     id="expires_at"
                     type="date"
                     value={formData.expires_at}
                     onChange={(e) => setFormData({...formData, expires_at: e.target.value})}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="is_active" className="text-right">Active</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="is_active" className="sm:text-right">Active</Label>
                   <Switch
                     id="is_active"
                     checked={formData.is_active}

@@ -70,7 +70,7 @@ const Customers = () => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 gap-2">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between space-y-0">
           <div><CardTitle>Customers</CardTitle><CardDescription>Each customer has a private page with purchases, shipping, payments and trade-ins.</CardDescription></div>
           <div className="flex gap-2"><Input className="w-48" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} />
             <Button onClick={() => setEditing({ name: '', phone: '', email: '', referred_by: 'none' })}><Plus className="h-4 w-4 mr-1" />Add</Button></div>
@@ -100,7 +100,7 @@ const Customers = () => {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between space-y-0">
           <div><CardTitle>Loyalty discounts</CardTitle><CardDescription>Set rewards for number of phones bought or people referred. The best one a customer qualifies for is offered when you record a sale.</CardDescription></div>
           <Button onClick={() => setRule({ name: '', rule_type: 'purchases', threshold: 2, discount_percent: 5, discount_amount: 0, active: true })}><Plus className="h-4 w-4 mr-1" />Add rule</Button>
         </CardHeader>

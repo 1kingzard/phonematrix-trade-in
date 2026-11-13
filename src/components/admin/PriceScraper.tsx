@@ -225,17 +225,17 @@ const PriceScraper: React.FC = () => {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between space-y-0">
           <CardTitle>Review Queue ({filtered.length})</CardTitle>
-          <div className="flex gap-2 items-center">
-            <div className="flex gap-1">
+          <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+            <div className="flex flex-wrap gap-1">
               {(['pending', 'approved', 'rejected', 'all'] as const).map(s => (
                 <Button key={s} size="sm" variant={statusFilter === s ? 'default' : 'outline'} onClick={() => setStatusFilter(s)}>{s}</Button>
               ))}
             </div>
-            <div className="relative">
+            <div className="relative flex-1 min-w-[10rem] sm:flex-none">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="pl-8 w-56" />
+              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="pl-8 w-full sm:w-56" />
             </div>
             <Button size="sm" variant="ghost" onClick={clearReviewed}>Clear reviewed</Button>
           </div>

@@ -212,7 +212,7 @@ const PriceListTab = ({ isAdmin = false }: { isAdmin?: boolean }) => {
               <div className="space-y-3">
                 <div><Label>Item</Label><Input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} /></div>
                 <div><Label>Category (optional)</Label><Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div><Label>Cost (JMD)</Label><Input type="number" value={form.cost_jmd} onChange={e => setForm({ ...form, cost_jmd: e.target.value })} /></div>
                   <div><Label>Shipping (JMD)</Label><Input type="number" value={form.shipping_jmd} onChange={e => setForm({ ...form, shipping_jmd: e.target.value })} /></div>
                   <div><Label>Sell (JMD)</Label><Input type="number" value={form.sell_jmd} onChange={e => setForm({ ...form, sell_jmd: e.target.value })} /></div>

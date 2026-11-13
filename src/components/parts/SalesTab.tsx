@@ -109,7 +109,7 @@ const SalesTab = () => {
     <div className="space-y-4">
     <Card>
       <CardHeader><CardTitle className="text-base">Record a Sale</CardTitle></CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-5 items-end">
+      <CardContent className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 items-end">
         <div className="sm:col-span-2">
           <Label>Item</Label>
           <Select value={saleItem} onValueChange={onSelectItem}>

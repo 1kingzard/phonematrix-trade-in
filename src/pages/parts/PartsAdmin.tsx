@@ -39,7 +39,7 @@ const PartsAdmin = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-10">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
               <Wrench className="h-6 w-6 text-primary" />

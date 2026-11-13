@@ -215,7 +215,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, on
     <>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <CardTitle>Inventory Management</CardTitle>
               <CardDescription>Manage device stock and pricing</CardDescription>
@@ -274,7 +274,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, on
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="quantity">Quantity</Label>
                       <Input

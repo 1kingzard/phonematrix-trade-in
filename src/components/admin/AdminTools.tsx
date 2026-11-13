@@ -74,13 +74,13 @@ const AdminTools: React.FC<AdminToolsProps> = ({ orders, inventory, referralCode
                 <DialogTitle>Promote User to Admin</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="admin-email" className="text-right">Email</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="admin-email" className="sm:text-right">Email</Label>
                   <Input
                     id="admin-email"
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     placeholder="user@example.com"
                   />
                 </div>
